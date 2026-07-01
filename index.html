@@ -340,6 +340,7 @@ async function uploadToYandex(fileName, blob, patientName) {
                 document.body.classList.toggle('dark-theme');
                 darkTheme = !darkTheme;
                 localStorage.setItem('darkTheme', darkTheme);
+                window.toggleTheme = toggleTheme;
             }
 
             async function render() {
