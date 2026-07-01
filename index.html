@@ -95,28 +95,130 @@
             const esc = s => { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; };
             const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-            const DISEASES = [
-                { id:'cf', name:'Муковисцидоз', icd:'E84', icon:'🫁', desc:'Поражение экзокринных желез', gene:'CFTR (7q31.2)', mutations:'F508del (70%)' },
-                { id:'pku', name:'Фенилкетонурия', icd:'E70.0', icon:'🧠', desc:'Дефицит фенилаланингидроксилазы', gene:'PAH (12q23.2)', mutations:'R408W' },
-                { id:'wilson', name:'Болезнь Вильсона', icd:'E83.0', icon:'🧬', desc:'Накопление меди', gene:'ATP7B (13q14.3)', mutations:'H1069Q' },
-                { id:'gaucher', name:'Болезнь Гоше', icd:'E75.2', icon:'🦴', desc:'Лизосомная болезнь', gene:'GBA (1q21)', mutations:'N370S' },
-                { id:'fabry', name:'Болезнь Фабри', icd:'E75.2', icon:'💔', desc:'Акропарестезии', gene:'GLA (Xq22.1)', mutations:'Более 900' }
-            ];
+           const DISEASES = [
+    // ==================== МЕТАБОЛИЧЕСКИЕ ====================
+    { id:'abetalipo', name:'Абеталипопротеинемия', icd:'E78.6', icon:'🩸', cat:'Метаболические', desc:'Нарушение синтеза β‑липопротеинов, мальабсорбция жиров, дефицит витамина Е. Стеаторея, атаксия, пигментный ретинит.', diag:'Гипохолестеринемия, отсутствие ЛПНП, генетический анализ MTTP.', treat:'Витамин Е 100 мг/кг/сут, А, D, K.', gene:'MTTP (4q22-q24)', mutations:'Миссенс-мутации, делеции', algorithm:'1. Липидограмма → 2. Анализ MTTP → 3. Офтальмологический осмотр' },
+    { id:'acroderm', name:'Акродерматит энтеропатический', icd:'E83.2', icon:'🍂', cat:'Метаболические', desc:'Гипоцинкемия. Везикуло‑буллёзная сыпь вокруг рта, ануса, диарея.', diag:'Цинк крови <13 мкмоль/л.', treat:'Сульфат цинка 3 мг/кг/сут.', gene:'SLC39A4 (8q24.3)', mutations:'Различные мутации ZIP4', algorithm:'1. Уровень цинка в крови → 2. Анализ SLC39A4 → 3. Биопсия кожи' },
+    { id:'wilson', name:'Болезнь Вильсона', icd:'E83.0', icon:'🧬', cat:'Метаболические', desc:'Накопление меди в печени, мозге, роговице.', diag:'Церулоплазмин <200 мг/л, медь в моче >100 мкг/сут.', treat:'D‑пеницилламин, цинк, триентин, диета.', gene:'ATP7B (13q14.3)', mutations:'H1069Q (Европа), R778L (Азия), более 500 мутаций', algorithm:'1. Церулоплазмин → 2. Медь в моче → 3. Проба с D‑пеницилламином → 4. Осмотр офтальмолога → 5. Анализ ATP7B' },
+    { id:'pku', name:'Фенилкетонурия', icd:'E70.0', icon:'🧠', cat:'Метаболические', desc:'Дефицит фенилаланингидроксилазы, накопление Phe.', diag:'Неонатальный скрининг, Phe >120 мкмоль/л.', treat:'Диета с низким Phe, сапроптерин.', gene:'PAH (12q23.2)', mutations:'R408W, IVS10nt546, R261Q, Y414C', algorithm:'1. Неонатальный скрининг → 2. Phe в плазме → 3. Анализ PAH → 4. Тест на ВН4' },
+    { id:'lipodystrophy', name:'Врождённая липодистрофия', icd:'E88.1', icon:'🏋️', cat:'Метаболические', desc:'Отсутствие подкожного жира, гипертрофия мышц, диабет.', diag:'Клиника, генетика.', treat:'Диета, контроль диабета.', gene:'AGPAT2 (9q34.3), BSCL2 (11q13)', mutations:'Различные мутации', algorithm:'1. Клинический осмотр → 2. Лептин крови → 3. Анализ AGPAT2/BSCL2' },
+    { id:'cdg1b', name:'Нарушение гликозилирования 1b', icd:'E77.8', icon:'🍬', cat:'Метаболические', desc:'Гепатомегалия, белоктеряющая энтеропатия.', diag:'Изоэлектрофокусирование трансферрина.', treat:'D‑манноза.', gene:'MPI (15q22-qter)', mutations:'Миссенс-мутации', algorithm:'1. Изоэлектрофокусирование трансферрина → 2. Анализ MPI → 3. Биопсия печени' },
+    { id:'hemochrom', name:'Гемохроматоз', icd:'E83.1', icon:'🧲', cat:'Метаболические', desc:'Перегрузка железом. Цирроз, диабет, бронзовая кожа.', diag:'Ферритин >200 нг/мл, насыщение трансферрина >45%.', treat:'Флеботомии, хелаторы.', gene:'HFE (6p21.3)', mutations:'C282Y, H63D, S65C', algorithm:'1. Ферритин, трансферрин → 2. Анализ HFE → 3. МРТ печени → 4. Биопсия печени' },
+    { id:'hypophos', name:'Гипофосфатазия', icd:'E83.3', icon:'🦷', cat:'Метаболические', desc:'Остеомаляция, потеря зубов, В6‑зависимые судороги.', diag:'Низкая ЩФ, фосфоэтаноламин мочи.', treat:'Асфотаза альфа.', gene:'ALPL (1p36.12)', mutations:'Более 300 мутаций', algorithm:'1. Активность ЩФ → 2. Фосфоэтаноламин мочи → 3. Анализ ALPL → 4. Рентген' },
+    { id:'tyrosinemia1', name:'Тирозинемия I типа', icd:'E70.2', icon:'🥬', cat:'Метаболические', desc:'Печёночная недостаточность, рахит, запах капусты.', diag:'Сукцинилацетон в моче.', treat:'Нитизинон, диета.', gene:'FAH (15q23-q25)', mutations:'IVS12+5G>A (частая)', algorithm:'1. Сукцинилацетон → 2. Анализ FAH → 3. α‑фетопротеин → 4. УЗИ печени' },
+    { id:'mma', name:'Метилмалоновая ацидемия', icd:'E71.1', icon:'🧪', cat:'Метаболические', desc:'Ацидоз, гипераммониемия, рвота.', diag:'Органические кислоты мочи.', treat:'Диета, карнитин, B12.', gene:'MUT (6p12.3), MMAA, MMAB', mutations:'Различные мутации', algorithm:'1. Органические кислоты мочи → 2. Анализ MUT/MMAA/MMAB → 3. Проба с B12' },
+    { id:'propionic', name:'Пропионовая ацидемия', icd:'E71.1', icon:'🧪', cat:'Метаболические', desc:'Кетоацидоз, гипераммониемия.', diag:'Органические кислоты мочи.', treat:'Диета, карнитин.', gene:'PCCA (13q32), PCCB (3q21-q22)', mutations:'Различные мутации', algorithm:'1. Органические кислоты → 2. Анализ PCCA/PCCB → 3. Ацилкарнитины' },
+    { id:'hyperoxaluria', name:'Первичная гипероксалурия', icd:'E74.8', icon:'🪨', cat:'Метаболические', desc:'Нефролитиаз, нефрокальциноз, ХПН.', diag:'Оксалаты мочи.', treat:'Пиридоксин, трансплантация.', gene:'AGXT (2q37.3), GRHPR (9p13)', mutations:'Gly170Arg, c.33_34insC', algorithm:'1. Оксалаты мочи → 2. Анализ AGXT/GRHPR → 3. УЗИ почек' },
+    { id:'epp', name:'Эритропоэтическая протопорфирия', icd:'E80.0', icon:'☀️', cat:'Метаболические', desc:'Фотосенсибилизация, боль после солнца.', diag:'Протопорфирин эритроцитов.', treat:'Защита от солнца, бета‑каротин.', gene:'FECH (18q21.3)', mutations:'Миссенс-мутации, сплайсинг', algorithm:'1. Протопорфирин → 2. Анализ FECH → 3. Фототест' },
+    { id:'lesch', name:'Синдром Леша–Найхана', icd:'E79.1', icon:'🦷', cat:'Метаболические', desc:'Гиперурикемия, самоповреждение, хореоатетоз.', diag:'Мочевая кислота, HPRT1.', treat:'Аллопуринол.', gene:'HPRT1 (Xq26.2-q26.3)', mutations:'Более 300 мутаций', algorithm:'1. Мочевая кислота → 2. Активность HPRT → 3. Анализ HPRT1' },
 
+    // ==================== ГЛИКОГЕНОЗЫ ====================
+    { id:'gierke', name:'Гликогеноз Ia (фон Гирке)', icd:'E74.0', icon:'🍚', cat:'Гликогенозы', desc:'Гипогликемия, гепатомегалия, лактатацидоз.', diag:'Биопсия печени, G6PC.', treat:'Кукурузный крахмал.', gene:'G6PC1 (17q21)', mutations:'R83C, Q347X', algorithm:'1. Глюкоза, лактат → 2. Биопсия печени → 3. Анализ G6PC1' },
+    { id:'pompe', name:'Болезнь Помпе (II)', icd:'E74.0', icon:'❤️', cat:'Гликогенозы', desc:'Кардиомиопатия, мышечная гипотония.', diag:'Активность кислой α‑глюкозидазы.', treat:'ФЗТ алглюкозидазой.', gene:'GAA (17q25.2)', mutations:'c.-32-13T>G, делеции', algorithm:'1. КФК, АСТ → 2. Активность GAA → 3. Анализ GAA → 4. ЭхоКГ' },
+    { id:'cori', name:'Гликогеноз III (Кори)', icd:'E74.0', icon:'🏃', cat:'Гликогенозы', desc:'Гепатомегалия, миопатия, гипогликемия.', diag:'Биопсия, ген AGL.', treat:'Диета, кукурузный крахмал.', gene:'AGL (1p21)', mutations:'Различные мутации', algorithm:'1. Глюкоза, КФК → 2. Биопсия → 3. Анализ AGL' },
+    { id:'anderson', name:'Гликогеноз IV (Андерсен)', icd:'E74.0', icon:'🌾', cat:'Гликогенозы', desc:'Цирроз печени, кардиомиопатия.', diag:'Биопсия печени, GBE1.', treat:'Трансплантация печени.', gene:'GBE1 (3p12)', mutations:'Различные мутации', algorithm:'1. УЗИ печени → 2. Биопсия → 3. Анализ GBE1' },
+    { id:'hers', name:'Гликогеноз VI (Херса)', icd:'E74.0', icon:'🍞', cat:'Гликогенозы', desc:'Доброкачественная гепатомегалия.', diag:'Фосфорилаза печени.', treat:'Диета.', gene:'PYGL (14q21-q22)', mutations:'Различные мутации', algorithm:'1. Глюкоза → 2. Активность фосфорилазы → 3. Анализ PYGL' },
+    { id:'phk', name:'Гликогеноз IX', icd:'E74.0', icon:'🧪', cat:'Гликогенозы', desc:'Дефицит фосфорилазкиназы.', diag:'Активность фермента.', treat:'Симптоматическое.', gene:'PHKA2 (Xp22.2-p22.1)', mutations:'Различные мутации', algorithm:'1. Глюкоза → 2. Активность PhK → 3. Анализ PHKA2/PHKB/PHKG2' },
+
+    // ==================== ЛИЗОСОМНЫЕ БОЛЕЗНИ ====================
+    { id:'gaucher', name:'Болезнь Гоше', icd:'E75.2', icon:'🦴', cat:'Лизосомные', desc:'Гепатоспленомегалия, костные кризы.', diag:'β‑глюкоцереброзидаза.', treat:'ФЗТ (имиглюцераза).', gene:'GBA (1q21)', mutations:'N370S, L444P, 84GG', algorithm:'1. Клиника → 2. Активность GBA → 3. Анализ GBA → 4. МРТ костей' },
+    { id:'niemann', name:'Болезнь Ниманна–Пика', icd:'E75.2', icon:'🧠', cat:'Лизосомные', desc:'Типы А/В/С. Гепатоспленомегалия, вишнёвая косточка.', diag:'Филиппиновый тест, генетика.', treat:'Миглустат (тип С).', gene:'SMPD1 (тип А/В), NPC1/NPC2 (тип С)', mutations:'Различные мутации', algorithm:'1. Филиппиновый тест → 2. Анализ SMPD1/NPC1 → 3. МРТ мозга' },
+    { id:'fabry', name:'Болезнь Фабри', icd:'E75.2', icon:'💔', cat:'Лизосомные', desc:'Акропарестезии, ангиокератомы, нефропатия.', diag:'α‑галактозидаза, GLA.', treat:'ФЗТ (агалсидаза).', gene:'GLA (Xq22.1)', mutations:'Более 900 мутаций', algorithm:'1. α‑Gal A → 2. Анализ GLA → 3. МРТ сердца, биопсия почки' },
+    { id:'wolman', name:'Болезнь Вольмана', icd:'E75.5', icon:'🫁', cat:'Лизосомные', desc:'Гепатоспленомегалия, кальцификация надпочечников.', diag:'Кислая липаза.', treat:'Себелипаза альфа.', gene:'LIPA (10q23.2-q23.3)', mutations:'Различные мутации', algorithm:'1. Активность LAL → 2. Анализ LIPA → 3. КТ надпочечников' },
+    { id:'mps1', name:'Мукополисахаридоз I', icd:'E76.0', icon:'👶', cat:'Мукополисахаридозы', desc:'Грубые черты, гепатоспленомегалия.', diag:'α‑L‑идуронидаза.', treat:'Ларонидаза.', gene:'IDUA (4p16.3)', mutations:'W402X, Q70X', algorithm:'1. ГАГ мочи → 2. Активность IDUA → 3. Анализ IDUA → 4. Рентген' },
+    { id:'mps2', name:'Мукополисахаридоз II (Хантер)', icd:'E76.1', icon:'👦', cat:'Мукополисахаридозы', desc:'Похож на MPS I, без поражения роговицы.', diag:'Идуронат‑2‑сульфатаза.', treat:'Идурсульфаза.', gene:'IDS (Xq28)', mutations:'Различные мутации', algorithm:'1. ГАГ мочи → 2. Активность IDS → 3. Анализ IDS' },
+    { id:'mps3', name:'Мукополисахаридоз III (Санфилиппо)', icd:'E76.2', icon:'🧩', cat:'Мукополисахаридозы', desc:'Тяжёлая умственная отсталость.', diag:'Гепаран‑N‑сульфатаза.', treat:'Симптоматическое.', gene:'SGSH (17q25.3), NAGLU (17q21)', mutations:'Различные мутации', algorithm:'1. ГАГ мочи → 2. Активность ферментов → 3. Анализ генов' },
+    { id:'mps4', name:'Мукополисахаридоз IV (Моркио)', icd:'E76.2', icon:'🦒', cat:'Мукополисахаридозы', desc:'Карликовость, платиспондилия.', diag:'Галактозамин‑6‑сульфатаза.', treat:'Элосульфаза альфа.', gene:'GALNS (16q24.3)', mutations:'Различные мутации', algorithm:'1. ГАГ мочи → 2. Активность GALNS → 3. Рентген позвоночника' },
+    { id:'mps6', name:'Мукополисахаридоз VI (Марото–Лами)', icd:'E76.2', icon:'🧑', cat:'Мукополисахаридозы', desc:'Грубые черты, дизостозы.', diag:'Арилсульфатаза B.', treat:'Галсульфаза.', gene:'ARSB (5q14.1)', mutations:'Различные мутации', algorithm:'1. ГАГ мочи → 2. Активность ARSB → 3. Анализ ARSB' },
+    { id:'cystinosis', name:'Цистиноз', icd:'E72.0', icon:'💎', cat:'Лизосомные', desc:'Синдром Фанкони, кристаллы цистина.', diag:'Цистин в лейкоцитах.', treat:'Цистеамин.', gene:'CTNS (17p13.2)', mutations:'57-kb делеция (частая)', algorithm:'1. Цистин в лейкоцитах → 2. Осмотр роговицы → 3. Анализ CTNS' },
+
+    // ==================== ГЕНЕТИЧЕСКИЕ СИНДРОМЫ ====================
+    { id:'cf', name:'Муковисцидоз', icd:'E84', icon:'🫁', cat:'Генетические', desc:'Густой секрет, поражение лёгких.', diag:'Потовый тест, CFTR.', treat:'Муколитики, ферменты, CFTR-модуляторы.', gene:'CFTR (7q31.2)', mutations:'F508del (70%), G542X, N1303K', algorithm:'1. Потовый тест → 2. Анализ CFTR → 3. Спирометрия → 4. Посев мокроты' },
+    { id:'ectodermal', name:'Эктодермальная дисплазия', icd:'Q82.8', icon:'💧', cat:'Наследственные синдромы', desc:'Гипогидроз, гипотрихоз, гиподонтия.', diag:'Клиника, биопсия кожи.', treat:'Избегать перегрева.', gene:'EDA (Xq12-q13.1)', mutations:'Различные мутации', algorithm:'1. Клиника → 2. Биопсия → 3. Анализ EDA/EDAR/EDARADD' },
+    { id:'achondro', name:'Ахондроплазия', icd:'Q77.4', icon:'🦴', cat:'Скелетные дисплазии', desc:'Низкорослость, ризомелия, макроцефалия.', diag:'Рентген, FGFR3.', treat:'Гормон роста, хирургия.', gene:'FGFR3 (4p16.3)', mutations:'Gly380Arg (99%)', algorithm:'1. Рентген → 2. Анализ FGFR3 → 3. Антропометрия' },
+    { id:'oi', name:'Несовершенный остеогенез', icd:'Q78.0', icon:'💀', cat:'Скелетные дисплазии', desc:'Ломкость костей, голубые склеры.', diag:'Коллаген, рентген.', treat:'Бисфосфонаты.', gene:'COL1A1 (17q21.33), COL1A2 (7q21.3)', mutations:'Глициновые замены', algorithm:'1. Рентген → 2. Денситометрия → 3. Анализ COL1A1/COL1A2' },
+    { id:'fop', name:'Фибродисплазия оссифицирующая', icd:'M61.1', icon:'🧟', cat:'Скелетные дисплазии', desc:'Оссификация мышц.', diag:'Рентген, ACVR1.', treat:'Избегать травм, ГК.', gene:'ACVR1 (2q23-q24)', mutations:'R206H (95%)', algorithm:'1. Осмотр пальцев стоп → 2. Рентген → 3. Анализ ACVR1' },
+    { id:'pycnodysostosis', name:'Пикнодизостоз', icd:'Q78.8', icon:'💀', cat:'Скелетные дисплазии', desc:'Низкий рост, незаращение швов.', diag:'Рентген, CTSK.', treat:'Симптоматическое.', gene:'CTSK (1q21)', mutations:'Различные мутации', algorithm:'1. Рентген черепа → 2. Анализ CTSK' },
+    { id:'crouzon', name:'Синдром Крузона', icd:'Q75.1', icon:'🤕', cat:'Скелетные дисплазии', desc:'Краниосиностоз, экзофтальм.', diag:'FGFR2.', treat:'Хирургия черепа.', gene:'FGFR2 (10q26)', mutations:'Различные мутации', algorithm:'1. КТ черепа → 2. Анализ FGFR2 → 3. Консультация нейрохирурга' },
+    { id:'cleidocranial', name:'Черепно-ключичный дизостоз', icd:'Q74.0', icon:'🦴', cat:'Скелетные дисплазии', desc:'Незаращение швов, гипоплазия ключиц.', diag:'RUNX2.', treat:'Ортодонтия.', gene:'RUNX2 (6p21)', mutations:'Различные мутации', algorithm:'1. Рентген → 2. Анализ RUNX2' },
+    { id:'sedt', name:'Спондилоэпифизарная дисплазия', icd:'Q77.7', icon:'🦴', cat:'Скелетные дисплазии', desc:'Укорочение туловища, платиспондилия.', diag:'Рентген, TRAPPC2.', treat:'ЛФК, хирургия.', gene:'TRAPPC2 (Xp22.2)', mutations:'Различные мутации', algorithm:'1. Рентген → 2. Анализ TRAPPC2' },
+    { id:'robinow', name:'Синдром Робинова', icd:'Q87.1', icon:'🧔', cat:'Скелетные дисплазии', desc:'Мезомелическая карликовость.', diag:'ROR2.', treat:'Симптоматическое.', gene:'ROR2 (9q22)', mutations:'Различные мутации', algorithm:'1. Рентген → 2. Анализ ROR2' },
+
+    // ==================== НЕВРОЛОГИЧЕСКИЕ ====================
+    { id:'friedreich', name:'Атаксия Фридрейха', icd:'G11.1', icon:'🚶', cat:'Неврологические', desc:'Прогрессирующая атаксия, кардиомиопатия.', diag:'МРТ, GAA-повторы.', treat:'Антиоксиданты.', gene:'FXN (9q13-q21.1)', mutations:'GAA-экспансия (>66 повторов)', algorithm:'1. МРТ → 2. Анализ FXN → 3. ЭхоКГ → 4. ЭНМГ' },
+    { id:'pelizaeus', name:'Болезнь Пелицеуса–Мерцбахера', icd:'E75.2', icon:'🧠', cat:'Неврологические', desc:'Гипомиелинизация, нистагм, атаксия.', diag:'МРТ, PLP1.', treat:'Паллиативное.', gene:'PLP1 (Xq22)', mutations:'Дупликации, миссенс', algorithm:'1. МРТ → 2. Анализ PLP1 → 3. Вызванные потенциалы' },
+    { id:'mdca1', name:'Мерозиндефицитная мышечная дистрофия', icd:'G71.2', icon:'💪', cat:'Нервно-мышечные', desc:'Гипотония, слабость, контрактуры.', diag:'Иммуногистохимия мышц.', treat:'Симптоматическое.', gene:'LAMA2 (6q22.33)', mutations:'Различные мутации', algorithm:'1. КФК → 2. МРТ мышц → 3. Биопсия → 4. Анализ LAMA2' },
+    { id:'angelman', name:'Синдром Ангельмана', icd:'Q93.5', icon:'😊', cat:'Неврологические', desc:'Отсутствие речи, смех, атаксия.', diag:'Метилирование 15q11-13.', treat:'Противосудорожные.', gene:'UBE3A (15q11.2)', mutations:'Делеция 15q11-q13 (70%)', algorithm:'1. Клиника → 2. Метилирование → 3. FISH/MLPA → 4. ЭЭГ' },
+    { id:'leigh', name:'Синдром Лея', icd:'G31.8', icon:'🧠', cat:'Неврологические', desc:'Регресс развития, гипотония.', diag:'МРТ, лактат ликвора.', treat:'Симптоматическое.', gene:'SURF1 (9q34), митохондриальная ДНК', mutations:'Различные мутации', algorithm:'1. МРТ → 2. Лактат → 3. Анализ SURF1/мтДНК' },
+    { id:'ms', name:'Рассеянный склероз', icd:'G35', icon:'🧠', cat:'Неврологические', desc:'Демиелинизация ЦНС.', diag:'МРТ, олигоклональные полосы.', treat:'ПИТРС.', gene:'HLA-DRB1 (6p21.3), IL7R', mutations:'Полиморфизмы', algorithm:'1. МРТ с контрастом → 2. Олигоклональные полосы → 3. Вызванные потенциалы' },
+
+    // ==================== ИММУННЫЕ ====================
+    { id:'job', name:'Синдром гипериммуноглобулинемии Е', icd:'D82.4', icon:'🦠', cat:'Иммунные', desc:'Холодные абсцессы, экзема, IgE >2000.', diag:'Клиническая шкала, STAT3.', treat:'Профилактика антибиотиками.', gene:'STAT3 (17q21.2)', mutations:'Доминантно-негативные', algorithm:'1. IgE → 2. Шкала NIH → 3. Секвенирование STAT3' },
+    { id:'caps', name:'Криопирин-ассоциированные синдромы', icd:'M04.1', icon:'🌡️', cat:'Аутовоспалительные', desc:'Лихорадка, крапивница, артрит.', diag:'Мутация NLRP3.', treat:'Канакинумаб.', gene:'NLRP3 (1q44)', mutations:'Миссенс-мутации', algorithm:'1. Клиника → 2. Анализ NLRP3 → 3. Ответ на анти‑ИЛ‑1' },
+    { id:'kawasaki', name:'Синдром Кавасаки', icd:'M30.3', icon:'🌡️', cat:'Ревматология', desc:'Васкулит, лихорадка, поражение коронаров.', diag:'Клинические критерии.', treat:'ВВИГ, аспирин.', gene:'ITPKC (19q13.1)', mutations:'Полиморфизмы', algorithm:'1. Клинические критерии → 2. ЭхоКГ → 3. СРБ, СОЭ' },
+    { id:'sjia', name:'Ювенильный идиопатический артрит', icd:'M08.2', icon:'🦵', cat:'Ревматология', desc:'Лихорадка, сыпь, артрит.', diag:'Критерии ILAR.', treat:'Тоцилизумаб.', gene:'IL1RN, IL6R', mutations:'Полиморфизмы', algorithm:'1. Критерии ILAR → 2. СРБ, ферритин → 3. Исключение инфекций' },
+
+    // ==================== ХРОМОСОМНЫЕ ====================
+    { id:'criduchat', name:'Синдром кошачьего крика', icd:'Q93.5', icon:'😿', cat:'Хромосомные', desc:'Микроцефалия, характерный плач.', diag:'Кариотип 5p-', treat:'Симптоматическое.', gene:'Делеция 5p15.2', mutations:'Вариабельная делеция', algorithm:'1. Кариотип → 2. FISH → 3. MLPA' },
+    { id:'turner', name:'Синдром Шерешевского–Тернера', icd:'Q96', icon:'👧', cat:'Хромосомные', desc:'Низкорослость, крыловидные складки.', diag:'Кариотип 45,X.', treat:'Гормон роста, эстрогены.', gene:'SHOX (Xp22.33)', mutations:'Моносомия X', algorithm:'1. Кариотип → 2. FISH → 3. УЗИ органов малого таза' },
+    { id:'edwards', name:'Синдром Эдвардса', icd:'Q91', icon:'👶', cat:'Хромосомные', desc:'Трисомия 18, множественные пороки.', diag:'Кариотип.', treat:'Паллиативное.', gene:'Трисомия 18', mutations:'Полная/мозаичная трисомия', algorithm:'1. Кариотип → 2. FISH → 3. УЗИ плода' },
+    { id:'smith', name:'Синдром Смит–Магенис', icd:'Q93.5', icon:'🔨', cat:'Хромосомные', desc:'Гиперактивность, самоповреждение.', diag:'Делеция 17p11.2.', treat:'Рисперидон.', gene:'RAI1 (17p11.2)', mutations:'Делеция 17p11.2', algorithm:'1. Клиника → 2. FISH → 3. MLPA' },
+
+    // ==================== ВРОЖДЁННЫЕ ПОРОКИ ====================
+    { id:'charge', name:'Синдром CHARGE', icd:'Q87.8', icon:'👁️', cat:'Врождённые пороки', desc:'Колобома, порок сердца, атрезия хоан.', diag:'Клинические критерии.', treat:'Хирургическая коррекция.', gene:'CHD7 (8q12.2)', mutations:'Различные мутации', algorithm:'1. Клинические критерии → 2. Анализ CHD7 → 3. ЭхоКГ, аудиометрия' },
+    { id:'treacher', name:'Синдром Тричера–Коллинза', icd:'Q75.4', icon:'👂', cat:'Врождённые пороки', desc:'Гипоплазия скул, микротия.', diag:'КТ.', treat:'Слухопротезирование.', gene:'TCOF1 (5q32-q33.1)', mutations:'Различные мутации', algorithm:'1. КТ → 2. Анализ TCOF1 → 3. Аудиометрия' },
+    { id:'goldenhar', name:'Синдром Гольденхара', icd:'Q87.0', icon:'👂', cat:'Врождённые пороки', desc:'Асимметрия лица, микротия.', diag:'КТ.', treat:'Реконструкция.', gene:'Спорадический', mutations:'—', algorithm:'1. КТ → 2. Консультация ЛОР → 3. Осмотр офтальмолога' },
+    { id:'choanal', name:'Атрезия хоан', icd:'Q30.0', icon:'👃', cat:'Врождённые пороки', desc:'Обструкция задних носовых отверстий.', diag:'Эндоскопия, КТ.', treat:'Хоанопластика.', gene:'Спорадический, CHD7', mutations:'Различные', algorithm:'1. Эндоскопия → 2. КТ → 3. Хирургическое лечение' },
+    { id:'poland', name:'Синдром Поланда', icd:'Q79.8', icon:'💪', cat:'Врождённые пороки', desc:'Отсутствие грудных мышц, синдактилия.', diag:'Клиника.', treat:'Реконструкция.', gene:'Спорадический', mutations:'—', algorithm:'1. Клинический осмотр → 2. Рентген → 3. КТ грудной клетки' },
+
+    // ==================== ДРУГИЕ ====================
+    { id:'cah', name:'Врождённая дисфункция коры надпочечников', icd:'E25.0', icon:'🌡️', cat:'Эндокринные', desc:'Вирилизация, сольтеряющие кризы.', diag:'17‑ОН‑прогестерон.', treat:'Гидрокортизон.', gene:'CYP21A2 (6p21.3)', mutations:'Делеции, конверсии', algorithm:'1. 17‑ОН‑прогестерон → 2. Анализ CYP21A2 → 3. Электролиты' },
+    { id:'beckwith', name:'Синдром Беквита–Видемана', icd:'Q87.3', icon:'👶', cat:'Врождённые пороки', desc:'Макроглоссия, омфалоцеле.', diag:'Эпигенетика 11p15.', treat:'Контроль глюкозы.', gene:'IGF2/H19 (11p15.5)', mutations:'Нарушение импринтинга', algorithm:'1. Клиника → 2. Метилирование 11p15 → 3. УЗИ брюшной полости' },
+    { id:'prader', name:'Синдром Прадера–Вилли', icd:'Q87.1', icon:'🍔', cat:'Генетические', desc:'Гипотония, гиперфагия, ожирение.', diag:'Метилирование 15q11-13.', treat:'Контроль питания.', gene:'SNRPN (15q11.2)', mutations:'Делеция 15q11-q13 (70%)', algorithm:'1. Клиника → 2. Метилирование → 3. FISH/MLPA' },
+    { id:'russell', name:'Синдром Рассела–Сильвера', icd:'Q87.1', icon:'📏', cat:'Генетические', desc:'Внутриутробная задержка роста.', diag:'Эпигенетика 11p15.', treat:'Гормон роста.', gene:'IGF2/H19 (11p15.5)', mutations:'Гипометилирование H19', algorithm:'1. Антропометрия → 2. Метилирование → 3. Костный возраст' },
+    { id:'sotos', name:'Синдром Сотоса', icd:'Q87.3', icon:'🧠', cat:'Генетические', desc:'Церебральный гигантизм.', diag:'NSD1.', treat:'Симптоматическое.', gene:'NSD1 (5q35)', mutations:'Делеции, миссенс', algorithm:'1. МРТ → 2. Анализ NSD1 → 3. Антропометрия' },
+    { id:'proteus', name:'Синдром Протея', icd:'Q87.3', icon:'🧌', cat:'Генетические', desc:'Асимметричный гигантизм.', diag:'AKT1 соматическая.', treat:'Хирургия.', gene:'AKT1 (14q32.33)', mutations:'c.49G>A (мозаичная)', algorithm:'1. Клиника → 2. Анализ AKT1 (биопсия) → 3. МРТ' },
+    { id:'alagille', name:'Синдром Алажилля', icd:'Q44.7', icon:'🧒', cat:'Гепатология', desc:'Холестаз, лицо эльфа.', diag:'3 из 5 критериев.', treat:'УДХК.', gene:'JAG1 (20p12), NOTCH2 (1p12)', mutations:'Различные мутации', algorithm:'1. Клинические критерии → 2. Анализ JAG1/NOTCH2 → 3. Биопсия печени' },
+    { id:'bartter', name:'Синдром Барттера', icd:'E26.8', icon:'🧂', cat:'Нефрология', desc:'Гипокалиемический алкалоз.', diag:'Электролиты, ренин.', treat:'Индометацин.', gene:'SLC12A1 (15q15-q21), KCNJ1 (11q24)', mutations:'Различные мутации', algorithm:'1. Электролиты → 2. Ренин, альдостерон → 3. Анализ генов' },
+    { id:'pearson', name:'Синдром Пирсона', icd:'N04.9', icon:'👁️', cat:'Нефрология', desc:'Врождённый нефротический синдром, микрокория.', diag:'LAMB2.', treat:'Трансплантация почки.', gene:'LAMB2 (3p21)', mutations:'Различные мутации', algorithm:'1. Анализ мочи → 2. Биопсия почки → 3. Анализ LAMB2' },
+    { id:'pcd', name:'Первичная цилиарная дискинезия', icd:'J98.0', icon:'🌀', cat:'Пульмонология', desc:'Хронический риносинусит, situs inversus.', diag:'Электронная микроскопия.', treat:'Мукоактивная терапия.', gene:'DNAI1 (9p13.3), DNAH5 (5p15.2)', mutations:'Различные мутации', algorithm:'1. Сахариновый тест → 2. Электронная микроскопия → 3. Анализ генов' },
+    { id:'crohn', name:'Болезнь Крона', icd:'K50', icon:'🔴', cat:'Гастроэнтерология', desc:'Трансмуральное воспаление ЖКТ.', diag:'Эндоскопия, МРТ.', treat:'Месалазин, анти‑ФНО.', gene:'NOD2 (16q12.1)', mutations:'R702W, G908R, 1007fs', algorithm:'1. Колоноскопия → 2. МРТ → 3. Анализ NOD2 → 4. Фекальный кальпротектин' },
+    { id:'uc', name:'Язвенный колит', icd:'K51', icon:'🔴', cat:'Гастроэнтерология', desc:'Воспаление толстой кишки.', diag:'Колоноскопия.', treat:'Месалазин, ГК.', gene:'HLA-DRB1, IL23R', mutations:'Полиморфизмы', algorithm:'1. Колоноскопия → 2. Биопсия → 3. Фекальный кальпротектин' },
+    { id:'pbc', name:'Первичный билиарный цирроз', icd:'K74.3', icon:'🟡', cat:'Гепатология', desc:'Аутоиммунное поражение желчных протоков.', diag:'АМА, ЩФ.', treat:'УДХК.', gene:'HLA-DRB1, IL12A', mutations:'Полиморфизмы', algorithm:'1. АМА → 2. ЩФ → 3. Биопсия печени' },
+    { id:'sturge', name:'Синдром Штурге–Вебера', icd:'Q85.8', icon:'🍷', cat:'Факоматозы', desc:'Пламенеющий невус, ангиома.', diag:'МРТ с контрастом.', treat:'Противосудорожные.', gene:'GNAQ (9q21)', mutations:'c.548G>A (мозаичная)', algorithm:'1. МРТ → 2. Анализ GNAQ → 3. Осмотр офтальмолога' },
+    { id:'netherton', name:'Синдром Нетертона', icd:'Q80.8', icon:'🐟', cat:'Дерматологические', desc:'Ихтиозиформная эритродермия.', diag:'Микроскопия волос.', treat:'Эмоленты, ретиноиды.', gene:'SPINK5 (5q32)', mutations:'Различные мутации', algorithm:'1. Микроскопия волос → 2. Анализ SPINK5 → 3. Биопсия кожи' },
+    { id:'olmsted', name:'Синдром Олмстеда', icd:'Q82.8', icon:'🦶', cat:'Дерматологические', desc:'Мутилирующая кератодермия.', diag:'TRPV3.', treat:'Ретиноиды.', gene:'TRPV3 (17p13.2)', mutations:'Gly573Ser', algorithm:'1. Клиника → 2. Анализ TRPV3 → 3. Биопсия' },
+    { id:'nailpatella', name:'Синдром ногтевых пластинок–надколенника', icd:'Q87.2', icon:'💅', cat:'Наследственные синдромы', desc:'Дисплазия ногтей, нефропатия.', diag:'LMX1B.', treat:'Нефропротекция.', gene:'LMX1B (9q34.1)', mutations:'Различные мутации', algorithm:'1. Клиника → 2. Рентген → 3. Анализ мочи → 4. Анализ LMX1B' },
+    { id:'incontinentia', name:'Недержание пигмента', icd:'Q82.3', icon:'🎨', cat:'Дерматологические', desc:'Стадийная сыпь по линиям Блашко.', diag:'IKBKG.', treat:'Местные ГК.', gene:'IKBKG (Xq28)', mutations:'Делеция экзонов 4-10', algorithm:'1. Клиника → 2. Биопсия → 3. Анализ IKBKG' },
+    { id:'leopard', name:'Синдром LEOPARD', icd:'Q87.1', icon:'🐆', cat:'Наследственные синдромы', desc:'Лентиго, ЭКГ-аномалии.', diag:'PTPN11.', treat:'Кардионаблюдение.', gene:'PTPN11 (12q24.1)', mutations:'Миссенс-мутации', algorithm:'1. Клиника → 2. ЭКГ, ЭхоКГ → 3. Анализ PTPN11' },
+    { id:'lch', name:'Лангергансоклеточный гистиоцитоз', icd:'C96.6', icon:'🩸', cat:'Гематология', desc:'Пролиферация клеток Лангерганса.', diag:'Биопсия CD1a+.', treat:'Винбластин+преднизолон.', gene:'BRAF (7q34)', mutations:'V600E (50%)', algorithm:'1. Биопсия → 2. CD1a, Langerin → 3. Анализ BRAF → 4. ПЭТ-КТ' },
+    { id:'mastocytosis', name:'Мастоцитоз', icd:'Q82.2', icon:'🟤', cat:'Гематология', desc:'Коричневые пятна, симптом Унны.', diag:'Биопсия.', treat:'Антигистаминные.', gene:'KIT (4q12)', mutations:'D816V (частая)', algorithm:'1. Биопсия → 2. Триптаза → 3. Анализ KIT' },
+    { id:'sarcoidosis', name:'Саркоидоз', icd:'D86.3', icon:'🔴', cat:'Дерматологические', desc:'Гранулёмы, lupus pernio.', diag:'Биопсия.', treat:'ГК, гидроксихлорохин.', gene:'HLA-DRB1, BTNL2', mutations:'Полиморфизмы', algorithm:'1. Биопсия → 2. АПФ → 3. КТ органов грудной клетки' },
+    { id:'frontonasal', name:'Фронтоназальная дисплазия', icd:'Q75.8', icon:'👃', cat:'Врождённые пороки', desc:'Гипертелоризм, расщепление носа.', diag:'КТ черепа.', treat:'Хирургия.', gene:'ALX3 (1p13.3)', mutations:'Различные мутации', algorithm:'1. КТ → 2. Анализ ALX3 → 3. Консультация хирурга' },
+    { id:'keratoderma', name:'Кератодермия Унны–Тоста', icd:'Q82.8', icon:'🖐️', cat:'Дерматологические', desc:'Гиперкератоз ладоней и подошв.', diag:'Гистология.', treat:'Кератолитики.', gene:'KRT1 (12q13.13)', mutations:'Различные мутации', algorithm:'1. Клиника → 2. Биопсия → 3. Анализ KRT1' },
+    { id:'microtia', name:'Синдром микротии–атрезии', icd:'Q17.2', icon:'👂', cat:'Врождённые пороки', desc:'Изолированная микротия.', diag:'КТ.', treat:'Слухопротезирование.', gene:'HOXA2 (7p15.2)', mutations:'Различные мутации', algorithm:'1. КТ → 2. Аудиометрия → 3. Анализ HOXA2' },
+    { id:'nevus', name:'Гигантский невомеланоцитарный невус', icd:'D22', icon:'🐾', cat:'Дерматологические', desc:'Большой невус, риск меланомы.', diag:'Дерматоскопия.', treat:'Эксцизия.', gene:'NRAS (1p13.2)', mutations:'Q61K/R (соматические)', algorithm:'1. Дерматоскопия → 2. Биопсия → 3. Анализ NRAS/BRAF' },
+    { id:'otto', name:'Протрузионный таз', icd:'M91.2', icon:'🦵', cat:'Ортопедические', desc:'Углубление вертлужных впадин.', diag:'Рентген.', treat:'Остеотомия.', gene:'Спорадический', mutations:'—', algorithm:'1. Рентген → 2. МРТ → 3. Консультация ортопеда' },
+    { id:'osteoid', name:'Остеоид‑остеома', icd:'D16.9', icon:'🦴', cat:'Опухоли', desc:'Ночные боли, купируются НПВП.', diag:'КТ.', treat:'Радиочастотная абляция.', gene:'FOS (14q24.3)', mutations:'Перестройки', algorithm:'1. КТ → 2. Сцинтиграфия → 3. Биопсия' },
+    { id:'waldmann', name:'Болезнь Вальдмана', icd:'I89.0', icon:'💧', cat:'Гастроэнтерология', desc:'Гипопротеинемические отёки.', diag:'Эндоскопия.', treat:'Диета с МСТ.', gene:'Спорадический', mutations:'—', algorithm:'1. Эндоскопия → 2. Биопсия → 3. Белок и альбумин крови' }
+];
             const FAQ = [
                 { q:'Как передать данные врачу?', a:'Нажмите «Сохранить и отправить» – файл автоматически загрузится в общую папку на Яндекс.Диске.' },
                 { q:'Нужно ли что-то настраивать?', a:'Только при первом входе разрешить доступ к Яндекс.Диску.' }
+                 { q:'Что такое орфанные заболевания?', a:'Это редкие заболевания, распространённость которых не превышает 10 случаев на 100 000 населения. В России перечень орфанных заболеваний утверждается Минздравом.' },
+        { q:'Как получить лекарства через фонд «Круг добра»?', a:'Обратитесь к лечащему врачу для подачи заявки. Экспертный совет фонда рассматривает заявку в течение 14 рабочих дней.' },
+        { q:'Как вести дневник здоровья?', a:'В разделе «Дневник» ежедневно отмечайте самочувствие, вес, симптомы. Это поможет врачу отслеживать динамику.' },
+        { q:'Что такое ТМК?', a:'Телемедицинская консультация — возможность задать вопрос врачу онлайн через чат в приложении.' },
+        { q:'Где найти информацию о заболевании?', a:'В разделе «Справочник» собрана информация о 82+ орфанных заболеваниях с описанием, диагностикой и лечением.' },
+        { q:'Как расшифровать генетический тест?', a:'В разделе «Генетика» вы найдёте информацию о генах и мутациях, связанных с вашим заболеванием. Для расшифровки обратитесь к врачу-генетику.' }
             ];
 
-            window.App = {
+           window.App = {
                 navigate: page => { location.hash = '#' + page; },
-                logout: () => {
-                    if(clockTimer)clearInterval(clockTimer);
-                    DB.setProfile(null); DB.setToken(null);
-                    profile = null; updateNav(); App.navigate('/');
-                }
+                logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); DB.setToken(null); profile = null; updateNav(); App.navigate('/'); }
             };
 
+            // ═══════════════ ЯНДЕКС АВТОРИЗАЦИЯ ═══════════════
             async function getToken() {
                 let token = DB.getToken();
                 if (token) return token;
@@ -130,16 +232,13 @@
                 if (token) { DB.setToken(token); window.location.hash = ''; }
             }
 
+            // ═══════════════ РАБОТА С ЯНДЕКС.ДИСКОМ ═══════════════
             async function ensureFolder(patientName) {
                 const token = await getToken();
                 const path = `${SHARED_FOLDER_PATH}/${patientName}`;
-                const r = await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}`, {
-                    headers: { 'Authorization': `OAuth ${token}` }
-                });
+                const r = await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}`, { headers: { 'Authorization': `OAuth ${token}` } });
                 if (r.status === 404) {
-                    await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}`, {
-                        method: 'PUT', headers: { 'Authorization': `OAuth ${token}` }
-                    });
+                    await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}`, { method: 'PUT', headers: { 'Authorization': `OAuth ${token}` } });
                 }
                 return path;
             }
@@ -149,15 +248,14 @@
                 if (!token) return notify('Необходимо войти в Яндекс', 'error');
                 const folder = await ensureFolder(patientName);
                 const filePath = `${folder}/${fileName}`;
-                const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/upload?path=${encodeURIComponent(filePath)}&overwrite=true`, {
-                    headers: { 'Authorization': `OAuth ${token}` }
-                });
+                const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/upload?path=${encodeURIComponent(filePath)}&overwrite=true`, { headers: { 'Authorization': `OAuth ${token}` } });
                 const { href } = await resp.json();
                 const upload = await fetch(href, { method: 'PUT', body: blob });
                 if (upload.ok) notify('Файл загружен в облако и доступен врачу');
                 else notify('Ошибка загрузки', 'error');
             }
 
+            // ═══════════════ НАВИГАЦИЯ ═══════════════
             async function updateNav() {
                 const nav = document.getElementById('navMenu');
                 if (!nav) return;
@@ -216,8 +314,19 @@
 
             function renderLogin() {
                 return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
-                    <div class="col-md-5 mb-3"><div class="card"><h4>👨‍⚕️ Врач</h4><input id="docName" class="form-control" placeholder="ФИО"><input id="docCode" type="password" class="form-control" placeholder="Код доступа"><button class="btn btn-primary w-100" id="doctorBtn">Войти как врач</button></div></div>
-                    <div class="col-md-5 mb-3"><div class="card"><h4>👤 Пациент</h4><input id="patName" class="form-control" placeholder="ФИО"><button class="btn btn-success w-100" id="patientBtn">Войти как пациент</button></div></div>
+                    <div class="col-md-5 mb-3"><div class="card"><h4>👨‍⚕️ Врач</h4>
+                        <input id="docName" class="form-control" placeholder="ФИО">
+                        <input id="docCode" type="password" class="form-control" placeholder="Код доступа">
+                        <button class="btn btn-primary w-100" id="doctorBtn">Войти как врач</button>
+                        <small class="text-muted mt-2 d-block" style="cursor:pointer" onclick="document.getElementById('docHint').classList.toggle('hidden-hint')">Нужна помощь?</small>
+                        <div id="docHint" class="hidden-hint">Код доступа для врачей: <strong>123doc</strong></div>
+                    </div></div>
+                    <div class="col-md-5 mb-3"><div class="card"><h4>👤 Пациент</h4>
+                        <input id="patName" class="form-control" placeholder="ФИО">
+                        <button class="btn btn-success w-100" id="patientBtn">Войти как пациент</button>
+                        <small class="text-muted mt-2 d-block" style="cursor:pointer" onclick="document.getElementById('patHint').classList.toggle('hidden-hint')">Инструкция для пациента</small>
+                        <div id="patHint" class="hidden-hint">Введите ваше полное ФИО. Данные будут сохранены локально, вы сможете отправлять отчёты врачу через Яндекс.Диск.</div>
+                    </div></div>
                 </div></div>`;
             }
 
@@ -272,14 +381,7 @@
             window.saveAndSendDiary = async function() {
                 const form = document.getElementById('diaryForm');
                 if (!form) return;
-                const data = {
-                    date: new Date().toISOString().split('T')[0],
-                    temperature: form.temperature.value,
-                    pressure: form.pressure.value,
-                    weight: form.weight.value,
-                    wellbeing: form.wellbeing.value,
-                    symptoms: form.symptoms.value
-                };
+                const data = { date: new Date().toISOString().split('T')[0], temperature: form.temperature.value, pressure: form.pressure.value, weight: form.weight.value, wellbeing: form.wellbeing.value, symptoms: form.symptoms.value };
                 const ws = XLSX.utils.json_to_sheet([data]);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, 'Дневник');
@@ -308,24 +410,43 @@
             };
 
             async function renderMedications() {
-                return `<h2>💊 Лекарства</h2><div class="card"><form id="medsForm">
+                const meds = DB.getMeds(profile.fullName) || [];
+                let medList = '';
+                meds.forEach((med, idx) => {
+                    medList += `<div class="card mb-2"><div class="d-flex justify-content-between align-items-center"><div><strong>${esc(med.name)}</strong> – ${esc(med.dosage)}</div><div><span class="reminder-badge">${med.time || 'не указано'}</span></div></div></div>`;
+                });
+                return `<h2>💊 Лекарства и напоминания</h2>
+                <div class="card"><form id="medsForm">
                     <input name="name" class="form-control" placeholder="Название">
                     <input name="dosage" class="form-control" placeholder="Дозировка">
-                    <input type="number" name="quantity" class="form-control" placeholder="Количество">
-                    <button type="button" class="btn btn-success w-100 mt-3" onclick="saveAndSendMeds()">📤 Сохранить и отправить врачу</button>
-                </form></div>`;
+                    <input type="time" name="time" class="form-control" placeholder="Время приёма">
+                    <button type="submit" class="btn btn-primary w-100 mt-2">➕ Добавить</button>
+                </form></div>
+                ${medList || '<p class="text-muted">Нет лекарств</p>'}
+                <button class="btn btn-success w-100 mt-3" onclick="saveAndSendMeds()">📤 Отправить список врачу</button>`;
             }
 
-            window.saveAndSendMeds = async function() {
-                const form = document.getElementById('medsForm');
-                if (!form) return;
-                const data = { name: form.name.value, dosage: form.dosage.value, quantity: form.quantity.value };
-                const ws = XLSX.utils.json_to_sheet([data]);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Лекарства');
-                const blob = new Blob([XLSX.write(wb, { bookType:'xlsx', type:'array' })], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                await uploadToYandex(`лекарства_${profile.fullName}_${new Date().toISOString().split('T')[0]}.xlsx`, blob, profile.fullName);
-            };
+            function setupMedications() {
+                document.getElementById('medsForm')?.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const form = e.target;
+                    const med = { name: form.name.value, dosage: form.dosage.value, time: form.time.value || '08:00' };
+                    const meds = DB.getMeds(profile.fullName) || [];
+                    meds.push(med);
+                    DB.saveMeds(profile.fullName, meds);
+                    form.reset();
+                    render();
+                    notify('Лекарство добавлено');
+                });
+                window.saveAndSendMeds = async function() {
+                    const meds = DB.getMeds(profile.fullName) || [];
+                    const ws = XLSX.utils.json_to_sheet(meds);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Лекарства');
+                    const blob = new Blob([XLSX.write(wb, { bookType:'xlsx', type:'array' })], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    await uploadToYandex(`лекарства_${profile.fullName}.xlsx`, blob, profile.fullName);
+                };
+            }
 
             async function renderPatients() {
                 if (profile.role !== 'doctor') return '<p>Только для врачей</p>';
@@ -338,26 +459,25 @@
                 if (!token) return '<p>Необходимо авторизоваться в Яндексе. <a href="#" onclick="getToken()">Войти</a></p>';
                 let files = [];
                 try {
-                    const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(SHARED_FOLDER_PATH)}&fields=_embedded.items.name,_embedded.items.path`, {
-                        headers: { 'Authorization': `OAuth ${token}` }
-                    });
+                    const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(SHARED_FOLDER_PATH)}&fields=_embedded.items.name,_embedded.items.path`, { headers: { 'Authorization': `OAuth ${token}` } });
                     const data = await resp.json();
                     if (data._embedded && data._embedded.items) files = data._embedded.items;
                 } catch(e) { return '<p>Ошибка загрузки</p>'; }
-                let html = `<h2>📈 Аналитика (общая папка)</h2><div class="list-group">`;
+                let html = `<h2>📈 Аналитика (общая папка)</h2><div class="list-group mb-3">`;
                 files.forEach(file => {
                     html += `<a href="#" class="list-group-item list-group-item-action" onclick="event.preventDefault(); downloadYandexFile('${encodeURIComponent(file.path)}')">${file.name}</a>`;
                 });
-                html += `</div><p class="mt-3 text-muted">Нажмите на файл, чтобы скачать.</p>`;
+                html += `</div><p class="text-muted">Нажмите на файл, чтобы скачать.</p>`;
+                html += `<hr><h5>🔗 Полезные ссылки для врачей</h5>
+                <ul><li><a href="https://cr.minzdrav.gov.ru/" target="_blank">Клинические рекомендации Минздрава РФ</a></li>
+                <li><a href="https://rcpcf.ru/biblioteka/" target="_blank">Библиотека РЦ ПКФ</a></li></ul>`;
                 return html;
             }
 
             window.downloadYandexFile = async function(path) {
                 const token = await getToken();
                 if (!token) return;
-                const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/download?path=${decodeURIComponent(path)}`, {
-                    headers: { 'Authorization': `OAuth ${token}` }
-                });
+                const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/download?path=${decodeURIComponent(path)}`, { headers: { 'Authorization': `OAuth ${token}` } });
                 const { href } = await resp.json();
                 window.open(href, '_blank');
             };
@@ -396,7 +516,11 @@
             }
 
             function renderSupport() {
-                return `<h2>❤️ Круг добра</h2><div class="card"><p>Фонд поддержки детей с орфанными заболеваниями.</p><p>📞 8-800-555-35-35</p><button class="btn btn-primary" onclick="notify('Заявка сформирована')">Подать заявку</button></div>`;
+                return `<h2>❤️ Фонд «Круг добра»</h2><div class="card">
+                    <p>Фонд поддержки детей с тяжёлыми и орфанными заболеваниями.</p>
+                    <p><i class="bi bi-telephone"></i> Горячая линия: <strong>8 (800) 201-62-26</strong></p>
+                    <a href="https://фондкругдобра.рф/" target="_blank" class="btn btn-primary">Перейти на сайт фонда</a>
+                </div>`;
             }
 
             function initClock() {
