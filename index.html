@@ -50,8 +50,11 @@
         footer { background: white; border-top: 1px solid #f1f5f9; padding: 1.5rem 0; text-align: center; }
         .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 15px 20px; border-radius: 8px; color: white; animation: fadeInUp 0.6s ease; }
         @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        .instr-block { background: white; border-radius: 16px; padding: 1.5rem; margin: 1rem 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .hidden-hint { display: none; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; border-left: 3px solid var(--primary); }
+        .hero-section { text-align: center; padding: 6rem 2rem; }
+        .hero-title { font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
+        .hero-subtitle { font-size: 1.25rem; color: var(--text-light); max-width: 600px; margin: 0 auto 2rem; }
+        .hero-btn { padding: 14px 40px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -71,8 +74,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         (function() {
-            const CLIENT_ID = '90b4a623756b448fb4067ee5a1af18c3'; // ваш Client ID
-            const SHARED_FOLDER_PATH = 'disk:/Орфанный помощник'; // папка на Яндекс.Диске
+            const CLIENT_ID = '90b4a623756b448fb4067ee5a1af18c3';
+            const SHARED_FOLDER_PATH = 'disk:/Орфанный помощник';
 
             const DB = {
                 get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
@@ -309,11 +312,13 @@
             }
 
             function renderWelcome() {
-                return `<div class="text-center mt-5"><h1>🧬 Орфанный помощник</h1><p class="lead">Обмен данными через Яндекс.Диск</p><button class="btn btn-primary mt-4" onclick="App.navigate('/login')">Войти в систему</button></div>
-                <div class="row mt-5">
-                    <div class="col-md-6"><div class="instr-block"><h4>👨‍⚕️ Врачу</h4><p>Войдите с кодом <strong>123doc</strong>. В разделе «Аналитика» просматривайте файлы пациентов из общей папки.</p></div></div>
-                    <div class="col-md-6"><div class="instr-block"><h4>👤 Пациенту</h4><p>Заполните дневник/паллиатив/лекарства, нажмите <strong>«Сохранить и отправить»</strong>. Файл автоматически попадёт в общую папку на Яндекс.Диске.</p></div></div>
-                </div>`;
+                return `
+                    <div class="hero-section">
+                        <div style="font-size:5rem; margin-bottom:1rem;">🧬</div>
+                        <h1 class="hero-title">Орфанный помощник</h1>
+                        <p class="hero-subtitle">Персонализированный ассистент для родителей и врачей с паллиативным модулем. Обмен данными через Яндекс.Диск.</p>
+                        <button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button>
+                    </div>`;
             }
 
             function renderLogin() {
