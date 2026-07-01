@@ -1,247 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Орфанный помощник</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🧬</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0d7377; --primary-light: #14a3a8; --danger: #ef4444; --success: #10b981; --text: #1e293b; --text-light: #64748b; --bg: #f8fafc; --card: #ffffff; --radius: 20px; }
+        .dark-theme { --primary: #14a3a8; --text: #f1f5f9; --text-light: #94a3b8; --bg: #0f172a; --card: #1e293b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: all 0.3s; }
+        .navbar { background: var(--card); backdrop-filter: blur(30px); border-bottom: 1px solid rgba(128,128,128,0.1); padding: 12px 0; }
+        .navbar-brand { font-weight: 800; font-size: 1.35rem; background: linear-gradient(135deg, var(--primary), #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), #0ea5e9); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; -webkit-text-fill-color: white; }
+        .btn { border-radius: 12px; padding: 8px 18px; font-weight: 600; border: none; transition: all 0.25s; cursor: pointer; font-size: 0.9rem; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: 0 4px 15px rgba(13,115,119,0.25); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(13,115,119,0.35); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #34d399); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #f87171); color: white; }
+        .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
+        .card { background: var(--card); border-radius: var(--radius); box-shadow: 0 4px 6px rgba(0,0,0,0.04); padding: 1.5rem; margin-bottom: 1rem; }
+        .dashboard-card { cursor: pointer; text-align: center; padding: 1.5rem; background: var(--card); border-radius: var(--radius); box-shadow: 0 2px 4px rgba(0,0,0,0.04); transition: all 0.3s; }
+        .dashboard-card:hover { transform: translateY(-6px); box-shadow: 0 25px 50px rgba(0,0,0,0.12); }
+        .dashboard-card .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .form-control, .form-select { border-radius: 10px; border: 2px solid #e2e8f0; padding: 11px 16px; background: var(--card); color: var(--text); width: 100%; margin-bottom: 8px; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary-light); outline: none; }
+        .clock-widget { background: linear-gradient(135deg, #1e293b, #334155); color: white; border-radius: var(--radius); padding: 2rem; text-align: center; }
+        .clock-widget .time { font-size: 3rem; font-weight: 800; }
+        .calendar-widget { background: var(--card); border-radius: var(--radius); padding: 1.25rem; }
+        .calendar-widget table { width: 100%; border-collapse: collapse; }
+        .calendar-widget td { text-align: center; padding: 5px; cursor: pointer; border-radius: 8px; }
+        .calendar-widget td.today { background: var(--primary); color: white; }
+        .faq-item { border-left: 3px solid var(--primary); padding: 1rem; margin-bottom: 1rem; background: var(--card); cursor: pointer; border-radius: 0 14px 14px 0; }
+        .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 15px 20px; border-radius: 8px; color: white; animation: fadeInUp 0.6s ease; }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+        .hero-section { text-align: center; padding: 6rem 2rem; }
+        .hero-title { font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
+        .hero-subtitle { font-size: 1.25rem; color: var(--text-light); max-width: 600px; margin: 0 auto 2rem; }
+        .hero-btn { padding: 14px 40px; font-size: 1.1rem; }
+        .palliative-badge { background: #fecaca; color: #991b1b; padding: 3px 10px; border-radius: 15px; font-size: 0.75rem; }
+        .reminder-badge { background: #c7d2fe; color: #3730a3; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; }
+        footer { background: var(--card); border-top: 1px solid rgba(128,128,128,0.1); padding: 1.5rem 0; text-align: center; }
+        @media (max-width: 768px) { .hero-title { font-size: 2.5rem; } .hero-section { padding: 3rem 1rem; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" onclick="App.navigate('/dashboard')"><span class="brand-icon">🧬</span> Орфанный помощник</a>
+            <div class="ms-auto d-flex gap-1 flex-wrap" id="navMenu"></div>
+        </div>
+    </nav>
+    <div class="container my-3" id="app"></div>
+    <footer>
+        <p class="fw-bold mb-1" style="color: var(--primary);">🧬 Орфанный помощник</p>
+        <p class="text-muted small">Персонализированный помощник с паллиативным модулем</p>
+        <p class="text-muted small">Разработчик: Истин А.А. © 2026 | Научный руководитель: д.м.н. Леднева В.С.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
-        (function() {
-            // ═══════════════ НАСТРОЙКИ ═══════════════
-            const CLIENT_ID = '90b4a623756b448fb4067ee5a1af18c3';
-            const SHARED_FOLDER_PATH = 'disk:/Орфанный помощник';
-
-            // ═══════════════ ХРАНИЛИЩЕ ═══════════════
-            const DB = {
-                get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
-                set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
-                getProfile() { return this.get('profile'); },
-                setProfile(p) { this.set('profile', p); },
-                getToken() { return this.get('ya_token'); },
-                setToken(t) { this.set('ya_token', t); },
-                getMeds(userId) { return this.get(`meds_${userId}`) || []; },
-                saveMeds(userId, meds) { this.set(`meds_${userId}`, meds); },
-                getDiary(userId) { return this.get(`diary_${userId}`) || []; },
-                saveDiary(userId, entries) { this.set(`diary_${userId}`, entries); },
-                getPalliative(userId) { return this.get(`palliative_${userId}`) || []; },
-                savePalliative(userId, entries) { this.set(`palliative_${userId}`, entries); },
-                getNutrition(userId) { return this.get(`nutrition_${userId}`) || []; },
-                saveNutrition(userId, entries) { this.set(`nutrition_${userId}`, entries); },
-                getLab(userId) { return this.get(`lab_${userId}`) || []; },
-                saveLab(userId, entries) { this.set(`lab_${userId}`, entries); },
-                getTimeline(userId) { return this.get(`timeline_${userId}`) || []; },
-                saveTimeline(userId, entries) { this.set(`timeline_${userId}`, entries); },
-                getSymptoms() { return this.get('symptoms') || []; },
-                saveSymptoms(symptoms) { this.set('symptoms', symptoms); }
-            };
-
-            // ═══════════════ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ═══════════════
-            let profile = DB.getProfile();
-            let clockTimer = null;
-            let darkTheme = localStorage.getItem('darkTheme') === 'true';
-            if (darkTheme) document.body.classList.add('dark-theme');
-
-            // ═══════════════ УТИЛИТЫ ═══════════════
-            const notify = (msg, type='success') => {
-                const el = document.createElement('div'); el.className='toast';
-                el.style.background = type==='error'?'#ef4444':'#10b981';
-                el.textContent = msg; document.body.appendChild(el);
-                setTimeout(()=>el.remove(), 3000);
-            };
-            const esc = s => { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; };
-            const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-
-            // ═══════════════ БАЗА ЗАБОЛЕВАНИЙ ═══════════════
-            const DISEASES = [
-                { id:'abetalipo', name:'Абеталипопротеинемия', icd:'E78.6', icon:'🩸', cat:'Метаболические', desc:'Нарушение синтеза β‑липопротеинов', gene:'MTTP (4q22-q24)', mutations:'Миссенс-мутации', symptoms:'стеаторея,атаксия,ретинит' },
-                { id:'wilson', name:'Болезнь Вильсона', icd:'E83.0', icon:'🧬', cat:'Метаболические', desc:'Накопление меди в печени, мозге', gene:'ATP7B (13q14.3)', mutations:'H1069Q, R778L', symptoms:'гепатит,тремор,дизартрия' },
-                { id:'pku', name:'Фенилкетонурия', icd:'E70.0', icon:'🧠', cat:'Метаболические', desc:'Дефицит фенилаланингидроксилазы', gene:'PAH (12q23.2)', mutations:'R408W', symptoms:'задержка развития,судороги,светлые волосы' },
-                { id:'cf', name:'Муковисцидоз', icd:'E84', icon:'🫁', cat:'Генетические', desc:'Густой секрет, поражение лёгких', gene:'CFTR (7q31.2)', mutations:'F508del (70%)', symptoms:'кашель,пневмония,стеаторея' },
-                { id:'gaucher', name:'Болезнь Гоше', icd:'E75.2', icon:'🦴', cat:'Лизосомные', desc:'Гепатоспленомегалия, костные кризы', gene:'GBA (1q21)', mutations:'N370S', symptoms:'боли в костях,тромбоцитопения,утомляемость' },
-                { id:'fabry', name:'Болезнь Фабри', icd:'E75.2', icon:'💔', cat:'Лизосомные', desc:'Акропарестезии, ангиокератомы', gene:'GLA (Xq22.1)', mutations:'Более 900', symptoms:'жгучие боли,ангиокератомы,гипогидроз' },
-                { id:'pompe', name:'Болезнь Помпе', icd:'E74.0', icon:'❤️', cat:'Гликогенозы', desc:'Кардиомиопатия, мышечная гипотония', gene:'GAA (17q25.2)', mutations:'c.-32-13T>G', symptoms:'слабость,одышка,гепатомегалия' },
-                { id:'turner', name:'Синдром Тернера', icd:'Q96', icon:'👧', cat:'Хромосомные', desc:'Низкорослость, крыловидные складки', gene:'SHOX', mutations:'Моносомия X', symptoms:'низкий рост,аменорея,пороки сердца' },
-                { id:'prader', name:'Синдром Прадера-Вилли', icd:'Q87.1', icon:'🍔', cat:'Генетические', desc:'Гипотония, гиперфагия', gene:'SNRPN', mutations:'Делеция', symptoms:'ожирение,гипотония,задержка развития' },
-                { id:'angelman', name:'Синдром Ангельмана', icd:'Q93.5', icon:'😊', cat:'Неврологические', desc:'Отсутствие речи, смех, атаксия', gene:'UBE3A', mutations:'Делеция', symptoms:'смех,атаксия,судороги' }
-            ];
-
-            // ═══════════════ FAQ ═══════════════
-            const FAQ = [
-                { q:'Как передать данные врачу?', a:'Нажмите «Сохранить и отправить» – файл загрузится в облако.' },
-                { q:'Как работает поиск по симптомам?', a:'В справочнике введите симптомы через запятую (например, "кашель,слабость") – система покажет подходящие заболевания.' },
-                { q:'Что такое тёмная тема?', a:'Переключатель в правом верхнем углу (🌓) меняет цветовую схему.' },
-                { q:'Как добавить событие в таймлайн?', a:'В разделе «Маршрут пациента» нажмите «Добавить событие» и заполните форму.' }
-            ];
-
-            // ═══════════════ ГЛОБАЛЬНЫЙ ОБЪЕКТ ═══════════════
-            window.App = {
-                navigate: page => { location.hash = '#' + page; },
-                logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); DB.setToken(null); profile = null; updateNav(); App.navigate('/'); }
-            };
-
-            // ═══════════════ ЯНДЕКС АВТОРИЗАЦИЯ ═══════════════
-            async function getToken() {
-                let token = DB.getToken();
-                if (token) return token;
-                const redirectUri = window.location.origin + window.location.pathname;
-                window.location.href = `https://oauth.yandex.ru/authorize?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-            }
-
-            if (window.location.hash.includes('access_token')) {
-                const params = new URLSearchParams(window.location.hash.substring(1));
-                const token = params.get('access_token');
-                if (token) { DB.setToken(token); window.location.hash = ''; }
-            }
-
-            // ═══════════════ РАБОТА С ЯНДЕКС.ДИСКОМ ═══════════════
-            async function ensureFolder(patientName) {
-                const token = await getToken();
-                const path = `${SHARED_FOLDER_PATH}/${patientName}`;
-                const r = await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}`, { headers: { 'Authorization': `OAuth ${token}` } });
-                if (r.status === 404) {
-                    await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(path)}`, { method: 'PUT', headers: { 'Authorization': `OAuth ${token}` } });
-                }
-                return path;
-            }
-
-            async function uploadToYandex(fileName, blob, patientName) {
-                const token = await getToken();
-                if (!token) return notify('Необходимо войти в Яндекс', 'error');
-                const folder = await ensureFolder(patientName);
-                const filePath = `${folder}/${fileName}`;
-                const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/upload?path=${encodeURIComponent(filePath)}&overwrite=true`, { headers: { 'Authorization': `OAuth ${token}` } });
-                const { href } = await resp.json();
-                const upload = await fetch(href, { method: 'PUT', body: blob });
-                if (upload.ok) notify('Файл загружен в облако и доступен врачу');
-                else notify('Ошибка загрузки', 'error');
-            }
-
-            // ═══════════════ НАВИГАЦИЯ ═══════════════
-            async function updateNav() {
-                const nav = document.getElementById('navMenu');
-                if (!nav) return;
-                if (!profile) {
-                    nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')">🔐 Войти</button>';
-                } else {
-                    const role = profile.role;
-                    let items = `
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/dashboard')">🏠</button>
-                        <button class="btn btn-sm btn-outline" onclick="toggleTheme()">🌓</button>`;
-                    if (role === 'parent') {
-                        items += `
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/diary')">📋 Дневник</button>
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/palliative')"><span class="palliative-badge">❤️ Паллиатив</span></button>
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/medications')">💊 Лекарства</button>
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/nutrition')">🍽️ Питание</button>
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/lab')">🔬 Анализы</button>
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/timeline')">📅 Таймлайн</button>`;
-                    } else {
-                        items += `
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')">👥 Пациенты</button>
-                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')">📈 Аналитика</button>`;
-                    }
-                    items += `
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')">📚</button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')">🧬</button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')">❓</button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')">❤️</button>
-                        <button class="btn btn-sm btn-danger" onclick="App.logout()">🚪</button>`;
-                    nav.innerHTML = items;
-                }
-            }
-
-            function toggleTheme() {
-                document.body.classList.toggle('dark-theme');
-                darkTheme = !darkTheme;
-                localStorage.setItem('darkTheme', darkTheme);
-            }
-
-            // ═══════════════ РЕНДЕР ═══════════════
-            async function render() {
-                await updateNav();
-                const page = location.hash.slice(1) || '/';
-                const app = document.getElementById('app');
-                if (!app) return;
-                if (!profile && !['/', '/login', '/reference', '/faq', '/genetics', '/support'].includes(page)) { App.navigate('/login'); return; }
-                switch (page) {
-                    case '/': app.innerHTML = renderWelcome(); break;
-                    case '/login': app.innerHTML = renderLogin(); setupLogin(); break;
-                    case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break;
-                    case '/diary': app.innerHTML = await renderDiary(); break;
-                    case '/palliative': app.innerHTML = await renderPalliative(); break;
-                    case '/medications': app.innerHTML = await renderMedications(); setupMedications(); break;
-                    case '/nutrition': app.innerHTML = await renderNutrition(); setupNutrition(); break;
-                    case '/lab': app.innerHTML = await renderLab(); setupLab(); break;
-                    case '/timeline': app.innerHTML = await renderTimeline(); setupTimeline(); break;
-                    case '/patients': app.innerHTML = await renderPatients(); break;
-                    case '/analytics': app.innerHTML = await renderAnalytics(); break;
-                    case '/reference': app.innerHTML = renderReference(); break;
-                    case '/genetics': app.innerHTML = renderGenetics(); setupGenetics(); break;
-                    case '/faq': app.innerHTML = renderFAQ(); break;
-                    case '/support': app.innerHTML = renderSupport(); break;
-                    default: app.innerHTML = '<h2 class="text-center mt-5">404</h2>';
-                }
-            }
-
-            // ═══════════════ СТРАНИЦЫ ═══════════════
-            function renderWelcome() {
-                return `
-                    <div class="hero-section">
-                        <div style="font-size:5rem; margin-bottom:1rem;">🧬</div>
-                        <h1 class="hero-title">Орфанный помощник</h1>
-                        <p class="hero-subtitle">Персонализированный ассистент с дневником, паллиативным модулем, трекером лекарств, таймлайном и поиском по симптомам</p>
-                        <button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button>
-                    </div>`;
-            }
-
-            function renderLogin() {
-                return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
-                    <div class="col-md-5 mb-3"><div class="card"><h4>👨‍⚕️ Врач</h4>
-                        <input id="docName" class="form-control" placeholder="ФИО">
-                        <input id="docCode" type="password" class="form-control" placeholder="Код доступа">
-                        <button class="btn btn-primary w-100" id="doctorBtn">Войти как врач</button>
-                        <small class="text-muted mt-2 d-block" style="cursor:pointer" onclick="document.getElementById('docHint').classList.toggle('hidden-hint')">Нужна помощь?</small>
-                        <div id="docHint" class="hidden-hint" style="display:none;margin-top:10px;padding:10px;background:var(--card);border-radius:8px;">Код доступа для врачей: <strong>123doc</strong></div>
-                    </div></div>
-                    <div class="col-md-5 mb-3"><div class="card"><h4>👤 Пациент</h4>
-                        <input id="patName" class="form-control" placeholder="ФИО">
-                        <button class="btn btn-success w-100" id="patientBtn">Войти как пациент</button>
-                    </div></div>
-                </div></div>`;
-            }
-
-            function setupLogin() {
-                document.getElementById('doctorBtn')?.addEventListener('click', () => {
-                    const name = document.getElementById('docName').value.trim();
-                    if (!name) return notify('Введите ФИО', 'error');
-                    if (document.getElementById('docCode').value !== '123doc') return notify('Неверный код', 'error');
-                    loginAs(name, 'doctor');
-                });
-                document.getElementById('patientBtn')?.addEventListener('click', () => {
-                    const name = document.getElementById('patName').value.trim();
-                    if (!name) return notify('Введите ФИО', 'error');
-                    loginAs(name, 'parent');
-                });
-            }
-
-            function loginAs(name, role) {
-                profile = { fullName: name, role };
-                DB.setProfile(profile);
-                updateNav();
-                App.navigate('/dashboard');
-            }
-
-            async function renderDashboard() {
-                if (!profile) return '';
-                const isDoctor = profile.role === 'doctor';
-                const cards = isDoctor ? [
-                    { icon:'👥', title:'Пациенты', link:'/patients' },
-                    { icon:'📈', title:'Аналитика', link:'/analytics' }
-                ] : [
-                    { icon:'📋', title:'Дневник', link:'/diary' },
-                    { icon:'❤️', title:'Паллиатив', link:'/palliative' },
-                    { icon:'💊', title:'Лекарства', link:'/medications' },
-                    { icon:'🍽️', title:'Питание', link:'/nutrition' },
-                    { icon:'🔬', title:'Анализы', link:'/lab' },
-                    { icon:'📅', title:'Таймлайн', link:'/timeline' }
-                ];
-                return `<div class="row"><div class="col-lg-9"><h2>👋 ${esc(profile.fullName)}</h2><p class="text-muted">${isDoctor?'👨‍⚕️ Врач':'👤 Пациент'}</p><div class="row mt-3">${cards.map(c=>`<div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('${c.link}')"><div class="icon">${c.icon}</div><h5>${c.title}</h5></div></div>`).join('')}</div></div>
-                <div class="col-lg-3"><div class="clock-widget mb-3"><div class="time" id="liveClock">--:--:--</div><div class="date" id="liveDate"></div></div><div class="calendar-widget" id="miniCalendar"></div></div></div>`;
-            }
-                <script>
         (function() {
             // ═══════════════ НАСТРОЙКИ ═══════════════
             const CLIENT_ID = '90b4a623756b448fb4067ee5a1af18c3';
