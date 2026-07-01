@@ -89,18 +89,14 @@
                 getLab(userId) { return this.get(`lab_${userId}`) || []; },
                 saveLab(userId, entries) { this.set(`lab_${userId}`, entries); },
                 getTimeline(userId) { return this.get(`timeline_${userId}`) || []; },
-                saveTimeline(userId, entries) { this.set(`timeline_${userId}`, entries); },
-                getSymptoms() { return this.get('symptoms') || []; },
-                saveSymptoms(symptoms) { this.set('symptoms', symptoms); }
+                saveTimeline(userId, entries) { this.set(`timeline_${userId}`, entries); }
             };
 
-            // ═══════════════ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ═══════════════
             let profile = DB.getProfile();
             let clockTimer = null;
             let darkTheme = localStorage.getItem('darkTheme') === 'true';
             if (darkTheme) document.body.classList.add('dark-theme');
 
-            // ═══════════════ УТИЛИТЫ ═══════════════
             const notify = (msg, type='success') => {
                 const el = document.createElement('div'); el.className='toast';
                 el.style.background = type==='error'?'#ef4444':'#10b981';
@@ -110,9 +106,8 @@
             const esc = s => { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; };
             const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-            // ═══════════════ БАЗА ЗАБОЛЕВАНИЙ ═══════════════
-            const DISEASES = [
-               // ==================== МЕТАБОЛИЧЕСКИЕ ====================
+           const DISEASES = [
+    // ==================== МЕТАБОЛИЧЕСКИЕ ====================
     { id:'abetalipo', name:'Абеталипопротеинемия', icd:'E78.6', icon:'🩸', cat:'Метаболические', desc:'Нарушение синтеза β‑липопротеинов, мальабсорбция жиров, дефицит витамина Е. Стеаторея, атаксия, пигментный ретинит.', diag:'Гипохолестеринемия, отсутствие ЛПНП, генетический анализ MTTP.', treat:'Витамин Е 100 мг/кг/сут, А, D, K.', gene:'MTTP (4q22-q24)', mutations:'Миссенс-мутации, делеции', algorithm:'1. Липидограмма → 2. Анализ MTTP → 3. Офтальмологический осмотр' },
     { id:'acroderm', name:'Акродерматит энтеропатический', icd:'E83.2', icon:'🍂', cat:'Метаболические', desc:'Гипоцинкемия. Везикуло‑буллёзная сыпь вокруг рта, ануса, диарея.', diag:'Цинк крови <13 мкмоль/л.', treat:'Сульфат цинка 3 мг/кг/сут.', gene:'SLC39A4 (8q24.3)', mutations:'Различные мутации ZIP4', algorithm:'1. Уровень цинка в крови → 2. Анализ SLC39A4 → 3. Биопсия кожи' },
     { id:'wilson', name:'Болезнь Вильсона', icd:'E83.0', icon:'🧬', cat:'Метаболические', desc:'Накопление меди в печени, мозге, роговице.', diag:'Церулоплазмин <200 мг/л, медь в моче >100 мкг/сут.', treat:'D‑пеницилламин, цинк, триентин, диета.', gene:'ATP7B (13q14.3)', mutations:'H1069Q (Европа), R778L (Азия), более 500 мутаций', algorithm:'1. Церулоплазмин → 2. Медь в моче → 3. Проба с D‑пеницилламином → 4. Осмотр офтальмолога → 5. Анализ ATP7B' },
@@ -217,43 +212,39 @@
     { id:'otto', name:'Протрузионный таз', icd:'M91.2', icon:'🦵', cat:'Ортопедические', desc:'Углубление вертлужных впадин.', diag:'Рентген.', treat:'Остеотомия.', gene:'Спорадический', mutations:'—', algorithm:'1. Рентген → 2. МРТ → 3. Консультация ортопеда' },
     { id:'osteoid', name:'Остеоид‑остеома', icd:'D16.9', icon:'🦴', cat:'Опухоли', desc:'Ночные боли, купируются НПВП.', diag:'КТ.', treat:'Радиочастотная абляция.', gene:'FOS (14q24.3)', mutations:'Перестройки', algorithm:'1. КТ → 2. Сцинтиграфия → 3. Биопсия' },
     { id:'waldmann', name:'Болезнь Вальдмана', icd:'I89.0', icon:'💧', cat:'Гастроэнтерология', desc:'Гипопротеинемические отёки.', diag:'Эндоскопия.', treat:'Диета с МСТ.', gene:'Спорадический', mutations:'—', algorithm:'1. Эндоскопия → 2. Биопсия → 3. Белок и альбумин крови' }
-            ];
+];
 
-            // ═══════════════ FAQ ═══════════════
             const FAQ = [
                 { q:'Как передать данные врачу?', a:'Нажмите «Сохранить и отправить» – файл загрузится в облако.' },
-                { q:'Как работает поиск по симптомам?', a:'В справочнике введите симптомы через запятую (например, "кашель,слабость") – система покажет подходящие заболевания.' },
-                { q:'Что такое тёмная тема?', a:'Переключатель в правом верхнем углу (🌓) меняет цветовую схему.' },
+                { q:'Как работает поиск по симптомам?', a:'В справочнике введите симптомы через запятую – система покажет подходящие заболевания.' },
+                { q:'Что такое тёмная тема?', a:'Переключатель 🌓 меняет цветовую схему.' },
                 { q:'Как добавить событие в таймлайн?', a:'В разделе «Маршрут пациента» нажмите «Добавить событие» и заполните форму.' },
-                { q:'Что такое орфанные заболевания?', a:'Это редкие заболевания, распространённость которых не превышает 10 случаев на 100 000 населения. В России перечень орфанных заболеваний утверждается Минздравом.' },
-             { q:'Как получить лекарства через фонд «Круг добра»?', a:'Обратитесь к лечащему врачу для подачи заявки. Экспертный совет фонда рассматривает заявку в течение 14 рабочих дней.' },
-             { q:'Как вести дневник здоровья?', a:'В разделе «Дневник» ежедневно отмечайте самочувствие, вес, симптомы. Это поможет врачу отслеживать динамику.' },
-             { q:'Что такое ТМК?', a:'Телемедицинская консультация — возможность задать вопрос врачу онлайн через чат в приложении.' },
-             { q:'Где найти информацию о заболевании?', a:'В разделе «Справочник» собрана информация о 82+ орфанных заболеваниях с описанием, диагностикой и лечением.' },
-             { q:'Как расшифровать генетический тест?', a:'В разделе «Генетика» вы найдёте информацию о генах и мутациях, связанных с вашим заболеванием. Для расшифровки обратитесь к врачу-генетику.' }
+                { q:'Что такое орфанные заболевания?', a:'Это редкие заболевания, распространённость которых не превышает 10 случаев на 100 000 населения.' },
+                { q:'Как получить лекарства через фонд «Круг добра»?', a:'Обратитесь к лечащему врачу для подачи заявки.' },
+                { q:'Как вести дневник здоровья?', a:'В разделе «Дневник» ежедневно отмечайте самочувствие, вес, симптомы.' },
+                { q:'Что такое ТМК?', a:'Телемедицинская консультация – возможность задать вопрос врачу онлайн.' },
+                { q:'Где найти информацию о заболевании?', a:'В разделе «Справочник» собрана информация о 82+ орфанных заболеваниях.' },
+                { q:'Как расшифровать генетический тест?', a:'В разделе «Генетика» вы найдёте информацию о генах и мутациях.' }
             ];
 
-            // ═══════════════ ГЛОБАЛЬНЫЙ ОБЪЕКТ ═══════════════
             window.App = {
                 navigate: page => { location.hash = '#' + page; },
                 logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); DB.setToken(null); profile = null; updateNav(); App.navigate('/'); }
             };
 
-            // ═══════════════ ЯНДЕКС АВТОРИЗАЦИЯ ═══════════════
+            // Яндекс.OAuth
             async function getToken() {
                 let token = DB.getToken();
                 if (token) return token;
                 const redirectUri = window.location.origin + window.location.pathname;
                 window.location.href = `https://oauth.yandex.ru/authorize?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
             }
-
             if (window.location.hash.includes('access_token')) {
                 const params = new URLSearchParams(window.location.hash.substring(1));
                 const token = params.get('access_token');
                 if (token) { DB.setToken(token); window.location.hash = ''; }
             }
 
-            // ═══════════════ РАБОТА С ЯНДЕКС.ДИСКОМ ═══════════════
             async function ensureFolder(patientName) {
                 const token = await getToken();
                 const path = `${SHARED_FOLDER_PATH}/${patientName}`;
@@ -272,11 +263,10 @@
                 const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources/upload?path=${encodeURIComponent(filePath)}&overwrite=true`, { headers: { 'Authorization': `OAuth ${token}` } });
                 const { href } = await resp.json();
                 const upload = await fetch(href, { method: 'PUT', body: blob });
-                if (upload.ok) notify('Файл загружен в облако и доступен врачу');
+                if (upload.ok) notify('Файл загружен в облако');
                 else notify('Ошибка загрузки', 'error');
             }
 
-            // ═══════════════ НАВИГАЦИЯ ═══════════════
             async function updateNav() {
                 const nav = document.getElementById('navMenu');
                 if (!nav) return;
@@ -316,7 +306,6 @@
                 localStorage.setItem('darkTheme', darkTheme);
             }
 
-            // ═══════════════ РЕНДЕР ═══════════════
             async function render() {
                 await updateNav();
                 const page = location.hash.slice(1) || '/';
@@ -327,8 +316,8 @@
                     case '/': app.innerHTML = renderWelcome(); break;
                     case '/login': app.innerHTML = renderLogin(); setupLogin(); break;
                     case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break;
-                    case '/diary': app.innerHTML = await renderDiary(); break;
-                    case '/palliative': app.innerHTML = await renderPalliative(); break;
+                    case '/diary': app.innerHTML = await renderDiary(); setupDiary(); break;
+                    case '/palliative': app.innerHTML = await renderPalliative(); setupPalliative(); break;
                     case '/medications': app.innerHTML = await renderMedications(); setupMedications(); break;
                     case '/nutrition': app.innerHTML = await renderNutrition(); setupNutrition(); break;
                     case '/lab': app.innerHTML = await renderLab(); setupLab(); break;
@@ -343,7 +332,6 @@
                 }
             }
 
-            // ═══════════════ СТРАНИЦЫ ═══════════════
             function renderWelcome() {
                 return `
                     <div class="hero-section">
@@ -408,7 +396,8 @@
                 return `<div class="row"><div class="col-lg-9"><h2>👋 ${esc(profile.fullName)}</h2><p class="text-muted">${isDoctor?'👨‍⚕️ Врач':'👤 Пациент'}</p><div class="row mt-3">${cards.map(c=>`<div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('${c.link}')"><div class="icon">${c.icon}</div><h5>${c.title}</h5></div></div>`).join('')}</div></div>
                 <div class="col-lg-3"><div class="clock-widget mb-3"><div class="time" id="liveClock">--:--:--</div><div class="date" id="liveDate"></div></div><div class="calendar-widget" id="miniCalendar"></div></div></div>`;
             }
-                        // ═══════════════ ДНЕВНИК ═══════════════
+
+            // ═══════════════ ДНЕВНИК ═══════════════
             async function renderDiary() {
                 const today = new Date().toISOString().split('T')[0];
                 return `<h2>📋 Дневник — ${fmtDate(today)}</h2><div class="card"><form id="diaryForm">
@@ -427,6 +416,10 @@
                     <textarea name="symptoms" class="form-control" rows="2" placeholder="Симптомы"></textarea>
                     <button type="button" class="btn btn-success w-100 mt-3" onclick="saveAndSendDiary()">📤 Сохранить и отправить врачу</button>
                 </form></div>`;
+            }
+
+            function setupDiary() {
+                // Функция saveAndSendDiary уже определена глобально
             }
 
             window.saveAndSendDiary = async function() {
@@ -457,6 +450,8 @@
                     <button type="button" class="btn btn-success w-100 mt-3" onclick="saveAndSendPalliative()">📤 Сохранить и отправить врачу</button>
                 </form></div>`;
             }
+
+            function setupPalliative() {}
 
             window.saveAndSendPalliative = async function() {
                 const form = document.getElementById('pallForm');
@@ -623,7 +618,7 @@
                 };
             }
 
-            // ═══════════════ ТАЙМЛАЙН (МАРШРУТ ПАЦИЕНТА) ═══════════════
+            // ═══════════════ ТАЙМЛАЙН ═══════════════
             async function renderTimeline() {
                 const events = DB.getTimeline(profile.fullName);
                 let list = events.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(e => `
@@ -664,13 +659,13 @@
                 };
             }
 
-            // ═══════════════ ПАЦИЕНТЫ (ДЛЯ ВРАЧА) ═══════════════
+            // ═══════════════ ПАЦИЕНТЫ (ВРАЧ) ═══════════════
             async function renderPatients() {
                 if (profile.role !== 'doctor') return '<p>Только для врачей</p>';
                 return `<h2>👥 Пациенты</h2><p>Список пациентов, отправивших файлы, отображается в разделе «Аналитика».</p>`;
             }
 
-            // ═══════════════ АНАЛИТИКА (ДЛЯ ВРАЧА) ═══════════════
+            // ═══════════════ АНАЛИТИКА (ВРАЧ) ═══════════════
             async function renderAnalytics() {
                 if (profile.role !== 'doctor') return '<p>Только для врачей</p>';
                 const token = await getToken();
@@ -790,7 +785,6 @@
                 html += '</tr></table>'; cal.innerHTML = html;
             }
 
-            // ═══════════════ ЗАПУСК ═══════════════
             window.onhashchange = () => { if(clockTimer)clearInterval(clockTimer); render(); };
             window.onload = render;
         })();
