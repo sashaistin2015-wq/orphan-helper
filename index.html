@@ -46,10 +46,12 @@
         .faq-item { border-left: 3px solid var(--primary); padding: 1rem; margin-bottom: 1rem; background: white; border-radius: 0 14px 14px 0; cursor: pointer; transition: all 0.3s; }
         .faq-item:hover { background: #e8f6f7; transform: translateX(5px); }
         .palliative-badge { background: #fecaca; color: #991b1b; padding: 3px 10px; border-radius: 15px; font-size: 0.75rem; font-weight: 700; }
+        .reminder-badge { background: #c7d2fe; color: #3730a3; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
         footer { background: white; border-top: 1px solid #f1f5f9; padding: 1.5rem 0; text-align: center; }
         .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 15px 20px; border-radius: 8px; color: white; animation: fadeInUp 0.6s ease; }
         @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
         .instr-block { background: white; border-radius: 16px; padding: 1.5rem; margin: 1rem 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .hidden-hint { display: none; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; border-left: 3px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -80,7 +82,13 @@
                 getUsers() { return this.get('users') || []; },
                 saveUsers(u) { this.set('users', u); },
                 getToken() { return this.get('ya_token'); },
-                setToken(t) { this.set('ya_token', t); }
+                setToken(t) { this.set('ya_token', t); },
+                getMeds(userId) { return this.get(`meds_${userId}`) || []; },
+                saveMeds(userId, meds) { this.set(`meds_${userId}`, meds); },
+                getDiary(userId) { return this.get(`diary_${userId}`) || []; },
+                saveDiary(userId, entries) { this.set(`diary_${userId}`, entries); },
+                getPalliative(userId) { return this.get(`palliative_${userId}`) || []; },
+                savePalliative(userId, entries) { this.set(`palliative_${userId}`, entries); }
             };
 
             let profile = DB.getProfile();
@@ -95,9 +103,8 @@
             const esc = s => { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; };
             const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-           const DISEASES = [
-    // ==================== МЕТАБОЛИЧЕСКИЕ ====================
-    { id:'abetalipo', name:'Абеталипопротеинемия', icd:'E78.6', icon:'🩸', cat:'Метаболические', desc:'Нарушение синтеза β‑липопротеинов, мальабсорбция жиров, дефицит витамина Е. Стеаторея, атаксия, пигментный ретинит.', diag:'Гипохолестеринемия, отсутствие ЛПНП, генетический анализ MTTP.', treat:'Витамин Е 100 мг/кг/сут, А, D, K.', gene:'MTTP (4q22-q24)', mutations:'Миссенс-мутации, делеции', algorithm:'1. Липидограмма → 2. Анализ MTTP → 3. Офтальмологический осмотр' },
+            const DISEASES = [
+               { id:'abetalipo', name:'Абеталипопротеинемия', icd:'E78.6', icon:'🩸', cat:'Метаболические', desc:'Нарушение синтеза β‑липопротеинов, мальабсорбция жиров, дефицит витамина Е. Стеаторея, атаксия, пигментный ретинит.', diag:'Гипохолестеринемия, отсутствие ЛПНП, генетический анализ MTTP.', treat:'Витамин Е 100 мг/кг/сут, А, D, K.', gene:'MTTP (4q22-q24)', mutations:'Миссенс-мутации, делеции', algorithm:'1. Липидограмма → 2. Анализ MTTP → 3. Офтальмологический осмотр' },
     { id:'acroderm', name:'Акродерматит энтеропатический', icd:'E83.2', icon:'🍂', cat:'Метаболические', desc:'Гипоцинкемия. Везикуло‑буллёзная сыпь вокруг рта, ануса, диарея.', diag:'Цинк крови <13 мкмоль/л.', treat:'Сульфат цинка 3 мг/кг/сут.', gene:'SLC39A4 (8q24.3)', mutations:'Различные мутации ZIP4', algorithm:'1. Уровень цинка в крови → 2. Анализ SLC39A4 → 3. Биопсия кожи' },
     { id:'wilson', name:'Болезнь Вильсона', icd:'E83.0', icon:'🧬', cat:'Метаболические', desc:'Накопление меди в печени, мозге, роговице.', diag:'Церулоплазмин <200 мг/л, медь в моче >100 мкг/сут.', treat:'D‑пеницилламин, цинк, триентин, диета.', gene:'ATP7B (13q14.3)', mutations:'H1069Q (Европа), R778L (Азия), более 500 мутаций', algorithm:'1. Церулоплазмин → 2. Медь в моче → 3. Проба с D‑пеницилламином → 4. Осмотр офтальмолога → 5. Анализ ATP7B' },
     { id:'pku', name:'Фенилкетонурия', icd:'E70.0', icon:'🧠', cat:'Метаболические', desc:'Дефицит фенилаланингидроксилазы, накопление Phe.', diag:'Неонатальный скрининг, Phe >120 мкмоль/л.', treat:'Диета с низким Phe, сапроптерин.', gene:'PAH (12q23.2)', mutations:'R408W, IVS10nt546, R261Q, Y414C', algorithm:'1. Неонатальный скрининг → 2. Phe в плазме → 3. Анализ PAH → 4. Тест на ВН4' },
@@ -201,24 +208,23 @@
     { id:'otto', name:'Протрузионный таз', icd:'M91.2', icon:'🦵', cat:'Ортопедические', desc:'Углубление вертлужных впадин.', diag:'Рентген.', treat:'Остеотомия.', gene:'Спорадический', mutations:'—', algorithm:'1. Рентген → 2. МРТ → 3. Консультация ортопеда' },
     { id:'osteoid', name:'Остеоид‑остеома', icd:'D16.9', icon:'🦴', cat:'Опухоли', desc:'Ночные боли, купируются НПВП.', diag:'КТ.', treat:'Радиочастотная абляция.', gene:'FOS (14q24.3)', mutations:'Перестройки', algorithm:'1. КТ → 2. Сцинтиграфия → 3. Биопсия' },
     { id:'waldmann', name:'Болезнь Вальдмана', icd:'I89.0', icon:'💧', cat:'Гастроэнтерология', desc:'Гипопротеинемические отёки.', diag:'Эндоскопия.', treat:'Диета с МСТ.', gene:'Спорадический', mutations:'—', algorithm:'1. Эндоскопия → 2. Биопсия → 3. Белок и альбумин крови' }
-];
-            const FAQ = [
-                { q:'Как передать данные врачу?', a:'Нажмите «Сохранить и отправить» – файл автоматически загрузится в общую папку на Яндекс.Диске.' },
-                { q:'Нужно ли что-то настраивать?', a:'Только при первом входе разрешить доступ к Яндекс.Диску.' }
-                 { q:'Что такое орфанные заболевания?', a:'Это редкие заболевания, распространённость которых не превышает 10 случаев на 100 000 населения. В России перечень орфанных заболеваний утверждается Минздравом.' },
-        { q:'Как получить лекарства через фонд «Круг добра»?', a:'Обратитесь к лечащему врачу для подачи заявки. Экспертный совет фонда рассматривает заявку в течение 14 рабочих дней.' },
-        { q:'Как вести дневник здоровья?', a:'В разделе «Дневник» ежедневно отмечайте самочувствие, вес, симптомы. Это поможет врачу отслеживать динамику.' },
-        { q:'Что такое ТМК?', a:'Телемедицинская консультация — возможность задать вопрос врачу онлайн через чат в приложении.' },
-        { q:'Где найти информацию о заболевании?', a:'В разделе «Справочник» собрана информация о 82+ орфанных заболеваниях с описанием, диагностикой и лечением.' },
-        { q:'Как расшифровать генетический тест?', a:'В разделе «Генетика» вы найдёте информацию о генах и мутациях, связанных с вашим заболеванием. Для расшифровки обратитесь к врачу-генетику.' }
             ];
 
-           window.App = {
+            const FAQ = [
+                { q:'Как передать данные врачу?', a:'Нажмите «Сохранить и отправить» – файл автоматически загрузится в общую папку на Яндекс.Диске.' },
+                { q:'Нужно ли что-то настраивать?', a:'Только при первом входе разрешить доступ к Яндекс.Диску.' },
+                { q:'Что такое орфанные заболевания?', a:'Это редкие заболевания, распространённость которых не превышает 10 случаев на 100 000 населения.' },
+                { q:'Как получить лекарства через фонд «Круг добра»?', a:'Обратитесь к лечащему врачу для подачи заявки.' },
+                { q:'Как вести дневник здоровья?', a:'В разделе «Дневник» ежедневно отмечайте самочувствие, вес, симптомы.' },
+                { q:'Что такое ТМК?', a:'Телемедицинская консультация — возможность задать вопрос врачу онлайн.' },
+                { q:'Где найти информацию о заболевании?', a:'В разделе «Справочник» собрана информация о 82+ орфанных заболеваниях.' }
+            ];
+
+            window.App = {
                 navigate: page => { location.hash = '#' + page; },
                 logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); DB.setToken(null); profile = null; updateNav(); App.navigate('/'); }
             };
 
-            // ═══════════════ ЯНДЕКС АВТОРИЗАЦИЯ ═══════════════
             async function getToken() {
                 let token = DB.getToken();
                 if (token) return token;
@@ -232,7 +238,6 @@
                 if (token) { DB.setToken(token); window.location.hash = ''; }
             }
 
-            // ═══════════════ РАБОТА С ЯНДЕКС.ДИСКОМ ═══════════════
             async function ensureFolder(patientName) {
                 const token = await getToken();
                 const path = `${SHARED_FOLDER_PATH}/${patientName}`;
@@ -255,7 +260,6 @@
                 else notify('Ошибка загрузки', 'error');
             }
 
-            // ═══════════════ НАВИГАЦИЯ ═══════════════
             async function updateNav() {
                 const nav = document.getElementById('navMenu');
                 if (!nav) return;
@@ -293,7 +297,7 @@
                     case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break;
                     case '/diary': app.innerHTML = await renderDiary(); break;
                     case '/palliative': app.innerHTML = await renderPalliative(); break;
-                    case '/medications': app.innerHTML = await renderMedications(); break;
+                    case '/medications': app.innerHTML = await renderMedications(); setupMedications(); break;
                     case '/patients': app.innerHTML = await renderPatients(); break;
                     case '/analytics': app.innerHTML = await renderAnalytics(); break;
                     case '/reference': app.innerHTML = renderReference(); break;
@@ -456,7 +460,7 @@
             async function renderAnalytics() {
                 if (profile.role !== 'doctor') return '<p>Только для врачей</p>';
                 const token = await getToken();
-                if (!token) return '<p>Необходимо авторизоваться в Яндексе. <a href="#" onclick="getToken()">Войти</a></p>';
+                if (!token) return '<p>Необходимо авторизоваться в Яндексе. <button class="btn btn-primary btn-sm" onclick="getToken()">Войти в Яндекс</button></p>';
                 let files = [];
                 try {
                     const resp = await fetch(`https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(SHARED_FOLDER_PATH)}&fields=_embedded.items.name,_embedded.items.path`, { headers: { 'Authorization': `OAuth ${token}` } });
