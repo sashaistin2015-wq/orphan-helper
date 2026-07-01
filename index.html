@@ -245,6 +245,7 @@
                 if (token) { DB.setToken(token); window.location.hash = ''; }
             }
 
+// ═══════════════ РАБОТА С ЯНДЕКС.ДИСКОМ (исправлено) ═══════════════
 async function ensureFolder(patientName) {
     const token = await getToken();
     if (!token) return null;
@@ -263,6 +264,7 @@ async function ensureFolder(patientName) {
                 `https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(currentPath)}`,
                 { method: 'PUT', headers: { 'Authorization': `OAuth ${token}` } }
             );
+            // 409 означает, что папка уже существует (создана параллельно)
             if (!create.ok && create.status !== 409) {
                 notify('Ошибка создания папки. Проверьте права приложения.', 'error');
                 return null;
@@ -272,9 +274,10 @@ async function ensureFolder(patientName) {
             DB.setToken(null);
             return null;
         }
+        // 200 – папка существует, идём дальше
     }
 
-    // Создаём папку пациента
+    // Создаём папку пациента (если не существует)
     const patientFolder = `${SHARED_FOLDER_PATH}/${patientName}`;
     const r = await fetch(
         `https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(patientFolder)}`,
@@ -292,15 +295,26 @@ async function uploadToYandex(fileName, blob, patientName) {
     if (!token) return;
     const folder = await ensureFolder(patientName);
     if (!folder) return;
+
     const filePath = `${folder}/${fileName}`;
+    // Запрашиваем URL для загрузки
     const resp = await fetch(
         `https://cloud-api.yandex.net/v1/disk/resources/upload?path=${encodeURIComponent(filePath)}&overwrite=true`,
         { headers: { 'Authorization': `OAuth ${token}` } }
     );
+    if (!resp.ok) {
+        notify('Ошибка получения ссылки для загрузки', 'error');
+        return;
+    }
     const { href } = await resp.json();
+
+    // Отправляем файл на полученный URL
     const upload = await fetch(href, { method: 'PUT', body: blob });
-    if (upload.ok) notify('Файл загружен в облако');
-    else notify('Ошибка загрузки', 'error');
+    if (upload.ok) {
+        notify('Файл загружен в облако');
+    } else {
+        notify('Ошибка загрузки файла', 'error');
+    }
 }
             async function updateNav() {
                 const nav = document.getElementById('navMenu');
