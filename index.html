@@ -245,8 +245,6 @@
                 if (token) { DB.setToken(token); window.location.hash = ''; }
             }
 
-     const SHARED_FOLDER_PATH = 'disk:/Приложения/Орфанный помощник/Обмен'; // новый путь
-
 async function ensureFolder(patientName) {
     const token = await getToken();
     if (!token) return null;
