@@ -67,7 +67,7 @@
     <script>
         (function() {
             // ═══════════════ НАСТРОЙКИ GOOGLE ═══════════════
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9ZqVZoJsd21GAVUgwIqTprxTeH0WyVTm0w67OAVtloYPqshSID1pV2mM3qDy7-jveRQ/exec';
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSSQsMTyoLHIbX671cTRKPiXrhP6d1ekMAOvxQizEF2zCijaguPoQpZbA30JMfFkY9/exec';
             const SPREADSHEET_ID = '1r6wC1EEVXeBN6tymsg-J4aKBITtIwtgHkZEfoRsXFOk';
 
             const DB = {
@@ -93,17 +93,29 @@
             const esc = s => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
             const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-            async function sendToSheet(sheetName, row) {
-                try {
-                    const resp = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ sheet: sheetName, row: { Пациент: profile.fullName, Дата: new Date().toLocaleDateString('ru-RU'), ...row } })
-                    });
-                    if (resp.ok) notify('Данные отправлены врачу');
-                    else notify('Ошибка отправки', 'error');
-                } catch (e) { notify('Ошибка: ' + e.message, 'error'); }
-            }
-
+    async function sendToSheet(sheetName, data) {
+    try {
+        const resp = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                sheet: sheetName, 
+                row: { 
+                    Пациент: profile.fullName, 
+                    Дата: new Date().toLocaleDateString('ru-RU'), 
+                    ...data 
+                } 
+            })
+        });
+        if (resp.ok) notify('Данные отправлены врачу');
+        else notify('Ошибка отправки', 'error');
+    } catch(e) { 
+        notify('Ошибка: ' + e.message, 'error'); 
+    }
+}
             function toggleTheme() { document.body.classList.toggle('dark-theme'); darkTheme = !darkTheme; localStorage.setItem('darkTheme', darkTheme); }
             window.toggleTheme = toggleTheme;
 
