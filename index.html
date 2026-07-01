@@ -68,7 +68,6 @@
         (function() {
             // ═══════════════ НАСТРОЙКИ ═══════════════
             const CLIENT_ID = '90b4a623756b448fb4067ee5a1af18c3';
-           const SHARED_FOLDER_PATH = 'disk:/Приложения/Орфанный помощник/Обмен';
 
             // ═══════════════ ХРАНИЛИЩЕ ═══════════════
             const DB = {
@@ -246,38 +245,40 @@
             }
 
 // ═══════════════ РАБОТА С ЯНДЕКС.ДИСКОМ (исправлено) ═══════════════
+const SHARED_FOLDER_PATH = 'disk:/Приложения/Орфанный помощник/Обмен';
+
 async function ensureFolder(patientName) {
     const token = await getToken();
     if (!token) return null;
 
-    // Разбиваем путь на части и создаём каждую папку, если её нет
-    const parts = SHARED_FOLDER_PATH.split('/').filter(p => p);
-    let currentPath = '';
+    // Убедимся, что весь путь до папки пациента существует
+    const parts = SHARED_FOLDER_PATH.split('/').filter(p => p && p !== 'disk:');
+    let currentPath = 'disk:';
     for (const part of parts) {
-        currentPath += (currentPath ? '/' : '') + part;
-        const exists = await fetch(
+        currentPath += '/' + part;
+        const check = await fetch(
             `https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(currentPath)}`,
             { headers: { 'Authorization': `OAuth ${token}` } }
         );
-        if (exists.status === 404) {
+        if (check.status === 404) {
+            // Папки не существует – пытаемся создать
             const create = await fetch(
                 `https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(currentPath)}`,
                 { method: 'PUT', headers: { 'Authorization': `OAuth ${token}` } }
             );
-            // 409 означает, что папка уже существует (создана параллельно)
+            // 409 означает, что папка уже создана (например, параллельным запросом) – это нормально
             if (!create.ok && create.status !== 409) {
-                notify('Ошибка создания папки. Проверьте права приложения.', 'error');
+                notify('Ошибка создания папки «' + part + '». Проверьте права приложения.', 'error');
                 return null;
             }
-        } else if (exists.status === 403) {
-            notify('Нет доступа к Яндекс.Диску. Авторизуйтесь заново.', 'error');
-            DB.setToken(null);
+        } else if (check.status === 423) {
+            // Папка приложения заблокирована – её нужно создать вручную
+            notify('Папка «' + part + '» заблокирована. Создайте её вручную на Яндекс.Диске (раздел Приложения).', 'error');
             return null;
         }
-        // 200 – папка существует, идём дальше
     }
 
-    // Создаём папку пациента (если не существует)
+    // Создаём папку пациента
     const patientFolder = `${SHARED_FOLDER_PATH}/${patientName}`;
     const r = await fetch(
         `https://cloud-api.yandex.net/v1/disk/resources?path=${encodeURIComponent(patientFolder)}`,
@@ -297,7 +298,6 @@ async function uploadToYandex(fileName, blob, patientName) {
     if (!folder) return;
 
     const filePath = `${folder}/${fileName}`;
-    // Запрашиваем URL для загрузки
     const resp = await fetch(
         `https://cloud-api.yandex.net/v1/disk/resources/upload?path=${encodeURIComponent(filePath)}&overwrite=true`,
         { headers: { 'Authorization': `OAuth ${token}` } }
@@ -307,8 +307,6 @@ async function uploadToYandex(fileName, blob, patientName) {
         return;
     }
     const { href } = await resp.json();
-
-    // Отправляем файл на полученный URL
     const upload = await fetch(href, { method: 'PUT', body: blob });
     if (upload.ok) {
         notify('Файл загружен в облако');
