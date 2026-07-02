@@ -91,14 +91,19 @@
                 lab: { url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d', fields: { patient: 'answer_short_text_9008982244487744', date: 'answer_short_text_9008982244495464', testName: 'answer_short_text_9008982244541872', result: 'answer_short_text_9008982244551234', unit: 'answer_short_text_9008982244565678', normal: 'answer_short_text_9008982244578901', notes: 'answer_long_text_9008982244582345' } },
                 timeline: { url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d', fields: { patient: 'answer_short_text_9008982244565458', date: 'answer_short_text_9008982244572784', event: 'answer_short_text_9008982244586536', description: 'answer_long_text_9008982244595120' } }
             };
-            const DB = {
+             const DB = {
                 get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
                 set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
-                getProfile() { return this.get('profile'); }, setProfile(p) { this.set('profile', p); },
-                getData(type) { return this.get(`data_${type}`) || []; }, saveData(type, data) { this.set(`data_${type}`, data); },
-                getMeds() { return this.get('medications') || []; }, saveMeds(meds) { this.set('medications', meds); },
-                getAllPatients() { return this.get('all_patients') || {}; }, saveAllPatients(all) { this.set('all_patients', all); },
-                getDoctorPatients() { return this.get('doctor_patients') || []; }, saveDoctorPatients(list) { this.set('doctor_patients', list); }
+                getProfile() { return this.get('profile'); },
+                setProfile(p) { this.set('profile', p); },
+                getData(type) { try { const data = this.get(`data_${type}`); return Array.isArray(data) ? data : []; } catch(e) { return []; } },
+                saveData(type, data) { this.set(`data_${type}`, data); },
+                getMeds() { try { const meds = this.get('medications'); return Array.isArray(meds) ? meds : []; } catch(e) { return []; } },
+                saveMeds(meds) { this.set('medications', meds); },
+                getAllPatients() { try { const all = this.get('all_patients'); return all && typeof all === 'object' ? all : {}; } catch(e) { return {}; } },
+                saveAllPatients(all) { this.set('all_patients', all); },
+                getDoctorPatients() { try { const list = this.get('doctor_patients'); return Array.isArray(list) ? list : []; } catch(e) { return []; } },
+                saveDoctorPatients(list) { this.set('doctor_patients', list); }
             };
             let profile = DB.getProfile();
             let clockTimer = null;
@@ -121,7 +126,7 @@
                 }
                 const baseUrl = config.url.split('?')[0];
                 window.open(`${baseUrl}?${params.toString()}`, '_blank');
-                notify('Форма открыта в новой вкладке. Проверьте данные и нажмите «Отправить».', 'info');
+                notify('Форма открыта в новой вкладке. Проверьте данные и нажмите «Отправить». После отправки закройте вкладку.', 'info');
             }
             async function sendToGoogleSheet(data) { try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' }, mode: 'no-cors' }); } catch(e) {} }
             function saveLocally(type, data) { const today = new Date().toISOString().split('T')[0]; const existing = DB.getData(type); existing.push({ date: today, ...data }); DB.saveData(type, existing); }
@@ -427,8 +432,28 @@
                 if (countEl) countEl.textContent = q ? `Найдено: ${visible}` : `Всего вопросов: ${document.querySelectorAll('#faqGrid .faq-item').length}`;
             };
 
-            function renderSupport() { return `<h2>❤️ Фонд «Круг добра»</h2><div class="card"><p><i class="bi bi-telephone"></i> 8 (800) 201-62-26</p><a href="https://фондкругдобра.рф/" target="_blank" class="btn btn-primary me-2">Перейти на сайт</a><a href="https://cr.minzdrav.gov.ru/" target="_blank" class="btn btn-outline me-2">Рубрикатор КР</a><a href="https://rcpcf.ru/" target="_blank" class="btn btn-outline">rcpcf.ru</a></div>`; }
-
+           function renderSupport() {
+                return `<h2>❤️ Поддержка и фонды</h2>
+                <div class="card mb-3">
+                    <h5><i class="bi bi-heart-pulse"></i> Благотворительный фонд «Детский паллиатив»</h5>
+                    <p>Фонд оказывает всестороннюю помощь детям с неизлечимыми заболеваниями и их семьям: медицинскую, психологическую, социальную и духовную поддержку.</p>
+                    <ul>
+                        <li><strong>Телефон горячей линии:</strong> 8 (800) 555-70-11</li>
+                        <li><strong>Сайт:</strong>  <a href="https://rcpcf.ru/" target="_blank" class="btn btn-outline">rcpcf.ru</a>
+                    </ul>
+                    <a href="https://rcpcf.ru" target="_blank" class="btn btn-primary me-2">Перейти на сайт</a>
+                </div>
+                <div class="card mb-3">
+                    <h5><i class="bi bi-hospital"></i> Фонд «Круг добра»</h5>
+                    <p>Обеспечивает лекарствами детей с орфанными заболеваниями по всей России.</p>
+                    <p><i class="bi bi-telephone"></i> 8 (800) 201-62-26</p>
+                    <a href="https://фондкругдобра.рф/" target="_blank" class="btn btn-primary me-2">Перейти на сайт</a>
+                </div>
+                <div class="card mb-3">
+                    <h5>Полезные ресурсы</h5>
+                    <a href="https://cr.minzdrav.gov.ru/" target="_blank" class="btn btn-outline me-2">Рубрикатор КР</a>
+                </div>`;
+            }
             function initClock() { const update = () => { const now = new Date(); const c = document.getElementById('liveClock'), d = document.getElementById('liveDate'); if(c) c.textContent = now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); if(d) d.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }; update(); if(clockTimer)clearInterval(clockTimer); clockTimer = setInterval(update, 1000); }
             function initCalendar() { const cal = document.getElementById('miniCalendar'); if(!cal)return; const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']; const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const diary = DB.getData('diary'); const palliative = DB.getData('palliative'); const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]); let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`; for(let i=1;i<fd;i++)h+='<td></td>'; for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>'; const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; h+=`<td class="${d===now.getDate()?'today':''} ${allDates.has(dateStr)?'has-entry':''}">${d}</td>`;} h+='</tr></table>'; cal.innerHTML = h; }
 
