@@ -117,15 +117,19 @@
                 set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
                 getProfile() { return this.get('profile'); },
                 setProfile(p) { this.set('profile', p); },
-                getData(type) { return this.get(`data_${type}`) || []; },
+                getData(type) { try { const data = this.get(`data_${type}`); return Array.isArray(data) ? data : []; } catch(e) { return []; } },
                 saveData(type, data) { this.set(`data_${type}`, data); },
-                getMeds() { return this.get('medications') || []; },
+                getMeds() { try { const meds = this.get('medications'); return Array.isArray(meds) ? meds : []; } catch(e) { return []; } },
                 saveMeds(meds) { this.set('medications', meds); },
-                getPatients() { return this.get('doctor_patients') || []; },
-                savePatients(patients) { this.set('doctor_patients', patients); },
-                getAllPatients() { return this.get('all_patients') || {}; },
-                saveAllPatients(all) { this.set('all_patients', all); }
+                getAllPatients() { try { const all = this.get('all_patients'); return all && typeof all === 'object' ? all : {}; } catch(e) { return {}; } },
+                saveAllPatients(all) { this.set('all_patients', all); },
+                getDoctorPatients() { try { const list = this.get('doctor_patients'); return Array.isArray(list) ? list : []; } catch(e) { return []; } },
+                saveDoctorPatients(list) { this.set('doctor_patients', list); }
             };
+            let profile = DB.getProfile();
+            let clockTimer = null;
+            let darkTheme = localStorage.getItem('darkTheme') === 'true';
+            if (darkTheme) document.body.classList.add('dark-theme');
 
             let profile = DB.getProfile();
             let clockTimer = null;
@@ -150,18 +154,18 @@
                 } catch(e) { console.error('Ошибка отправки в таблицу:', e); }
             }
 
-            function openYandexForm(formType, data) {
+         function openYandexForm(formType, data) {
                 const config = YANDEX_FORMS[formType];
-                if (!config) return notify('Форма не настроена', 'error');
-                const today = new Date().toISOString().split('T')[0];
+                if (!config) { notify('Форма не настроена', 'error'); return; }
                 const params = new URLSearchParams();
                 params.append(config.fields.patient, profile.fullName);
-                params.append(config.fields.date, today);
+                params.append(config.fields.date, new Date().toISOString().split('T')[0]);
                 for (const [key, value] of Object.entries(data)) {
-                    if (config.fields[key]) params.append(config.fields[key], value);
+                    if (config.fields[key] && value !== undefined && value !== null) params.append(config.fields[key], value);
                 }
-                window.open(config.url + '&' + params.toString(), '_blank');
-                notify('Форма открыта. Проверьте данные и нажмите «Отправить».');
+                const baseUrl = config.url.split('?')[0];
+                window.open(`${baseUrl}?${params.toString()}`, '_blank');
+                notify('Форма открыта в новой вкладке. Проверьте данные и нажмите «Отправить». После отправки закройте вкладку.', 'info');
             }
 
             function saveLocally(type, data) {
