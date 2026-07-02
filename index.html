@@ -128,7 +128,21 @@
                 window.open(`${baseUrl}?${params.toString()}`, '_blank');
                 notify('Форма открыта в новой вкладке. Проверьте данные и нажмите «Отправить». После отправки закройте вкладку.', 'info');
             }
-            async function sendToGoogleSheet(data) { try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' }, mode: 'no-cors' }); } catch(e) {} }
+            async function sendToGoogleSheet(data) {
+  try {
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = await response.text(); // или response.json()
+    console.log('Успешно отправлено:', result);
+  } catch (error) {
+    console.error('Ошибка отправки:', error);
+    // можно показать уведомление пользователю
+  }
+}
             function saveLocally(type, data) { const today = new Date().toISOString().split('T')[0]; const existing = DB.getData(type); existing.push({ date: today, ...data }); DB.saveData(type, existing); }
             function registerPatientIfNeeded(patientName) { const all = DB.getAllPatients(); if (!all[patientName]) { all[patientName] = { fullName: patientName, firstSeen: new Date().toLocaleDateString('ru-RU'), birthDate: '', age: '', diagnosis: '', lastUpdate: new Date().toLocaleString('ru-RU'), diaryCount:0, palliativeCount:0, medsCount:0, nutritionCount:0, labCount:0, timelineCount:0 }; DB.saveAllPatients(all); } return all[patientName]; }
             function updatePatientStats(patientName, field) { const all = DB.getAllPatients(); if (all[patientName]) { all[patientName][field] = (all[patientName][field]||0) + 1; all[patientName].lastUpdate = new Date().toLocaleString('ru-RU'); DB.saveAllPatients(all); } }
@@ -176,7 +190,39 @@
                 }
             }
 
-            async function render() { await updateNav(); const page = location.hash.slice(1) || '/'; const app = document.getElementById('app'); if (!app) return; if (!profile && !['/', '/login', '/reference', '/faq', '/genetics', '/support'].includes(page)) { App.navigate('/login'); return; } switch (page) { case '/': app.innerHTML = renderWelcome(); break; case '/login': app.innerHTML = renderLogin(); setupLogin(); break; case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break; case '/diary': app.innerHTML = await renderDiary(); break; case '/palliative': app.innerHTML = await renderPalliative(); break; case '/medications': app.innerHTML = await renderMedications(); break; case '/nutrition': app.innerHTML = await renderNutrition(); break; case '/lab': app.innerHTML = await renderLab(); break; case '/timeline': app.innerHTML = await renderTimeline(); break; case '/patients': app.innerHTML = await renderPatients(); break; case '/analytics': app.innerHTML = await renderAnalytics(); break; case '/reference': app.innerHTML = renderReference(); setupReference(); break; case '/genetics': app.innerHTML = renderGenetics(); setupGenetics(); break; case '/faq': app.innerHTML = renderFAQ(); break; case '/support': app.innerHTML = renderSupport(); break; default: app.innerHTML = '<h2 class="text-center mt-5">404</h2>'; } }
+            async function render() {
+                await updateNav();
+                const page = location.hash.slice(1) || '/';
+                const app = document.getElementById('app');
+                if (!app) return;
+                if (!profile && !['/', '/login', '/reference', '/faq', '/genetics', '/support', '/diary', '/palliative', '/medications', '/nutrition', '/lab', '/timeline', '/patients', '/analytics'].includes(page)) {
+                    App.navigate('/login');
+                    return;
+                }
+                try {
+                    switch (page) {
+                        case '/': app.innerHTML = renderWelcome(); break;
+                        case '/login': app.innerHTML = renderLogin(); setupLogin(); break;
+                        case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break;
+                        case '/diary': app.innerHTML = await renderDiary(); break;
+                        case '/palliative': app.innerHTML = await renderPalliative(); break;
+                        case '/medications': app.innerHTML = await renderMedications(); break;
+                        case '/nutrition': app.innerHTML = await renderNutrition(); break;
+                        case '/lab': app.innerHTML = await renderLab(); break;
+                        case '/timeline': app.innerHTML = await renderTimeline(); break;
+                        case '/patients': app.innerHTML = await renderPatients(); break;
+                        case '/analytics': app.innerHTML = await renderAnalytics(); break;
+                        case '/reference': app.innerHTML = renderReference(); setupReference(); break;
+                        case '/genetics': app.innerHTML = renderGenetics(); setupGenetics(); break;
+                        case '/faq': app.innerHTML = renderFAQ(); break;
+                        case '/support': app.innerHTML = renderSupport(); break;
+                        default: app.innerHTML = '<h2 class="text-center mt-5">404</h2>';
+                    }
+                } catch (e) {
+                    app.innerHTML = `<div class="alert alert-danger">Произошла ошибка при загрузке страницы. Попробуйте перезагрузить приложение или очистить кэш браузера.<br><small>${esc(e.message)}</small></div>`;
+                    console.error(e);
+                }
+            }
 
             function renderWelcome() { return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1><p class="hero-subtitle">Современный инструмент для ведения дневника здоровья и обмена данными с врачом</p><button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`; }
             function renderLogin() { return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4"><div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person-badge"></i> Врач</h4><input id="docName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="docCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i></div><button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button></div></div><div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person"></i> Пациент</h4><input id="patName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="patCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i></div><button class="btn btn-success w-100 mt-2" id="patientBtn">Войти как пациент</button></div></div></div></div>`; }
