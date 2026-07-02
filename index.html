@@ -70,7 +70,7 @@
     <script>
         (function() {
             // ═══════════════ НАСТРОЙКИ ═══════════════
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2kflA2T5B8XZ4HhN5jQ8t9uV3rL6mN1pR4sX8/exec';
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyh6UqZnYsplMUEyGetAzgSc4rAbn4IJRoLD_qNsINAXuHk_Bq-1I5y8QufPmM_P3ZjEg/exec';
             const SPREADSHEET_ID = '1r6wC1EEVXeBN6tymsg-J4aKBITtIwtgHkZEfoRsXFOk';
 
             const YANDEX_FORMS = {
@@ -437,9 +437,9 @@
                 return `<h2>📈 Аналитика</h2>
                 <div class="card mb-3">
                     <h5>📊 Единая таблица ответов</h5>
-                    <p>Все данные из форм собираются в одну Google Таблицу. Вы можете открыть её или скачать актуальный Excel.</p>
+                    <p>Все данные из форм собираются в одну Google Таблицу.</p>
                     <a href="https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit" target="_blank" class="btn btn-outline me-2">📂 Открыть таблицу</a>
-                    <button class="btn btn-success" onclick="window.open('${GOOGLE_SCRIPT_URL}', '_blank')">📥 Скачать Excel</button>
+                    <a href="https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=xlsx" target="_blank" class="btn btn-success">📥 Скачать Excel</a>
                 </div>
                 <div class="card">
                     <h5>📤 Загрузить локальный Excel</h5>
