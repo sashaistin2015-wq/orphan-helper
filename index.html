@@ -69,71 +69,37 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
         (function() {
-            // ═══════════════ НАСТРОЙКИ ЯНДЕКС.ФОРМ ═══════════════
+            // ═══════════════ НАСТРОЙКИ ═══════════════
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2kflA2T5B8XZ4HhN5jQ8t9uV3rL6mN1pR4sX8/exec';
+            const SPREADSHEET_ID = '1r6wC1EEVXeBN6tymsg-J4aKBITtIwtgHkZEfoRsXFOk';
+
             const YANDEX_FORMS = {
-    diary: {
-        url: 'https://forms.yandex.ru/u/6a4640fbe010db3111be4d8d?iframe=true',
-        fields: { 
-            patient: 'answer_short_text_9008982243801472', 
-            date: 'answer_short_text_9008982243933814', 
-            temperature: 'answer_short_text_9008982243865188', 
-            pressure: 'answer_short_text_9008982243959294', 
-            weight: 'answer_short_text_9008982243970860', 
-            wellbeing: 'answer_short_text_9008982243981124', 
-            symptoms: 'answer_short_text_9008982243992044' 
-        }
-    },
-    palliative: {
-        url: 'https://forms.yandex.ru/u/6a46420d90290233739cb2dc?iframe=true',
-        fields: { 
-            patient: 'answer_short_text_9008982244078472', 
-            date: 'answer_short_text_9008982244090874', 
-            pain: 'answer_short_text_9008982244099538', 
-            nausea: 'answer_short_text_9008982244111466', 
-            appetite: 'answer_short_text_9008982244119952', 
-            sleep: 'answer_short_text_9008982244127712', 
-            mood: 'answer_short_text_9008982244137858', 
-            dyspnea: 'answer_short_text_9008982244146280', 
-            fatigue: 'answer_short_text_9008982244158842', 
-            quality: 'answer_short_text_9008982244166458' 
-        }
-    },
-    medications: {
-        url: 'https://forms.yandex.ru/u/6a46429602848f32aa3c608c?iframe=true',
-        fields: { 
-            patient: 'answer_short_text_9008982244205454', 
-            date: 'answer_short_text_9008982244229810', 
-            name: 'answer_short_text_9008982244236874', 
-            dosage: 'answer_short_text_9008982244244130', 
-            time: 'answer_short_text_9008982244252698' 
-        }
-    },
-    nutrition: {
-        url: 'https://forms.yandex.ru/u/6a46432e90fa7b3dcf51f634?iframe=true',
-        fields: { 
-            patient: 'answer_short_text_9008982244365004', 
-            date: 'answer_short_text_9008982244372442', 
-            calories: 'answer_short_text_9008982244387096', 
-            protein: 'answer_short_text_9008982244400456', 
-            fat: 'answer_short_text_9008982244408464', 
-            carbs: 'answer_short_text_9008982244414128', 
-            notes: 'answer_short_text_9008982244427000' 
-        }
-    },
-    lab: {
-        url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d?iframe=true',
-                    fields: { patient: 'answer_short_text_9008982244487744', date: 'answer_short_text_9008982244495464', testName: 'answer_short_text_9008982244541872', result: 'answer_short_text_9008982244541872', unit: 'answer_short_text_9008982244541872', normal: 'answer_short_text_9008982244541872', notes: 'answer_short_text_9008982244541872' }
+                diary: {
+                    url: 'https://forms.yandex.ru/u/6a4640fbe010db3111be4d8d?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982243801472', date: 'answer_short_text_9008982243933814', temperature: 'answer_short_text_9008982243865188', pressure: 'answer_short_text_9008982243959294', weight: 'answer_short_text_9008982243970860', wellbeing: 'answer_short_text_9008982243981124', symptoms: 'answer_short_text_9008982243992044' }
                 },
-             timeline: {
-        url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d?iframe=true',
-        fields: { 
-            patient: 'answer_short_text_9008982244565458', 
-            date: 'answer_short_text_9008982244572784', 
-            event: 'answer_short_text_9008982244586536', 
-            description: 'answer_long_text_9008982244595120' 
-        }
-    }
-};
+                palliative: {
+                    url: 'https://forms.yandex.ru/u/6a46420d90290233739cb2dc?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244078472', date: 'answer_short_text_9008982244090874', pain: 'answer_short_text_9008982244099538', nausea: 'answer_short_text_9008982244111466', appetite: 'answer_short_text_9008982244119952', sleep: 'answer_short_text_9008982244127712', mood: 'answer_short_text_9008982244137858', dyspnea: 'answer_short_text_9008982244146280', fatigue: 'answer_short_text_9008982244158842', quality: 'answer_short_text_9008982244166458' }
+                },
+                medications: {
+                    url: 'https://forms.yandex.ru/u/6a46429602848f32aa3c608c?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244205454', date: 'answer_short_text_9008982244229810', name: 'answer_short_text_9008982244236874', dosage: 'answer_short_text_9008982244244130', time: 'answer_short_text_9008982244252698' }
+                },
+                nutrition: {
+                    url: 'https://forms.yandex.ru/u/6a46432e90fa7b3dcf51f634?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244365004', date: 'answer_short_text_9008982244372442', calories: 'answer_short_text_9008982244387096', protein: 'answer_short_text_9008982244400456', fat: 'answer_short_text_9008982244408464', carbs: 'answer_short_text_9008982244414128', notes: 'answer_short_text_9008982244427000' }
+                },
+                lab: {
+                    url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244487744', date: 'answer_short_text_9008982244495464', testName: 'answer_short_text_9008982244541872', result: 'answer_short_text_9008982244551234', unit: 'answer_short_text_9008982244565678', normal: 'answer_short_text_9008982244578901', notes: 'answer_long_text_9008982244582345' }
+                },
+                timeline: {
+                    url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244565458', date: 'answer_short_text_9008982244572784', event: 'answer_short_text_9008982244586536', description: 'answer_long_text_9008982244595120' }
+                }
+            };
+
             const DB = {
                 get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
                 set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
@@ -142,7 +108,9 @@
                 getData(type) { return this.get(`data_${type}`) || []; },
                 saveData(type, data) { this.set(`data_${type}`, data); },
                 getMeds() { return this.get('medications') || []; },
-                saveMeds(meds) { this.set('medications', meds); }
+                saveMeds(meds) { this.set('medications', meds); },
+                getPatients() { return this.get('doctor_patients') || []; },
+                savePatients(patients) { this.set('doctor_patients', patients); }
             };
 
             let profile = DB.getProfile();
@@ -156,6 +124,17 @@
             };
             const esc = s => { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; };
             const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+            async function sendToGoogleSheet(data) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(data),
+                        headers: { 'Content-Type': 'application/json' },
+                        mode: 'no-cors'
+                    });
+                } catch(e) { console.error('Ошибка отправки в таблицу:', e); }
+            }
 
             function openYandexForm(formType, data) {
                 const config = YANDEX_FORMS[formType];
@@ -240,7 +219,7 @@
 
             function renderWelcome() {
                 return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1>
-                <p class="hero-subtitle">Заполняйте модули, сохраняйте локально и отправляйте врачу через Яндекс.Формы</p>
+                <p class="hero-subtitle">Заполняйте модули, сохраняйте локально и отправляйте врачу через Яндекс.Формы и Google Таблицу</p>
                 <button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`;
             }
 
@@ -300,7 +279,13 @@
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
             window.saveDiaryLocally = function() { const f = document.getElementById('diaryForm'); if(f) { saveLocally('diary', { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value }); render(); } };
-            window.sendDiary = function() { const f = document.getElementById('diaryForm'); if(f) openYandexForm('diary', { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value }); };
+            window.sendDiary = function() {
+                const f = document.getElementById('diaryForm');
+                if(!f) return;
+                const data = { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value };
+                openYandexForm('diary', data);
+                sendToGoogleSheet({ form_name: 'Дневник', patient: profile.fullName, ...data });
+            };
 
             // ═══════════════ ПАЛЛИАТИВ ═══════════════
             async function renderPalliative() {
@@ -315,7 +300,13 @@
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
             window.savePalliativeLocally = function() { const f = document.getElementById('pallForm'); if(f) { const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value); saveLocally('palliative', d); render(); } };
-            window.sendPalliative = function() { const f = document.getElementById('pallForm'); if(f) { const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value); openYandexForm('palliative', d); } };
+            window.sendPalliative = function() {
+                const f = document.getElementById('pallForm');
+                if(!f) return;
+                const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value);
+                openYandexForm('palliative', d);
+                sendToGoogleSheet({ form_name: 'Паллиатив', patient: profile.fullName, ...d });
+            };
 
             // ═══════════════ ЛЕКАРСТВА ═══════════════
             async function renderMedications() {
@@ -329,7 +320,13 @@
                 </form></div>${list || '<p>Нет лекарств</p>'}
                 <button class="btn btn-success w-100 mt-3" onclick="sendMeds()">📤 Отправить список врачу</button>`;
             }
-            window.sendMeds = function() { const meds = DB.getMeds(); meds.forEach(m => openYandexForm('medications', { name: m.name, dosage: m.dosage, time: m.time })); };
+            window.sendMeds = function() {
+                const meds = DB.getMeds();
+                meds.forEach(m => {
+                    openYandexForm('medications', { name: m.name, dosage: m.dosage, time: m.time });
+                    sendToGoogleSheet({ form_name: 'Лекарства', patient: profile.fullName, med_name: m.name, dosage: m.dosage, med_time: m.time });
+                });
+            };
             document.addEventListener('submit', (e) => { if(e.target.id === 'medsForm') { e.preventDefault(); const f = e.target; const meds = DB.getMeds(); meds.push({ name: f.name.value, dosage: f.dosage.value, time: f.time.value }); DB.saveMeds(meds); f.reset(); render(); notify('Лекарство добавлено'); } });
 
             // ═══════════════ ПИТАНИЕ ═══════════════
@@ -348,7 +345,13 @@
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
             window.saveNutritionLocally = function() { const f = document.getElementById('nutrForm'); if(f) { saveLocally('nutrition', { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value }); render(); } };
-            window.sendNutrition = function() { const f = document.getElementById('nutrForm'); if(f) openYandexForm('nutrition', { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value }); };
+            window.sendNutrition = function() {
+                const f = document.getElementById('nutrForm');
+                if(!f) return;
+                const data = { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value };
+                openYandexForm('nutrition', data);
+                sendToGoogleSheet({ form_name: 'Питание', patient: profile.fullName, ...data });
+            };
 
             // ═══════════════ АНАЛИЗЫ ═══════════════
             async function renderLab() {
@@ -366,7 +369,13 @@
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
             window.saveLabLocally = function() { const f = document.getElementById('labForm'); if(f) { saveLocally('lab', { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value }); render(); } };
-            window.sendLab = function() { const f = document.getElementById('labForm'); if(f) openYandexForm('lab', { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value }); };
+            window.sendLab = function() {
+                const f = document.getElementById('labForm');
+                if(!f) return;
+                const data = { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value };
+                openYandexForm('lab', data);
+                sendToGoogleSheet({ form_name: 'Анализы', patient: profile.fullName, ...data });
+            };
 
             // ═══════════════ ТАЙМЛАЙН ═══════════════
             async function renderTimeline() {
@@ -382,11 +391,80 @@
                 <div class="card mt-3"><h5>📊 История событий</h5>${histHtml || '<p class="text-muted">Нет событий</p>'}</div>`;
             }
             window.saveTimelineLocally = function() { const f = document.getElementById('tlForm'); if(f) { saveLocally('timeline', { event: f.event.value, description: f.description.value }); render(); } };
-            window.sendTimeline = function() { const f = document.getElementById('tlForm'); if(f) openYandexForm('timeline', { event: f.event.value, description: f.description.value }); };
+            window.sendTimeline = function() {
+                const f = document.getElementById('tlForm');
+                if(!f) return;
+                const data = { event: f.event.value, description: f.description.value };
+                openYandexForm('timeline', data);
+                sendToGoogleSheet({ form_name: 'Таймлайн', patient: profile.fullName, ...data });
+            };
 
-            // Остальные страницы
-            async function renderPatients() { return '<h2>👥 Пациенты</h2><p>Список пациентов, отправивших данные через формы.</p>'; }
-            async function renderAnalytics() { return '<h2>📈 Аналитика</h2><p>Перейдите в Яндекс.Таблицы, связанные с формами, для просмотра данных.</p>'; }
+            // ═══════════════ ПАЦИЕНТЫ (ДЛЯ ВРАЧА) ═══════════════
+            async function renderPatients() {
+                if (profile.role !== 'doctor') return '<p>Только для врачей</p>';
+                const patients = DB.getPatients();
+                let list = patients.map(p => `<div class="card mb-2 d-flex justify-content-between"><span>${esc(p)}</span><button class="btn btn-sm btn-danger" onclick="removePatient('${p}')">🗑️</button></div>`).join('');
+                return `<h2>👥 Мои пациенты</h2>
+                <div class="card"><form id="addPatientForm">
+                    <input name="name" class="form-control" placeholder="ФИО пациента">
+                    <button type="submit" class="btn btn-primary w-100 mt-2">➕ Добавить</button>
+                </form></div>
+                ${list || '<p class="text-muted">Нет пациентов</p>'}`;
+            }
+            window.removePatient = function(name) {
+                let patients = DB.getPatients();
+                patients = patients.filter(p => p !== name);
+                DB.savePatients(patients);
+                render();
+            };
+            document.addEventListener('submit', (e) => {
+                if (e.target.id === 'addPatientForm') {
+                    e.preventDefault();
+                    const name = e.target.name.value.trim();
+                    if (!name) return;
+                    let patients = DB.getPatients();
+                    if (!patients.includes(name)) {
+                        patients.push(name);
+                        DB.savePatients(patients);
+                        render();
+                    } else notify('Пациент уже в списке', 'warning');
+                }
+            });
+
+            // ═══════════════ АНАЛИТИКА (ДЛЯ ВРАЧА) ═══════════════
+            async function renderAnalytics() {
+                if (profile.role !== 'doctor') return '<p>Только для врачей</p>';
+                return `<h2>📈 Аналитика</h2>
+                <div class="card mb-3">
+                    <h5>📊 Единая таблица ответов</h5>
+                    <p>Все данные из форм собираются в одну Google Таблицу. Вы можете открыть её или скачать актуальный Excel.</p>
+                    <a href="https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit" target="_blank" class="btn btn-outline me-2">📂 Открыть таблицу</a>
+                    <button class="btn btn-success" onclick="window.open('${GOOGLE_SCRIPT_URL}', '_blank')">📥 Скачать Excel</button>
+                </div>
+                <div class="card">
+                    <h5>📤 Загрузить локальный Excel</h5>
+                    <input type="file" id="localExcel" accept=".xlsx,.xls" class="form-control mb-2">
+                    <button class="btn btn-primary" onclick="loadLocalExcel()">Показать данные</button>
+                    <div id="excelPreview" class="mt-3"></div>
+                </div>`;
+            }
+            window.loadLocalExcel = function() {
+                const file = document.getElementById('localExcel')?.files[0];
+                if (!file) return notify('Выберите файл', 'error');
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const wb = XLSX.read(e.target.result, { type: 'array' });
+                    let html = '';
+                    wb.SheetNames.forEach(name => {
+                        const ws = wb.Sheets[name];
+                        html += `<h6>${name}</h6><div class="table-responsive">${XLSX.utils.sheet_to_html(ws)}</div>`;
+                    });
+                    document.getElementById('excelPreview').innerHTML = html;
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            // ═══════════════ ОСТАЛЬНЫЕ СТРАНИЦЫ ═══════════════
             function renderReference() {
                 const diseases = [
                     { name:'Муковисцидоз', icd:'E84', desc:'Поражение экзокринных желез' },
@@ -423,7 +501,7 @@
             }
             function renderFAQ() {
                 const faq = [
-                    { q:'Как передать данные врачу?', a:'Нажмите «Отправить врачу» – откроется Яндекс.Форма с заполненными данными. Проверьте и нажмите «Отправить» в форме.' },
+                    { q:'Как передать данные врачу?', a:'Нажмите «Отправить врачу» – откроется Яндекс.Форма с заполненными данными. Данные также автоматически попадают в Google Таблицу.' },
                     { q:'Где хранятся мои данные?', a:'Все записи сохраняются локально в вашем браузере. История видна в каждом модуле.' }
                 ];
                 return `<h2>❓ FAQ</h2>${faq.map(f => `<div class="faq-item" onclick="this.querySelector('.a').style.display=this.querySelector('.a').style.display==='block'?'none':'block'"><h6>${f.q}</h6><p class="a text-muted" style="display:none">${f.a}</p></div>`).join('')}`;
