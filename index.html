@@ -80,76 +80,133 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        (function() {
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2kflA2T5B8XZ4HhN5jQ8t9uV3rL6mN1pR4sX8/exec';
+         (function() {
+            // ═══════════════ НАСТРОЙКИ ═══════════════
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyh6UqZnYsplMUEyGetAzgSc4rAbn4IJRoLD_qNsINAXuHk_Bq-1I5y8QufPmM_P3ZjEg/exec';
             const SPREADSHEET_ID = '1r6wC1EEVXeBN6tymsg-J4aKBITtIwtgHkZEfoRsXFOk';
+
             const YANDEX_FORMS = {
-                diary: { url: 'https://forms.yandex.ru/u/6a4640fbe010db3111be4d8d', fields: { patient: 'answer_short_text_9008982243801472', date: 'answer_short_text_9008982243933814', temperature: 'answer_short_text_9008982243865188', pressure: 'answer_short_text_9008982243959294', weight: 'answer_short_text_9008982243970860', wellbeing: 'answer_short_text_9008982243981124', symptoms: 'answer_short_text_9008982243992044' } },
-                palliative: { url: 'https://forms.yandex.ru/u/6a46420d90290233739cb2dc', fields: { patient: 'answer_short_text_9008982244078472', date: 'answer_short_text_9008982244090874', pain: 'answer_short_text_9008982244099538', nausea: 'answer_short_text_9008982244111466', appetite: 'answer_short_text_9008982244119952', sleep: 'answer_short_text_9008982244127712', mood: 'answer_short_text_9008982244137858', dyspnea: 'answer_short_text_9008982244146280', fatigue: 'answer_short_text_9008982244158842', quality: 'answer_short_text_9008982244166458' } },
-                medications: { url: 'https://forms.yandex.ru/u/6a46429602848f32aa3c608c', fields: { patient: 'answer_short_text_9008982244205454', date: 'answer_short_text_9008982244229810', name: 'answer_short_text_9008982244236874', dosage: 'answer_short_text_9008982244244130', time: 'answer_short_text_9008982244252698' } },
-                nutrition: { url: 'https://forms.yandex.ru/u/6a46432e90fa7b3dcf51f634', fields: { patient: 'answer_short_text_9008982244365004', date: 'answer_short_text_9008982244372442', calories: 'answer_short_text_9008982244387096', protein: 'answer_short_text_9008982244400456', fat: 'answer_short_text_9008982244408464', carbs: 'answer_short_text_9008982244414128', notes: 'answer_short_text_9008982244427000' } },
-                lab: { url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d', fields: { patient: 'answer_short_text_9008982244487744', date: 'answer_short_text_9008982244495464', testName: 'answer_short_text_9008982244541872', result: 'answer_short_text_9008982244551234', unit: 'answer_short_text_9008982244565678', normal: 'answer_short_text_9008982244578901', notes: 'answer_long_text_9008982244582345' } },
-                timeline: { url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d', fields: { patient: 'answer_short_text_9008982244565458', date: 'answer_short_text_9008982244572784', event: 'answer_short_text_9008982244586536', description: 'answer_long_text_9008982244595120' } }
+                diary: {
+                    url: 'https://forms.yandex.ru/u/6a4640fbe010db3111be4d8d?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982243801472', date: 'answer_short_text_9008982243933814', temperature: 'answer_short_text_9008982243865188', pressure: 'answer_short_text_9008982243959294', weight: 'answer_short_text_9008982243970860', wellbeing: 'answer_short_text_9008982243981124', symptoms: 'answer_short_text_9008982243992044' }
+                },
+                palliative: {
+                    url: 'https://forms.yandex.ru/u/6a46420d90290233739cb2dc?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244078472', date: 'answer_short_text_9008982244090874', pain: 'answer_short_text_9008982244099538', nausea: 'answer_short_text_9008982244111466', appetite: 'answer_short_text_9008982244119952', sleep: 'answer_short_text_9008982244127712', mood: 'answer_short_text_9008982244137858', dyspnea: 'answer_short_text_9008982244146280', fatigue: 'answer_short_text_9008982244158842', quality: 'answer_short_text_9008982244166458' }
+                },
+                medications: {
+                    url: 'https://forms.yandex.ru/u/6a46429602848f32aa3c608c?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244205454', date: 'answer_short_text_9008982244229810', name: 'answer_short_text_9008982244236874', dosage: 'answer_short_text_9008982244244130', time: 'answer_short_text_9008982244252698' }
+                },
+                nutrition: {
+                    url: 'https://forms.yandex.ru/u/6a46432e90fa7b3dcf51f634?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244365004', date: 'answer_short_text_9008982244372442', calories: 'answer_short_text_9008982244387096', protein: 'answer_short_text_9008982244400456', fat: 'answer_short_text_9008982244408464', carbs: 'answer_short_text_9008982244414128', notes: 'answer_short_text_9008982244427000' }
+                },
+                lab: {
+                    url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244487744', date: 'answer_short_text_9008982244495464', testName: 'answer_short_text_9008982244541872', result: 'answer_short_text_9008982244551234', unit: 'answer_short_text_9008982244565678', normal: 'answer_short_text_9008982244578901', notes: 'answer_long_text_9008982244582345' }
+                },
+                timeline: {
+                    url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244565458', date: 'answer_short_text_9008982244572784', event: 'answer_short_text_9008982244586536', description: 'answer_long_text_9008982244595120' }
+                }
             };
-             const DB = {
+
+            const DB = {
                 get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
                 set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
                 getProfile() { return this.get('profile'); },
                 setProfile(p) { this.set('profile', p); },
-                getData(type) { try { const data = this.get(`data_${type}`); return Array.isArray(data) ? data : []; } catch(e) { return []; } },
+                getData(type) { return this.get(`data_${type}`) || []; },
                 saveData(type, data) { this.set(`data_${type}`, data); },
-                getMeds() { try { const meds = this.get('medications'); return Array.isArray(meds) ? meds : []; } catch(e) { return []; } },
+                getMeds() { return this.get('medications') || []; },
                 saveMeds(meds) { this.set('medications', meds); },
-                getAllPatients() { try { const all = this.get('all_patients'); return all && typeof all === 'object' ? all : {}; } catch(e) { return {}; } },
-                saveAllPatients(all) { this.set('all_patients', all); },
-                getDoctorPatients() { try { const list = this.get('doctor_patients'); return Array.isArray(list) ? list : []; } catch(e) { return []; } },
-                saveDoctorPatients(list) { this.set('doctor_patients', list); }
+                getPatients() { return this.get('doctor_patients') || []; },
+                savePatients(patients) { this.set('doctor_patients', patients); },
+                getAllPatients() { return this.get('all_patients') || {}; },
+                saveAllPatients(all) { this.set('all_patients', all); }
             };
+
             let profile = DB.getProfile();
             let clockTimer = null;
-            let darkTheme = localStorage.getItem('darkTheme') === 'true';
-            if (darkTheme) document.body.classList.add('dark-theme');
 
-            const notify = (msg, type='success') => { const el = document.createElement('div'); el.className='toast'; if (type === 'error') el.style.background = '#ef4444'; else if (type === 'info') el.style.background = '#3b82f6'; else el.style.background = '#10b981'; el.innerHTML = msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 4000); };
-            window.notify = notify;
+            const notify = (msg, type='success') => {
+                const el = document.createElement('div'); el.className='toast';
+                el.style.background = type==='error'?'#ef4444':'#10b981';
+                el.textContent = msg; document.body.appendChild(el);
+                setTimeout(()=>el.remove(), 3000);
+            };
             const esc = s => { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; };
             const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
+            async function sendToGoogleSheet(data) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(data),
+                        headers: { 'Content-Type': 'application/json' },
+                        mode: 'no-cors'
+                    });
+                } catch(e) { console.error('Ошибка отправки в таблицу:', e); }
+            }
+
             function openYandexForm(formType, data) {
                 const config = YANDEX_FORMS[formType];
-                if (!config) { notify('Форма не настроена', 'error'); return; }
+                if (!config) return notify('Форма не настроена', 'error');
+                const today = new Date().toISOString().split('T')[0];
                 const params = new URLSearchParams();
                 params.append(config.fields.patient, profile.fullName);
-                params.append(config.fields.date, new Date().toISOString().split('T')[0]);
+                params.append(config.fields.date, today);
                 for (const [key, value] of Object.entries(data)) {
-                    if (config.fields[key] && value !== undefined && value !== null) params.append(config.fields[key], value);
+                    if (config.fields[key]) params.append(config.fields[key], value);
                 }
-                const baseUrl = config.url.split('?')[0];
-                window.open(`${baseUrl}?${params.toString()}`, '_blank');
-                notify('Форма открыта в новой вкладке. Проверьте данные и нажмите «Отправить». После отправки закройте вкладку.', 'info');
+                window.open(config.url + '&' + params.toString(), '_blank');
+                notify('Форма открыта. Проверьте данные и нажмите «Отправить».');
             }
-            async function sendToGoogleSheet(data) {
-  try {
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.text(); // или response.json()
-    console.log('Успешно отправлено:', result);
-  } catch (error) {
-    console.error('Ошибка отправки:', error);
-    // можно показать уведомление пользователю
-  }
-}
-            function saveLocally(type, data) { const today = new Date().toISOString().split('T')[0]; const existing = DB.getData(type); existing.push({ date: today, ...data }); DB.saveData(type, existing); }
-            function registerPatientIfNeeded(patientName) { const all = DB.getAllPatients(); if (!all[patientName]) { all[patientName] = { fullName: patientName, firstSeen: new Date().toLocaleDateString('ru-RU'), birthDate: '', age: '', diagnosis: '', lastUpdate: new Date().toLocaleString('ru-RU'), diaryCount:0, palliativeCount:0, medsCount:0, nutritionCount:0, labCount:0, timelineCount:0 }; DB.saveAllPatients(all); } return all[patientName]; }
-            function updatePatientStats(patientName, field) { const all = DB.getAllPatients(); if (all[patientName]) { all[patientName][field] = (all[patientName][field]||0) + 1; all[patientName].lastUpdate = new Date().toLocaleString('ru-RU'); DB.saveAllPatients(all); } }
 
-            window.App = { navigate: page => { location.hash = '#' + page; }, logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); profile = null; updateNav(); App.navigate('/'); } };
-            function toggleTheme() { document.body.classList.toggle('dark-theme'); darkTheme = !darkTheme; localStorage.setItem('darkTheme', darkTheme); }
-            window.toggleTheme = toggleTheme;
+            function saveLocally(type, data) {
+                const today = new Date().toISOString().split('T')[0];
+                const existing = DB.getData(type);
+                existing.push({ date: today, ...data });
+                DB.saveData(type, existing);
+                notify('Данные сохранены локально');
+            }
+
+            function registerPatientIfNeeded(patientName) {
+                const all = DB.getAllPatients();
+                if (!all[patientName]) {
+                    all[patientName] = {
+                        fullName: patientName,
+                        firstSeen: new Date().toLocaleDateString('ru-RU'),
+                        birthDate: '',
+                        age: '',
+                        diagnosis: '',
+                        lastUpdate: new Date().toLocaleString('ru-RU'),
+                        diaryCount: 0,
+                        palliativeCount: 0,
+                        medsCount: 0,
+                        nutritionCount: 0,
+                        labCount: 0,
+                        timelineCount: 0
+                    };
+                    DB.saveAllPatients(all);
+                }
+                return all[patientName];
+            }
+
+            function updatePatientStats(patientName, field) {
+                const all = DB.getAllPatients();
+                if (all[patientName]) {
+                    all[patientName][field] = (all[patientName][field] || 0) + 1;
+                    all[patientName].lastUpdate = new Date().toLocaleString('ru-RU');
+                    DB.saveAllPatients(all);
+                }
+            }
+
+            window.App = {
+                navigate: page => { location.hash = '#' + page; },
+                logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); profile = null; updateNav(); App.navigate('/'); }
+            };
 
             async function updateNav() {
                 const nav = document.getElementById('navMenu');
