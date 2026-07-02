@@ -71,32 +71,69 @@
         (function() {
             // ═══════════════ НАСТРОЙКИ ЯНДЕКС.ФОРМ ═══════════════
             const YANDEX_FORMS = {
-                diary: {
-                    url: 'https://forms.yandex.ru/u/6a4640fbe010db3111be4d8d?iframe=1/?iframe=true',
-                    fields: { patient: 'answer_short_text_9008982243801472', date: 'answer_short_text_9008982243933814', temperature: 'answer_short_text_9008982243865188', pressure: 'answer_short_text_9008982243959294', weight: 'answer_short_text_9008982243970860', wellbeing: 'answer_short_text_9008982243981124', symptoms: 'answer_short_text_9008982243992044' }
-                },
-                palliative: {
-                    url: 'https://forms.yandex.ru/u/6a46420d90290233739cb2dc?iframe=1/?iframe=true',
-                    fields: { patient: 'answer_short_text_9008982244078472', date: 'answer_short_text_9008982244090874', pain: 'answer_short_text_9008982244099538', nausea: 'answer_short_text_9008982244111466', appetite: 'answer_short_text_9008982244119952', sleep: 'answer_short_text_9008982244127712', mood: 'answer_short_text_9008982244137858', dyspnea: 'answer_short_text_9008982244146280', fatigue: 'answer_short_text_9008982244158842', quality: 'answer_short_text_9008982244166458' }
-                },
-                medications: {
-                    url: 'https://forms.yandex.ru/u/6a46429602848f32aa3c608c?iframe=1/?iframe=true',
-                    fields: { patient: 'answer_short_text_9008982244205454', date: 'answer_short_text_9008982244229810', name: 'answer_short_text_9008982244236874', dosage: 'answer_short_text_9008982244244130', time: 'answer_short_text_9008982244252698' }
-                },
-                nutrition: {
-                    url: 'https://forms.yandex.ru/u/6a46432e90fa7b3dcf51f634?iframe=1/?iframe=true',
-                    fields: { patient: 'answer_short_text_9008982244365004', date: 'answer_short_text_9008982244372442', calories: 'answer_short_text_9008982244387096', protein: 'answer_short_text_9008982244400456', fat: 'answer_short_text_9008982244408464', carbs: 'answer_short_text_9008982244414128', notes: 'answer_short_text_9008982244427000' }
-                },
-                lab: {
-                    url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d?iframe=1/?iframe=true',
+    diary: {
+        url: 'https://forms.yandex.ru/u/6a4640fbe010db3111be4d8d?iframe=true',
+        fields: { 
+            patient: 'answer_short_text_9008982243801472', 
+            date: 'answer_short_text_9008982243933814', 
+            temperature: 'answer_short_text_9008982243865188', 
+            pressure: 'answer_short_text_9008982243959294', 
+            weight: 'answer_short_text_9008982243970860', 
+            wellbeing: 'answer_short_text_9008982243981124', 
+            symptoms: 'answer_short_text_9008982243992044' 
+        }
+    },
+    palliative: {
+        url: 'https://forms.yandex.ru/u/6a46420d90290233739cb2dc?iframe=true',
+        fields: { 
+            patient: 'answer_short_text_9008982244078472', 
+            date: 'answer_short_text_9008982244090874', 
+            pain: 'answer_short_text_9008982244099538', 
+            nausea: 'answer_short_text_9008982244111466', 
+            appetite: 'answer_short_text_9008982244119952', 
+            sleep: 'answer_short_text_9008982244127712', 
+            mood: 'answer_short_text_9008982244137858', 
+            dyspnea: 'answer_short_text_9008982244146280', 
+            fatigue: 'answer_short_text_9008982244158842', 
+            quality: 'answer_short_text_9008982244166458' 
+        }
+    },
+    medications: {
+        url: 'https://forms.yandex.ru/u/6a46429602848f32aa3c608c?iframe=true',
+        fields: { 
+            patient: 'answer_short_text_9008982244205454', 
+            date: 'answer_short_text_9008982244229810', 
+            name: 'answer_short_text_9008982244236874', 
+            dosage: 'answer_short_text_9008982244244130', 
+            time: 'answer_short_text_9008982244252698' 
+        }
+    },
+    nutrition: {
+        url: 'https://forms.yandex.ru/u/6a46432e90fa7b3dcf51f634?iframe=true',
+        fields: { 
+            patient: 'answer_short_text_9008982244365004', 
+            date: 'answer_short_text_9008982244372442', 
+            calories: 'answer_short_text_9008982244387096', 
+            protein: 'answer_short_text_9008982244400456', 
+            fat: 'answer_short_text_9008982244408464', 
+            carbs: 'answer_short_text_9008982244414128', 
+            notes: 'answer_short_text_9008982244427000' 
+        }
+    },
+    lab: {
+        url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d?iframe=true',
                     fields: { patient: 'answer_short_text_9008982244487744', date: 'answer_short_text_9008982244495464', testName: 'answer_short_text_9008982244541872', result: 'answer_short_text_9008982244541872', unit: 'answer_short_text_9008982244541872', normal: 'answer_short_text_9008982244541872', notes: 'answer_short_text_9008982244541872' }
                 },
-                timeline: {
-                    url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d?iframe=1/?iframe=true',
-                    fields: { patient: 'answer_short_text_9008982244565458', date: 'answer_short_text_9008982244572784', event: 'answer_short_text_9008982244586536', description: 'answer_short_text_9008982244595120' }
-                }
-            };
-
+             timeline: {
+        url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d?iframe=true',
+        fields: { 
+            patient: 'answer_short_text_9008982244565458', 
+            date: 'answer_short_text_9008982244572784', 
+            event: 'answer_short_text_9008982244586536', 
+            description: 'answer_long_text_9008982244595120' 
+        }
+    }
+};
             const DB = {
                 get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
                 set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
