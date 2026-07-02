@@ -131,9 +131,6 @@
             let darkTheme = localStorage.getItem('darkTheme') === 'true';
             if (darkTheme) document.body.classList.add('dark-theme');
 
-            let profile = DB.getProfile();
-            let clockTimer = null;
-
             const notify = (msg, type='success') => {
                 const el = document.createElement('div'); el.className='toast';
                 el.style.background = type==='error'?'#ef4444':'#10b981';
