@@ -7,14 +7,11 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🧬</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #0d7377; --primary-light: #14a3a8; --danger: #ef4444; --success: #10b981; --text: #1e293b; --text-light: #64748b; --bg: #f8fafc; --card: #ffffff; --radius: 20px; }
-        .dark-theme { --primary: #14a3a8; --text: #f1f5f9; --text-light: #94a3b8; --bg: #0f172a; --card: #1e293b; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: all 0.3s; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
         .navbar { background: var(--card); backdrop-filter: blur(30px); border-bottom: 1px solid rgba(128,128,128,0.1); padding: 12px 0; }
         .navbar-brand { font-weight: 800; font-size: 1.35rem; background: linear-gradient(135deg, var(--primary), #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), #0ea5e9); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; -webkit-text-fill-color: white; }
@@ -30,12 +27,17 @@
         .dashboard-card .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
         .form-control, .form-select { border-radius: 10px; border: 2px solid #e2e8f0; padding: 11px 16px; background: var(--card); color: var(--text); width: 100%; margin-bottom: 8px; }
         .form-control:focus, .form-select:focus { border-color: var(--primary-light); outline: none; }
+        .form-range { height: 8px; }
+        .form-range::-webkit-slider-thumb { width: 24px; height: 24px; background: var(--primary); cursor: pointer; }
         .clock-widget { background: linear-gradient(135deg, #1e293b, #334155); color: white; border-radius: var(--radius); padding: 2rem; text-align: center; }
         .clock-widget .time { font-size: 3rem; font-weight: 800; }
+        .clock-widget .date { color: #94a3b8; font-size: 0.95rem; }
         .calendar-widget { background: var(--card); border-radius: var(--radius); padding: 1.25rem; }
+        .calendar-widget .month-title { font-weight: 700; color: var(--primary); text-align: center; margin-bottom: 0.75rem; }
         .calendar-widget table { width: 100%; border-collapse: collapse; }
-        .calendar-widget td { text-align: center; padding: 5px; cursor: pointer; border-radius: 8px; }
-        .calendar-widget td.today { background: var(--primary); color: white; }
+        .calendar-widget th { color: var(--text-light); font-weight: 600; font-size: 0.75rem; padding: 0.4rem; text-transform: uppercase; }
+        .calendar-widget td { text-align: center; padding: 0.35rem; font-size: 0.85rem; border-radius: 8px; cursor: pointer; }
+        .calendar-widget td.today { background: var(--primary); color: white; font-weight: 700; }
         .faq-item { border-left: 3px solid var(--primary); padding: 1rem; margin-bottom: 1rem; background: var(--card); cursor: pointer; border-radius: 0 14px 14px 0; }
         .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 15px 20px; border-radius: 8px; color: white; animation: fadeInUp 0.6s ease; }
         @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
@@ -45,6 +47,7 @@
         .hero-btn { padding: 14px 40px; font-size: 1.1rem; }
         .palliative-badge { background: #fecaca; color: #991b1b; padding: 3px 10px; border-radius: 15px; font-size: 0.75rem; }
         .reminder-badge { background: #c7d2fe; color: #3730a3; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; }
+        .history-item { font-size: 0.85rem; padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
         footer { background: var(--card); border-top: 1px solid rgba(128,128,128,0.1); padding: 1.5rem 0; text-align: center; }
         @media (max-width: 768px) { .hero-title { font-size: 2.5rem; } .hero-section { padding: 3rem 1rem; } }
     </style>
@@ -66,62 +69,82 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
         (function() {
-            // ═══════════════ НАСТРОЙКИ GOOGLE ═══════════════
-            const GOOGLE_SCRIPT_URL = 'https://corsproxy.io/?' + encodeURIComponent('https://script.google.com/macros/s/AKfycbwSSQsMTyoLHIbX671cTRKPiXrhP6d1ekMAOvxQizEF2zCijaguPoQpZbA30JMfFkY9/exec');
-            const SPREADSHEET_ID = '1r6wC1EEVXeBN6tymsg-J4aKBITtIwtgHkZEfoRsXFOk';
+            // ═══════════════ НАСТРОЙКИ ЯНДЕКС.ФОРМ ═══════════════
+            const YANDEX_FORMS = {
+                diary: {
+                    url: 'https://forms.yandex.ru/u/6a4640fbe010db3111be4d8d?iframe=1/?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982243801472', date: 'answer_short_text_9008982243933814', temperature: 'answer_short_text_9008982243865188', pressure: 'answer_short_text_9008982243959294', weight: 'answer_short_text_9008982243970860', wellbeing: 'answer_short_text_9008982243981124', symptoms: 'answer_short_text_9008982243992044' }
+                },
+                palliative: {
+                    url: 'https://forms.yandex.ru/u/6a46420d90290233739cb2dc?iframe=1/?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244078472', date: 'answer_short_text_9008982244090874', pain: 'answer_short_text_9008982244099538', nausea: 'answer_short_text_9008982244111466', appetite: 'answer_short_text_9008982244119952', sleep: 'answer_short_text_9008982244127712', mood: 'answer_short_text_9008982244137858', dyspnea: 'answer_short_text_9008982244146280', fatigue: 'answer_short_text_9008982244158842', quality: 'answer_short_text_9008982244166458' }
+                },
+                medications: {
+                    url: 'https://forms.yandex.ru/u/6a46429602848f32aa3c608c?iframe=1/?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244205454', date: 'answer_short_text_9008982244229810', name: 'answer_short_text_9008982244236874', dosage: 'answer_short_text_9008982244244130', time: 'answer_short_text_9008982244252698' }
+                },
+                nutrition: {
+                    url: 'https://forms.yandex.ru/u/6a46432e90fa7b3dcf51f634?iframe=1/?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244365004', date: 'answer_short_text_9008982244372442', calories: 'answer_short_text_9008982244387096', protein: 'answer_short_text_9008982244400456', fat: 'answer_short_text_9008982244408464', carbs: 'answer_short_text_9008982244414128', notes: 'answer_short_text_9008982244427000' }
+                },
+                lab: {
+                    url: 'https://forms.yandex.ru/u/6a4643a9e010db317bbe4e0d?iframe=1/?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244487744', date: 'answer_short_text_9008982244495464', testName: 'answer_short_text_9008982244541872', result: 'answer_short_text_9008982244541872', unit: 'answer_short_text_9008982244541872', normal: 'answer_short_text_9008982244541872', notes: 'answer_short_text_9008982244541872' }
+                },
+                timeline: {
+                    url: 'https://forms.yandex.ru/u/6a4643f5068ff032def2ae8d?iframe=1/?iframe=true',
+                    fields: { patient: 'answer_short_text_9008982244565458', date: 'answer_short_text_9008982244572784', event: 'answer_short_text_9008982244586536', description: 'answer_short_text_9008982244595120' }
+                }
+            };
 
             const DB = {
                 get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
                 set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
                 getProfile() { return this.get('profile'); },
                 setProfile(p) { this.set('profile', p); },
-                getMeds(userId) { return this.get(`meds_${userId}`) || []; },
-                saveMeds(userId, meds) { this.set(`meds_${userId}`, meds); }
+                getData(type) { return this.get(`data_${type}`) || []; },
+                saveData(type, data) { this.set(`data_${type}`, data); },
+                getMeds() { return this.get('medications') || []; },
+                saveMeds(meds) { this.set('medications', meds); }
             };
 
             let profile = DB.getProfile();
             let clockTimer = null;
-            let darkTheme = localStorage.getItem('darkTheme') === 'true';
-            if (darkTheme) document.body.classList.add('dark-theme');
 
-            const notify = (msg, type = 'success') => {
-                const el = document.createElement('div'); el.className = 'toast';
-                el.style.background = type === 'error' ? '#ef4444' : '#10b981';
+            const notify = (msg, type='success') => {
+                const el = document.createElement('div'); el.className='toast';
+                el.style.background = type==='error'?'#ef4444':'#10b981';
                 el.textContent = msg; document.body.appendChild(el);
-                setTimeout(() => el.remove(), 3000);
+                setTimeout(()=>el.remove(), 3000);
             };
-            const esc = s => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+            const esc = s => { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; };
             const fmtDate = d => new Date(d).toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-    async function sendToSheet(sheetName, data) {
-    try {
-        const resp = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                sheet: sheetName, 
-                row: { 
-                    Пациент: profile.fullName, 
-                    Дата: new Date().toLocaleDateString('ru-RU'), 
-                    ...data 
-                } 
-            })
-        });
-        if (resp.ok) notify('Данные отправлены врачу');
-        else notify('Ошибка отправки', 'error');
-    } catch(e) { 
-        notify('Ошибка: ' + e.message, 'error'); 
-    }
-}
-            function toggleTheme() { document.body.classList.toggle('dark-theme'); darkTheme = !darkTheme; localStorage.setItem('darkTheme', darkTheme); }
-            window.toggleTheme = toggleTheme;
+            function openYandexForm(formType, data) {
+                const config = YANDEX_FORMS[formType];
+                if (!config) return notify('Форма не настроена', 'error');
+                const today = new Date().toISOString().split('T')[0];
+                const params = new URLSearchParams();
+                params.append(config.fields.patient, profile.fullName);
+                params.append(config.fields.date, today);
+                for (const [key, value] of Object.entries(data)) {
+                    if (config.fields[key]) params.append(config.fields[key], value);
+                }
+                window.open(config.url + '&' + params.toString(), '_blank');
+                notify('Форма открыта. Проверьте данные и нажмите «Отправить».');
+            }
+
+            function saveLocally(type, data) {
+                const today = new Date().toISOString().split('T')[0];
+                const existing = DB.getData(type);
+                existing.push({ date: today, ...data });
+                DB.saveData(type, existing);
+                notify('Данные сохранены локально');
+            }
 
             window.App = {
                 navigate: page => { location.hash = '#' + page; },
-                logout: () => { if (clockTimer) clearInterval(clockTimer); DB.setProfile(null); profile = null; updateNav(); App.navigate('/'); }
+                logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); profile = null; updateNav(); App.navigate('/'); }
             };
 
             async function updateNav() {
@@ -131,8 +154,7 @@
                     nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')">🔐 Войти</button>';
                 } else {
                     const role = profile.role;
-                    let items = `<button class="btn btn-sm btn-outline" onclick="App.navigate('/dashboard')">🏠</button>
-                                 <button class="btn btn-sm btn-outline" onclick="toggleTheme()">🌓</button>`;
+                    let items = `<button class="btn btn-sm btn-outline" onclick="App.navigate('/dashboard')">🏠</button>`;
                     if (role === 'parent') {
                         items += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/diary')">📋 Дневник</button>
                                   <button class="btn btn-sm btn-outline" onclick="App.navigate('/palliative')"><span class="palliative-badge">❤️ Паллиатив</span></button>
@@ -181,7 +203,7 @@
 
             function renderWelcome() {
                 return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1>
-                <p class="hero-subtitle">Данные сразу попадают в Google Таблицу врача</p>
+                <p class="hero-subtitle">Заполняйте модули, сохраняйте локально и отправляйте врачу через Яндекс.Формы</p>
                 <button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`;
             }
 
@@ -194,14 +216,12 @@
 
             function setupLogin() {
                 document.getElementById('doctorBtn')?.addEventListener('click', () => {
-                    const n = document.getElementById('docName').value.trim();
-                    if (!n) return notify('Введите ФИО', 'error');
-                    if (document.getElementById('docCode').value !== '123doc') return notify('Неверный код', 'error');
+                    const n = document.getElementById('docName').value.trim(); if(!n) return notify('Введите ФИО','error');
+                    if(document.getElementById('docCode').value !== '123doc') return notify('Неверный код','error');
                     loginAs(n, 'doctor');
                 });
                 document.getElementById('patientBtn')?.addEventListener('click', () => {
-                    const n = document.getElementById('patName').value.trim();
-                    if (!n) return notify('Введите ФИО', 'error');
+                    const n = document.getElementById('patName').value.trim(); if(!n) return notify('Введите ФИО','error');
                     loginAs(n, 'parent');
                 });
             }
@@ -222,156 +242,177 @@
                     { icon:'🔬', title:'Анализы', link:'/lab' },
                     { icon:'📅', title:'Таймлайн', link:'/timeline' }
                 ];
-                return `<div class="row"><div class="col-lg-9"><h2>👋 ${esc(profile.fullName)}</h2><div class="row mt-3">${cards.map(c => `<div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('${c.link}')"><div class="icon">${c.icon}</div><h5>${c.title}</h5></div></div>`).join('')}</div></div>
+                return `<div class="row"><div class="col-lg-9"><h2>👋 ${esc(profile.fullName)}</h2><div class="row mt-3">${cards.map(c=>`<div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('${c.link}')"><div class="icon">${c.icon}</div><h5>${c.title}</h5></div></div>`).join('')}</div></div>
                 <div class="col-lg-3"><div class="clock-widget mb-3"><div class="time" id="liveClock">--:--:--</div><div class="date" id="liveDate"></div></div><div class="calendar-widget" id="miniCalendar"></div></div></div>`;
             }
 
             // ═══════════════ ДНЕВНИК ═══════════════
             async function renderDiary() {
                 const today = new Date().toISOString().split('T')[0];
+                const history = DB.getData('diary').slice(-10).reverse();
+                let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | ${e.temperature||'—'}°C | ${e.pressure||'—'} | ${e.weight||'—'} кг | Самочувствие: ${e.wellbeing}/10</div>`).join('');
                 return `<h2>📋 Дневник — ${fmtDate(today)}</h2><div class="card"><form id="diaryForm">
-                    <div class="row"><div class="col-md-4"><input type="number" name="Температура" class="form-control" placeholder="°C" step="0.1"></div>
-                    <div class="col-md-4"><input name="Давление" class="form-control" placeholder="120/80"></div>
-                    <div class="col-md-4"><input type="number" name="Вес" class="form-control" placeholder="кг" step="0.1"></div></div>
-                    <div class="row mt-2"><div class="col-md-4"><input type="number" name="Сатурация" class="form-control" placeholder="%"></div>
-                    <div class="col-md-4"><input type="number" name="Пульс" class="form-control" placeholder="уд/мин"></div>
-                    <div class="col-md-4"><input type="number" name="Сахар" class="form-control" placeholder="ммоль/л" step="0.1"></div></div>
-                    <label class="mt-2">Самочувствие (1-10)</label><input type="range" name="Самочувствие" class="form-range" min="1" max="10" value="5">
-                    <textarea name="Симптомы" class="form-control" rows="2" placeholder="Симптомы"></textarea>
-                    <button type="button" class="btn btn-success w-100 mt-3" onclick="sendDiary()">📤 Отправить врачу</button>
-                </form></div>`;
+                    <div class="row"><div class="col-md-4"><input type="number" name="temperature" class="form-control" placeholder="Температура °C" step="0.1"></div>
+                    <div class="col-md-4"><input name="pressure" class="form-control" placeholder="Давление 120/80"></div>
+                    <div class="col-md-4"><input type="number" name="weight" class="form-control" placeholder="Вес (кг)" step="0.1"></div></div>
+                    <label class="mt-2">Самочувствие (1-10)</label><input type="range" name="wellbeing" class="form-range" min="1" max="10" value="5">
+                    <textarea name="symptoms" class="form-control" rows="2" placeholder="Симптомы"></textarea>
+                    <button type="button" class="btn btn-primary w-100 mt-2" onclick="saveDiaryLocally()">💾 Сохранить локально</button>
+                    <button type="button" class="btn btn-success w-100 mt-2" onclick="sendDiary()">📤 Отправить врачу</button>
+                </form></div>
+                <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.sendDiary = async function() {
-                const f = document.getElementById('diaryForm');
-                if (!f) return;
-                await sendToSheet('Дневник', {
-                    Температура: f.Температура.value, Давление: f.Давление.value, Вес: f.Вес.value,
-                    Сатурация: f.Сатурация.value, Пульс: f.Пульс.value, Сахар: f.Сахар.value,
-                    Самочувствие: f.Самочувствие.value, Симптомы: f.Симптомы.value
-                });
-            };
+            window.saveDiaryLocally = function() { const f = document.getElementById('diaryForm'); if(f) { saveLocally('diary', { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value }); render(); } };
+            window.sendDiary = function() { const f = document.getElementById('diaryForm'); if(f) openYandexForm('diary', { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value }); };
 
             // ═══════════════ ПАЛЛИАТИВ ═══════════════
             async function renderPalliative() {
                 const fields = ['pain:Боль','nausea:Тошнота','appetite:Аппетит','sleep:Сон','mood:Настроение','dyspnea:Одышка','fatigue:Усталость','quality:Качество жизни'];
+                const history = DB.getData('palliative').slice(-10).reverse();
+                let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain} | Тошнота: ${e.nausea} | Аппетит: ${e.appetite} | Сон: ${e.sleep} | Настроение: ${e.mood} | Одышка: ${e.dyspnea} | Усталость: ${e.fatigue} | КЖ: ${e.quality}</div>`).join('');
                 return `<h2>❤️ Паллиативный модуль</h2><div class="card"><form id="pallForm">
                     ${fields.map(f => { const [id, label] = f.split(':'); return `<label>${label} (0-10)</label><input type="range" name="${id}" class="form-range" min="0" max="10" value="5">`; }).join('')}
-                    <button type="button" class="btn btn-success w-100 mt-3" onclick="sendPalliative()">📤 Отправить врачу</button>
-                </form></div>`;
+                    <button type="button" class="btn btn-primary w-100 mt-2" onclick="savePalliativeLocally()">💾 Сохранить локально</button>
+                    <button type="button" class="btn btn-success w-100 mt-2" onclick="sendPalliative()">📤 Отправить врачу</button>
+                </form></div>
+                <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.sendPalliative = async function() {
-                const f = document.getElementById('pallForm');
-                if (!f) return;
-                const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value);
-                await sendToSheet('Паллиатив', d);
-            };
+            window.savePalliativeLocally = function() { const f = document.getElementById('pallForm'); if(f) { const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value); saveLocally('palliative', d); render(); } };
+            window.sendPalliative = function() { const f = document.getElementById('pallForm'); if(f) { const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value); openYandexForm('palliative', d); } };
 
             // ═══════════════ ЛЕКАРСТВА ═══════════════
             async function renderMedications() {
-                const meds = DB.getMeds(profile.fullName);
-                let list = meds.map((m, i) => `<div class="card mb-2"><strong>${esc(m.name)}</strong> – ${esc(m.dosage)} <span class="reminder-badge">${m.time}</span></div>`).join('');
+                const meds = DB.getMeds();
+                let list = meds.map((m, i) => `<div class="card mb-2"><strong>${esc(m.name)}</strong> – ${esc(m.dosage)} <span class="reminder-badge">${m.time||''}</span></div>`).join('');
                 return `<h2>💊 Лекарства</h2><div class="card"><form id="medsForm">
-                    <input name="Название" class="form-control" placeholder="Название">
-                    <input name="Дозировка" class="form-control" placeholder="Дозировка">
-                    <input type="time" name="Время" class="form-control" value="08:00">
+                    <input name="name" class="form-control" placeholder="Название">
+                    <input name="dosage" class="form-control" placeholder="Дозировка">
+                    <input type="time" name="time" class="form-control" value="08:00">
                     <button type="submit" class="btn btn-primary w-100 mt-2">➕ Добавить</button>
                 </form></div>${list || '<p>Нет лекарств</p>'}
-                <button class="btn btn-success w-100 mt-3" onclick="sendMeds()">📤 Отправить врачу</button>`;
+                <button class="btn btn-success w-100 mt-3" onclick="sendMeds()">📤 Отправить список врачу</button>`;
             }
-            window.sendMeds = async function() {
-                const meds = DB.getMeds(profile.fullName);
-                for (const m of meds) {
-                    await sendToSheet('Лекарства', { Название: m.name, Дозировка: m.dosage, Время: m.time });
-                }
-            };
+            window.sendMeds = function() { const meds = DB.getMeds(); meds.forEach(m => openYandexForm('medications', { name: m.name, dosage: m.dosage, time: m.time })); };
+            document.addEventListener('submit', (e) => { if(e.target.id === 'medsForm') { e.preventDefault(); const f = e.target; const meds = DB.getMeds(); meds.push({ name: f.name.value, dosage: f.dosage.value, time: f.time.value }); DB.saveMeds(meds); f.reset(); render(); notify('Лекарство добавлено'); } });
 
             // ═══════════════ ПИТАНИЕ ═══════════════
             async function renderNutrition() {
-                return `<h2>🍽️ Дневник питания</h2><div class="card"><form id="nutrForm">
-                    <div class="row"><div class="col-md-3"><input name="Калории" class="form-control" placeholder="Ккал"></div>
-                    <div class="col-md-3"><input name="Белки" class="form-control" placeholder="Белки г"></div>
-                    <div class="col-md-3"><input name="Жиры" class="form-control" placeholder="Жиры г"></div>
-                    <div class="col-md-3"><input name="Углеводы" class="form-control" placeholder="Углеводы г"></div></div>
-                    <textarea name="Заметки" class="form-control mt-2" rows="2" placeholder="Заметки"></textarea>
+                const history = DB.getData('nutrition').slice(-10).reverse();
+                let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | Калории: ${e.calories} | Белки: ${e.protein}г | Жиры: ${e.fat}г | Углеводы: ${e.carbs}г</div>`).join('');
+                return `<h2>🍽️ Питание</h2><div class="card"><form id="nutrForm">
+                    <div class="row"><div class="col-md-3"><input type="number" name="calories" class="form-control" placeholder="Ккал"></div>
+                    <div class="col-md-3"><input type="number" name="protein" class="form-control" placeholder="Белки (г)"></div>
+                    <div class="col-md-3"><input type="number" name="fat" class="form-control" placeholder="Жиры (г)"></div>
+                    <div class="col-md-3"><input type="number" name="carbs" class="form-control" placeholder="Углеводы (г)"></div></div>
+                    <textarea name="notes" class="form-control mt-2" rows="2" placeholder="Заметки"></textarea>
+                    <button type="button" class="btn btn-primary w-100 mt-2" onclick="saveNutritionLocally()">💾 Сохранить локально</button>
                     <button type="button" class="btn btn-success w-100 mt-2" onclick="sendNutrition()">📤 Отправить врачу</button>
-                </form></div>`;
+                </form></div>
+                <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.sendNutrition = async function() {
-                const f = document.getElementById('nutrForm');
-                if (!f) return;
-                await sendToSheet('Питание', { Калории: f.Калории.value, Белки: f.Белки.value, Жиры: f.Жиры.value, Углеводы: f.Углеводы.value, Заметки: f.Заметки.value });
-            };
+            window.saveNutritionLocally = function() { const f = document.getElementById('nutrForm'); if(f) { saveLocally('nutrition', { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value }); render(); } };
+            window.sendNutrition = function() { const f = document.getElementById('nutrForm'); if(f) openYandexForm('nutrition', { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value }); };
 
             // ═══════════════ АНАЛИЗЫ ═══════════════
             async function renderLab() {
-                return `<h2>🔬 Лабораторные анализы</h2><div class="card"><form id="labForm">
-                    <input name="Название" class="form-control" placeholder="Анализ">
-                    <div class="row"><div class="col-md-4"><input name="Результат" class="form-control" placeholder="Результат"></div>
-                    <div class="col-md-4"><input name="Единицы" class="form-control" placeholder="Ед."></div>
-                    <div class="col-md-4"><input name="Норма" class="form-control" placeholder="Норма"></div></div>
-                    <textarea name="Заметки" class="form-control mt-2" rows="2" placeholder="Заметки"></textarea>
+                const history = DB.getData('lab').slice(-10).reverse();
+                let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | ${esc(e.testName)}: ${e.result} ${e.unit} (норма: ${e.normal||'—'})</div>`).join('');
+                return `<h2>🔬 Анализы</h2><div class="card"><form id="labForm">
+                    <input name="testName" class="form-control" placeholder="Название анализа">
+                    <div class="row"><div class="col-md-4"><input name="result" class="form-control" placeholder="Результат"></div>
+                    <div class="col-md-4"><input name="unit" class="form-control" placeholder="Ед. изм."></div>
+                    <div class="col-md-4"><input name="normal" class="form-control" placeholder="Норма"></div></div>
+                    <textarea name="notes" class="form-control mt-2" rows="2" placeholder="Заметки"></textarea>
+                    <button type="button" class="btn btn-primary w-100 mt-2" onclick="saveLabLocally()">💾 Сохранить локально</button>
                     <button type="button" class="btn btn-success w-100 mt-2" onclick="sendLab()">📤 Отправить врачу</button>
-                </form></div>`;
+                </form></div>
+                <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.sendLab = async function() {
-                const f = document.getElementById('labForm');
-                if (!f) return;
-                await sendToSheet('Анализы', { Название: f.Название.value, Результат: f.Результат.value, Единицы: f.Единицы.value, Норма: f.Норма.value, Заметки: f.Заметки.value });
-            };
+            window.saveLabLocally = function() { const f = document.getElementById('labForm'); if(f) { saveLocally('lab', { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value }); render(); } };
+            window.sendLab = function() { const f = document.getElementById('labForm'); if(f) openYandexForm('lab', { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value }); };
 
             // ═══════════════ ТАЙМЛАЙН ═══════════════
             async function renderTimeline() {
-                return `<h2>📅 Маршрут пациента</h2><div class="card"><form id="tlForm">
-                    <input type="date" name="Дата" class="form-control" value="${new Date().toISOString().split('T')[0]}">
-                    <input name="Событие" class="form-control" placeholder="Событие">
-                    <textarea name="Описание" class="form-control mt-2" rows="2" placeholder="Описание"></textarea>
+                const history = DB.getData('timeline').sort((a,b)=>new Date(b.date)-new Date(a.date));
+                let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> — ${esc(e.event)}<br><small>${esc(e.description||'')}</small></div>`).join('');
+                return `<h2>📅 Таймлайн</h2><div class="card"><form id="tlForm">
+                    <input type="date" name="date" class="form-control" value="${new Date().toISOString().split('T')[0]}">
+                    <input name="event" class="form-control" placeholder="Событие">
+                    <textarea name="description" class="form-control mt-2" rows="2" placeholder="Описание"></textarea>
+                    <button type="button" class="btn btn-primary w-100 mt-2" onclick="saveTimelineLocally()">💾 Сохранить локально</button>
                     <button type="button" class="btn btn-success w-100 mt-2" onclick="sendTimeline()">📤 Отправить врачу</button>
-                </form></div>`;
+                </form></div>
+                <div class="card mt-3"><h5>📊 История событий</h5>${histHtml || '<p class="text-muted">Нет событий</p>'}</div>`;
             }
-            window.sendTimeline = async function() {
-                const f = document.getElementById('tlForm');
-                if (!f) return;
-                await sendToSheet('Таймлайн', { Дата: f.Дата.value, Событие: f.Событие.value, Описание: f.Описание.value });
-            };
+            window.saveTimelineLocally = function() { const f = document.getElementById('tlForm'); if(f) { saveLocally('timeline', { event: f.event.value, description: f.description.value }); render(); } };
+            window.sendTimeline = function() { const f = document.getElementById('tlForm'); if(f) openYandexForm('timeline', { event: f.event.value, description: f.description.value }); };
 
-            async function renderPatients() { return '<h2>👥 Пациенты</h2><p>Данные — в Google Таблице.</p>'; }
-            async function renderAnalytics() {
-                return `<h2>📈 Аналитика</h2><div class="card"><p>Откройте Google Таблицу врача:</p>
-                <a href="https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit" target="_blank" class="btn btn-primary">Открыть таблицу</a></div>`;
+            // Остальные страницы
+            async function renderPatients() { return '<h2>👥 Пациенты</h2><p>Список пациентов, отправивших данные через формы.</p>'; }
+            async function renderAnalytics() { return '<h2>📈 Аналитика</h2><p>Перейдите в Яндекс.Таблицы, связанные с формами, для просмотра данных.</p>'; }
+            function renderReference() {
+                const diseases = [
+                    { name:'Муковисцидоз', icd:'E84', desc:'Поражение экзокринных желез' },
+                    { name:'Фенилкетонурия', icd:'E70.0', desc:'Дефицит фенилаланингидроксилазы' },
+                    { name:'Болезнь Вильсона', icd:'E83.0', desc:'Накопление меди' },
+                    { name:'Болезнь Гоше', icd:'E75.2', desc:'Лизосомная болезнь' }
+                ];
+                return `<h2>📚 Справочник</h2>${diseases.map(d => `<div class="card"><h5>${d.name}</h5><span class="badge bg-primary">МКБ-10: ${d.icd}</span><p class="mt-2">${d.desc}</p></div>`).join('')}`;
             }
-
-            function renderReference() { return '<h2>📚 Справочник</h2>'; }
-            function renderGenetics() { return '<h2>🧬 Генетика</h2>'; }
-            function setupGenetics() {}
-            function renderFAQ() { return '<h2>❓ FAQ</h2>'; }
-            function renderSupport() { return '<h2>❤️ Круг добра</h2>'; }
+            function renderGenetics() {
+                return `<h2>🧬 Генетика</h2><div class="card"><h5>Калькулятор риска</h5>
+                <select id="inheritType" class="form-select mb-2"><option value="autosomal_recessive">Аутосомно-рецессивный</option><option value="autosomal_dominant">Аутосомно-доминантный</option><option value="x_linked">X-сцепленный</option></select>
+                <select id="fatherStatus" class="form-select mb-2"><option value="healthy">Здоров</option><option value="carrier">Носитель</option><option value="sick">Болен</option></select>
+                <select id="motherStatus" class="form-select mb-2"><option value="healthy">Здорова</option><option value="carrier">Носитель</option><option value="sick">Больна</option></select>
+                <button class="btn btn-primary w-100" onclick="calcRisk()">Рассчитать</button><div id="riskResult" class="mt-2 text-center fw-bold"></div></div>`;
+            }
+            function setupGenetics() {
+                window.calcRisk = () => {
+                    const type = document.getElementById('inheritType')?.value;
+                    const f = document.getElementById('fatherStatus')?.value;
+                    const m = document.getElementById('motherStatus')?.value;
+                    if(!f||!m||!type) return;
+                    let risk = 0;
+                    if (type === 'autosomal_recessive') {
+                        if (f==='carrier'&&m==='carrier') risk=25;
+                        else if ((f==='sick'&&m==='carrier')||(f==='carrier'&&m==='sick')) risk=50;
+                    } else if (type === 'autosomal_dominant') {
+                        if (f==='sick'||m==='sick') risk=50;
+                    } else if (type === 'x_linked') {
+                        if (m==='carrier') risk=25;
+                    }
+                    document.getElementById('riskResult').textContent = `Вероятность: ${risk}%`;
+                };
+            }
+            function renderFAQ() {
+                const faq = [
+                    { q:'Как передать данные врачу?', a:'Нажмите «Отправить врачу» – откроется Яндекс.Форма с заполненными данными. Проверьте и нажмите «Отправить» в форме.' },
+                    { q:'Где хранятся мои данные?', a:'Все записи сохраняются локально в вашем браузере. История видна в каждом модуле.' }
+                ];
+                return `<h2>❓ FAQ</h2>${faq.map(f => `<div class="faq-item" onclick="this.querySelector('.a').style.display=this.querySelector('.a').style.display==='block'?'none':'block'"><h6>${f.q}</h6><p class="a text-muted" style="display:none">${f.a}</p></div>`).join('')}`;
+            }
+            function renderSupport() {
+                return `<h2>❤️ Фонд «Круг добра»</h2><div class="card">
+                    <p>Фонд поддержки детей с тяжёлыми и орфанными заболеваниями.</p>
+                    <p><i class="bi bi-telephone"></i> Горячая линия: <strong>8 (800) 201-62-26</strong></p>
+                    <a href="https://фондкругдобра.рф/" target="_blank" class="btn btn-primary">Перейти на сайт фонда</a></div>`;
+            }
 
             function initClock() {
-                const update = () => {
-                    const now = new Date();
-                    const c = document.getElementById('liveClock'), d = document.getElementById('liveDate');
-                    if (c) c.textContent = now.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-                    if (d) d.textContent = now.toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-                };
-                update(); if (clockTimer) clearInterval(clockTimer); clockTimer = setInterval(update, 1000);
+                const update = () => { const now = new Date(); const c = document.getElementById('liveClock'), d = document.getElementById('liveDate'); if(c) c.textContent = now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); if(d) d.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); };
+                update(); if(clockTimer)clearInterval(clockTimer); clockTimer = setInterval(update, 1000);
             }
-
             function initCalendar() {
-                const cal = document.getElementById('miniCalendar'); if (!cal) return;
-                const now = new Date();
-                const months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-                const fd = new Date(now.getFullYear(), now.getMonth(), 1).getDay() || 7;
-                const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                let h = `<div class="month-title">${months[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`;
-                for (let i = 1; i < fd; i++) h += '<td></td>';
-                for (let d = 1; d <= days; d++) {
-                    if ((fd + d - 1) % 7 === 1 && d > 1) h += '</tr><tr>';
-                    h += `<td class="${d === now.getDate() ? 'today' : ''}">${d}</td>`;
-                }
-                h += '</tr></table>'; cal.innerHTML = h;
+                const cal = document.getElementById('miniCalendar'); if(!cal)return;
+                const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+                const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+                let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`;
+                for(let i=1;i<fd;i++)h+='<td></td>';
+                for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>';h+=`<td class="${d===now.getDate()?'today':''}">${d}</td>`;}
+                h+='</tr></table>'; cal.innerHTML = h;
             }
 
-            window.onhashchange = () => { if (clockTimer) clearInterval(clockTimer); render(); };
+            window.onhashchange = () => { if(clockTimer)clearInterval(clockTimer); render(); };
             window.onload = render;
         })();
     </script>
