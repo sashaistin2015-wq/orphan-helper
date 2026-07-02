@@ -70,7 +70,7 @@
     <script>
         (function() {
             // ═══════════════ НАСТРОЙКИ ═══════════════
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyh6UqZnYsplMUEyGetAzgSc4rAbn4IJRoLD_qNsINAXuHk_Bq-1I5y8QufPmM_P3ZjEg/exec';
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2kflA2T5B8XZ4HhN5jQ8t9uV3rL6mN1pR4sX8/exec';
             const SPREADSHEET_ID = '1r6wC1EEVXeBN6tymsg-J4aKBITtIwtgHkZEfoRsXFOk';
 
             const YANDEX_FORMS = {
@@ -110,7 +110,9 @@
                 getMeds() { return this.get('medications') || []; },
                 saveMeds(meds) { this.set('medications', meds); },
                 getPatients() { return this.get('doctor_patients') || []; },
-                savePatients(patients) { this.set('doctor_patients', patients); }
+                savePatients(patients) { this.set('doctor_patients', patients); },
+                getAllPatients() { return this.get('all_patients') || {}; },
+                saveAllPatients(all) { this.set('all_patients', all); }
             };
 
             let profile = DB.getProfile();
@@ -156,6 +158,37 @@
                 existing.push({ date: today, ...data });
                 DB.saveData(type, existing);
                 notify('Данные сохранены локально');
+            }
+
+            function registerPatientIfNeeded(patientName) {
+                const all = DB.getAllPatients();
+                if (!all[patientName]) {
+                    all[patientName] = {
+                        fullName: patientName,
+                        firstSeen: new Date().toLocaleDateString('ru-RU'),
+                        birthDate: '',
+                        age: '',
+                        diagnosis: '',
+                        lastUpdate: new Date().toLocaleString('ru-RU'),
+                        diaryCount: 0,
+                        palliativeCount: 0,
+                        medsCount: 0,
+                        nutritionCount: 0,
+                        labCount: 0,
+                        timelineCount: 0
+                    };
+                    DB.saveAllPatients(all);
+                }
+                return all[patientName];
+            }
+
+            function updatePatientStats(patientName, field) {
+                const all = DB.getAllPatients();
+                if (all[patientName]) {
+                    all[patientName][field] = (all[patientName][field] || 0) + 1;
+                    all[patientName].lastUpdate = new Date().toLocaleString('ru-RU');
+                    DB.saveAllPatients(all);
+                }
             }
 
             window.App = {
@@ -239,6 +272,7 @@
                 document.getElementById('patientBtn')?.addEventListener('click', () => {
                     const n = document.getElementById('patName').value.trim(); if(!n) return notify('Введите ФИО','error');
                     loginAs(n, 'parent');
+                    registerPatientIfNeeded(n);
                 });
             }
 
@@ -278,13 +312,14 @@
                 </form></div>
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.saveDiaryLocally = function() { const f = document.getElementById('diaryForm'); if(f) { saveLocally('diary', { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value }); render(); } };
+            window.saveDiaryLocally = function() { const f = document.getElementById('diaryForm'); if(f) { saveLocally('diary', { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value }); updatePatientStats(profile.fullName, 'diaryCount'); render(); } };
             window.sendDiary = function() {
                 const f = document.getElementById('diaryForm');
                 if(!f) return;
                 const data = { temperature: f.temperature.value, pressure: f.pressure.value, weight: f.weight.value, wellbeing: f.wellbeing.value, symptoms: f.symptoms.value };
                 openYandexForm('diary', data);
                 sendToGoogleSheet({ form_name: 'Дневник', patient: profile.fullName, ...data });
+                updatePatientStats(profile.fullName, 'diaryCount');
             };
 
             // ═══════════════ ПАЛЛИАТИВ ═══════════════
@@ -299,13 +334,14 @@
                 </form></div>
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.savePalliativeLocally = function() { const f = document.getElementById('pallForm'); if(f) { const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value); saveLocally('palliative', d); render(); } };
+            window.savePalliativeLocally = function() { const f = document.getElementById('pallForm'); if(f) { const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value); saveLocally('palliative', d); updatePatientStats(profile.fullName, 'palliativeCount'); render(); } };
             window.sendPalliative = function() {
                 const f = document.getElementById('pallForm');
                 if(!f) return;
                 const d = {}; ['pain','nausea','appetite','sleep','mood','dyspnea','fatigue','quality'].forEach(k => d[k] = f[k].value);
                 openYandexForm('palliative', d);
                 sendToGoogleSheet({ form_name: 'Паллиатив', patient: profile.fullName, ...d });
+                updatePatientStats(profile.fullName, 'palliativeCount');
             };
 
             // ═══════════════ ЛЕКАРСТВА ═══════════════
@@ -326,6 +362,7 @@
                     openYandexForm('medications', { name: m.name, dosage: m.dosage, time: m.time });
                     sendToGoogleSheet({ form_name: 'Лекарства', patient: profile.fullName, med_name: m.name, dosage: m.dosage, med_time: m.time });
                 });
+                updatePatientStats(profile.fullName, 'medsCount');
             };
             document.addEventListener('submit', (e) => { if(e.target.id === 'medsForm') { e.preventDefault(); const f = e.target; const meds = DB.getMeds(); meds.push({ name: f.name.value, dosage: f.dosage.value, time: f.time.value }); DB.saveMeds(meds); f.reset(); render(); notify('Лекарство добавлено'); } });
 
@@ -344,13 +381,14 @@
                 </form></div>
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.saveNutritionLocally = function() { const f = document.getElementById('nutrForm'); if(f) { saveLocally('nutrition', { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value }); render(); } };
+            window.saveNutritionLocally = function() { const f = document.getElementById('nutrForm'); if(f) { saveLocally('nutrition', { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value }); updatePatientStats(profile.fullName, 'nutritionCount'); render(); } };
             window.sendNutrition = function() {
                 const f = document.getElementById('nutrForm');
                 if(!f) return;
                 const data = { calories: f.calories.value, protein: f.protein.value, fat: f.fat.value, carbs: f.carbs.value, notes: f.notes.value };
                 openYandexForm('nutrition', data);
                 sendToGoogleSheet({ form_name: 'Питание', patient: profile.fullName, ...data });
+                updatePatientStats(profile.fullName, 'nutritionCount');
             };
 
             // ═══════════════ АНАЛИЗЫ ═══════════════
@@ -368,13 +406,14 @@
                 </form></div>
                 <div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
-            window.saveLabLocally = function() { const f = document.getElementById('labForm'); if(f) { saveLocally('lab', { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value }); render(); } };
+            window.saveLabLocally = function() { const f = document.getElementById('labForm'); if(f) { saveLocally('lab', { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value }); updatePatientStats(profile.fullName, 'labCount'); render(); } };
             window.sendLab = function() {
                 const f = document.getElementById('labForm');
                 if(!f) return;
                 const data = { testName: f.testName.value, result: f.result.value, unit: f.unit.value, normal: f.normal.value, notes: f.notes.value };
                 openYandexForm('lab', data);
                 sendToGoogleSheet({ form_name: 'Анализы', patient: profile.fullName, ...data });
+                updatePatientStats(profile.fullName, 'labCount');
             };
 
             // ═══════════════ ТАЙМЛАЙН ═══════════════
@@ -390,46 +429,46 @@
                 </form></div>
                 <div class="card mt-3"><h5>📊 История событий</h5>${histHtml || '<p class="text-muted">Нет событий</p>'}</div>`;
             }
-            window.saveTimelineLocally = function() { const f = document.getElementById('tlForm'); if(f) { saveLocally('timeline', { event: f.event.value, description: f.description.value }); render(); } };
+            window.saveTimelineLocally = function() { const f = document.getElementById('tlForm'); if(f) { saveLocally('timeline', { event: f.event.value, description: f.description.value }); updatePatientStats(profile.fullName, 'timelineCount'); render(); } };
             window.sendTimeline = function() {
                 const f = document.getElementById('tlForm');
                 if(!f) return;
                 const data = { event: f.event.value, description: f.description.value };
                 openYandexForm('timeline', data);
                 sendToGoogleSheet({ form_name: 'Таймлайн', patient: profile.fullName, ...data });
+                updatePatientStats(profile.fullName, 'timelineCount');
             };
 
             // ═══════════════ ПАЦИЕНТЫ (ДЛЯ ВРАЧА) ═══════════════
             async function renderPatients() {
                 if (profile.role !== 'doctor') return '<p>Только для врачей</p>';
-                const patients = DB.getPatients();
-                let list = patients.map(p => `<div class="card mb-2 d-flex justify-content-between"><span>${esc(p)}</span><button class="btn btn-sm btn-danger" onclick="removePatient('${p}')">🗑️</button></div>`).join('');
+                const all = DB.getAllPatients();
+                const patients = Object.values(all);
+                let list = patients.map(p => `
+                    <div class="card mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5>${esc(p.fullName)}</h5>
+                                <small class="text-muted">Первое посещение: ${p.firstSeen || '—'}</small><br>
+                                <small class="text-muted">Дата рождения: ${p.birthDate || '—'} | Возраст: ${p.age || '—'}</small><br>
+                                <small class="text-muted">Диагноз: ${p.diagnosis || '—'}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary me-1">📋 ${p.diaryCount||0}</span>
+                                <span class="badge bg-danger me-1">❤️ ${p.palliativeCount||0}</span>
+                                <span class="badge bg-info me-1">💊 ${p.medsCount||0}</span>
+                                <span class="badge bg-success me-1">🍽️ ${p.nutritionCount||0}</span>
+                                <span class="badge bg-warning me-1">🔬 ${p.labCount||0}</span>
+                                <span class="badge bg-secondary">📅 ${p.timelineCount||0}</span>
+                                <br><small class="text-muted">Обновлено: ${p.lastUpdate || '—'}</small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
                 return `<h2>👥 Мои пациенты</h2>
-                <div class="card"><form id="addPatientForm">
-                    <input name="name" class="form-control" placeholder="ФИО пациента">
-                    <button type="submit" class="btn btn-primary w-100 mt-2">➕ Добавить</button>
-                </form></div>
+                <p class="text-muted">Пациенты автоматически добавляются при первом входе и отправке данных.</p>
                 ${list || '<p class="text-muted">Нет пациентов</p>'}`;
             }
-            window.removePatient = function(name) {
-                let patients = DB.getPatients();
-                patients = patients.filter(p => p !== name);
-                DB.savePatients(patients);
-                render();
-            };
-            document.addEventListener('submit', (e) => {
-                if (e.target.id === 'addPatientForm') {
-                    e.preventDefault();
-                    const name = e.target.name.value.trim();
-                    if (!name) return;
-                    let patients = DB.getPatients();
-                    if (!patients.includes(name)) {
-                        patients.push(name);
-                        DB.savePatients(patients);
-                        render();
-                    } else notify('Пациент уже в списке', 'warning');
-                }
-            });
 
             // ═══════════════ АНАЛИТИКА (ДЛЯ ВРАЧА) ═══════════════
             async function renderAnalytics() {
