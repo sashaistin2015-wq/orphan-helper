@@ -566,13 +566,12 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
             }
 
             function renderWelcome() { return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1><p class="hero-subtitle">Современный инструмент для ведения дневника здоровья и обмена данными с врачом</p><button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`; }
-            function renderLogin() {
-                return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
-                <div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person-badge"></i> Врач</h4><input id="docName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="docCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i></div><button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button></div></div>
-                <div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person"></i> Пациент</h4><input id="patName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="patCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i></div><// Внутри renderLogin, в блоке пациента:
-<select id="patDiagnosis" class="form-control"><option value="">Выберите диагноз (опционально)</option>${getDiseaseOptions()}</select><button class="btn btn-success w-100 mt-2" id="patientBtn">Войти как пациент</button></div></div>
-                </div></div>`;
-            }
+           function renderLogin() {
+    return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
+    <div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person-badge"></i> Врач</h4><input id="docName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="docCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i></div><button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button></div></div>
+    <div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person"></i> Пациент</h4><input id="patName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="patCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i></div><select id="patDiagnosis" class="form-control"><option value="">Выберите диагноз (опционально)</option>${getDiseaseOptions()}</select><button class="btn btn-success w-100 mt-2" id="patientBtn">Войти как пациент</button></div></div>
+    </div></div>`;
+}
             window.togglePasswordVisibility = function(inputId, iconEl) { const input = document.getElementById(inputId); if (!input) return; if (input.type === 'password') { input.type = 'text'; iconEl.classList.remove('bi-eye'); iconEl.classList.add('bi-eye-slash'); } else { input.type = 'password'; iconEl.classList.remove('bi-eye-slash'); iconEl.classList.add('bi-eye'); } };
             function setupLogin() { document.getElementById('doctorBtn')?.addEventListener('click', () => { const n = document.getElementById('docName').value.trim(); if(!n) return notify('Введите ФИО','error'); if(document.getElementById('docCode').value !== '123doc') return notify('Неверный код','error'); loginAs(n, 'doctor', ''); }); document.getElementById('patientBtn')?.addEventListener('click', () => { const n = document.getElementById('patName').value.trim(); if(!n) return notify('Введите ФИО','error'); if(document.getElementById('patCode').value !== 'pat2026') return notify('Неверный код','error'); const d = document.getElementById('patDiagnosis')?.value || ''; loginAs(n, 'parent', d); registerPatientIfNeeded(n); }); }
             function loginAs(name, role, diagnosis = '') { profile = { fullName: name, role, diagnosis }; DB.setProfile(profile); updateNav(); App.navigate('/dashboard'); }
@@ -789,7 +788,6 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
     const diseases = getDiseaseList(); // вместо локального DISEASES
     return `<h2>📚 Справочник орфанных заболеваний (${diseases.length})</h2>
     <input id="searchDisease" class="form-control mb-3" placeholder="🔍 Поиск по названию или гену..." oninput="window.filterDiseases()">
-    // После <input id="searchDisease" ...> добавьте:
 <select id="categoryFilter" class="form-control mb-2" onchange="window.filterDiseases()">
     <option value="">Все категории</option>
     <option value="Метаболические">Метаболические</option>
@@ -818,7 +816,7 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
 </select>
     <div class="row" id="diseaseList">
         ${diseases.map(d => `
-        <div class="col-md-4 mb-3">
+       <div class="col-md-4 mb-3" data-id="${d.id}" data-category="${d.cat}">
             <div class="card disease-card" style="cursor:pointer;" data-id="${d.id}">
                 <div class="card-body">
                     <div style="font-size:2rem;">${d.icon}</div>
