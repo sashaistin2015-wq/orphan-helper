@@ -280,16 +280,30 @@ function getDiseaseRiskRules(diseaseName) {
                     ]
                 },
                 predict(data, diagnosis = '', history = []) {
-                    let totalScore = 0;
-                    const rules = this.rules[diagnosis] || this.rules.default;
-                    rules.forEach(rule => { const value = data[rule.param]; if (value !== undefined && rule.condition(value)) totalScore += rule.score; });
-                    if (history.length >= 3) {
-                        const temps = history.map(e => parseFloat(e.temperature)).filter(v => !isNaN(v));
-                        if (temps.length >= 3) { const last3 = temps.slice(-3); if (last3[2] > last3[1] && last3[1] > last3[0]) totalScore += 3; }
-                    }
-                    return Math.round(Math.min(100, (totalScore / 20) * 100));
-                },
-                // Расширяем RiskPredictor для использования базы заболеваний
+        let totalScore = 0;
+        const rules = this.rules[diagnosis] || this.rules.default;
+        rules.forEach(rule => {
+            const value = data[rule.param];
+            if (value !== undefined && rule.condition(value)) totalScore += rule.score;
+        });
+        if (history.length >= 3) {
+            const temps = history.map(e => parseFloat(e.temperature)).filter(v => !isNaN(v));
+            if (temps.length >= 3) {
+                const last3 = temps.slice(-3);
+                if (last3[2] > last3[1] && last3[1] > last3[0]) totalScore += 3;
+            }
+        }
+        return Math.round(Math.min(100, (totalScore / 20) * 100));
+    },
+    getPriority(data, diagnosis = '') {
+        const risk = this.predict(data, diagnosis);
+        if (risk >= 80) return 3;
+        if (risk >= 50) return 2;
+        return 1;
+    }
+};
+
+// ===== ВЫНОСИМ ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ СЮДА =====
 RiskPredictor.getRulesForDiagnosis = function(diagnosis) {
     const disease = DISEASE_DATABASE.find(d => d.name === diagnosis);
     if (disease && disease.riskRules) {
@@ -298,7 +312,7 @@ RiskPredictor.getRulesForDiagnosis = function(diagnosis) {
     return this.rules[diagnosis] || this.rules.default;
 };
 
-// Переопределяем predict, чтобы использовать новые правила
+// Переопределяем predict с использованием базы заболеваний
 RiskPredictor.predict = function(data, diagnosis = '', history = []) {
     let totalScore = 0;
     const rules = this.getRulesForDiagnosis(diagnosis);
@@ -306,7 +320,6 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
         const value = data[rule.param];
         if (value !== undefined && rule.condition(value)) totalScore += rule.score;
     });
-    // Дополнительный учёт тренда
     if (history.length >= 3) {
         const temps = history.map(e => parseFloat(e.temperature)).filter(v => !isNaN(v));
         if (temps.length >= 3) {
@@ -316,16 +329,6 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
     }
     return Math.round(Math.min(100, (totalScore / 20) * 100));
 };
-
-// Оставляем getPriority без изменений
-                getPriority(data, diagnosis = '') {
-                    const risk = this.predict(data, diagnosis);
-                    if (risk >= 80) return 3;
-                    if (risk >= 50) return 2;
-                    return 1;
-                }
-            };
-
             const FieldConfig = {
                 'diary': {
                     'Муковисцидоз': [
