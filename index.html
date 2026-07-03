@@ -785,39 +785,39 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
             window.loadLocalExcel = function() { const file = document.getElementById('localExcel')?.files[0]; if (!file) return notify('Выберите файл', 'error'); const reader = new FileReader(); reader.onload = function(e) { try { const wb = XLSX.read(e.target.result, { type: 'array' }); let html = ''; wb.SheetNames.forEach(name => { const ws = wb.Sheets[name]; html += `<h6>${name}</h6><div class="table-responsive">${XLSX.utils.sheet_to_html(ws)}</div>`; }); document.getElementById('excelPreview').innerHTML = html; } catch(err) { notify('Ошибка чтения файла', 'error'); } }; reader.readAsArrayBuffer(file); };
 
             function renderReference() {
-    const diseases = getDiseaseList(); // вместо локального DISEASES
+    const diseases = getDiseaseList();
     return `<h2>📚 Справочник орфанных заболеваний (${diseases.length})</h2>
     <input id="searchDisease" class="form-control mb-3" placeholder="🔍 Поиск по названию или гену..." oninput="window.filterDiseases()">
-<select id="categoryFilter" class="form-control mb-2" onchange="window.filterDiseases()">
-    <option value="">Все категории</option>
-    <option value="Метаболические">Метаболические</option>
-    <option value="Лизосомные">Лизосомные</option>
-    <option value="Мукополисахаридозы">Мукополисахаридозы</option>
-    <option value="Гликогенозы">Гликогенозы</option>
-    <option value="Скелетные дисплазии">Скелетные дисплазии</option>
-    <option value="Неврологические">Неврологические</option>
-    <option value="Нервно-мышечные">Нервно-мышечные</option>
-    <option value="Наследственные синдромы">Наследственные синдромы</option>
-    <option value="Гепатология">Гепатология</option>
-    <option value="Нефрология">Нефрология</option>
-    <option value="Пульмонология">Пульмонология</option>
-    <option value="Гастроэнтерология">Гастроэнтерология</option>
-    <option value="Иммунные">Иммунные</option>
-    <option value="Аутовоспалительные">Аутовоспалительные</option>
-    <option value="Ревматология">Ревматология</option>
-    <option value="Хромосомные">Хромосомные</option>
-    <option value="Врождённые пороки">Врождённые пороки</option>
-    <option value="Эндокринные">Эндокринные</option>
-    <option value="Генетические">Генетические</option>
-    <option value="Факоматозы">Факоматозы</option>
-    <option value="Дерматологические">Дерматологические</option>
-    <option value="Гематология">Гематология</option>
-    <option value="Опухоли">Опухоли</option>
-</select>
+    <select id="categoryFilter" class="form-control mb-2" onchange="window.filterDiseases()">
+        <option value="">Все категории</option>
+        <option value="Метаболические">Метаболические</option>
+        <option value="Лизосомные">Лизосомные</option>
+        <option value="Мукополисахаридозы">Мукополисахаридозы</option>
+        <option value="Гликогенозы">Гликогенозы</option>
+        <option value="Скелетные дисплазии">Скелетные дисплазии</option>
+        <option value="Неврологические">Неврологические</option>
+        <option value="Нервно-мышечные">Нервно-мышечные</option>
+        <option value="Наследственные синдромы">Наследственные синдромы</option>
+        <option value="Гепатология">Гепатология</option>
+        <option value="Нефрология">Нефрология</option>
+        <option value="Пульмонология">Пульмонология</option>
+        <option value="Гастроэнтерология">Гастроэнтерология</option>
+        <option value="Иммунные">Иммунные</option>
+        <option value="Аутовоспалительные">Аутовоспалительные</option>
+        <option value="Ревматология">Ревматология</option>
+        <option value="Хромосомные">Хромосомные</option>
+        <option value="Врождённые пороки">Врождённые пороки</option>
+        <option value="Эндокринные">Эндокринные</option>
+        <option value="Генетические">Генетические</option>
+        <option value="Факоматозы">Факоматозы</option>
+        <option value="Дерматологические">Дерматологические</option>
+        <option value="Гематология">Гематология</option>
+        <option value="Опухоли">Опухоли</option>
+    </select>
     <div class="row" id="diseaseList">
         ${diseases.map(d => `
-       <div class="col-md-4 mb-3" data-id="${d.id}" data-category="${d.cat}">
-            <div class="card disease-card" style="cursor:pointer;" data-id="${d.id}">
+        <div class="col-md-4 mb-3" data-id="${d.id}" data-category="${d.cat}">
+            <div class="card disease-card" style="cursor:pointer;">
                 <div class="card-body">
                     <div style="font-size:2rem;">${d.icon}</div>
                     <h6>${esc(d.name)}</h6>
@@ -835,6 +835,19 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
         </div>`).join('')}
     </div>`;
 }
+
+window.filterDiseases = () => {
+    const q = document.getElementById('searchDisease')?.value.toLowerCase() || '';
+    const cat = document.getElementById('categoryFilter')?.value || '';
+    document.querySelectorAll('#diseaseList .col-md-4').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const category = card.dataset.category || '';
+        let show = true;
+        if (q && !text.includes(q)) show = false;
+        if (cat && category !== cat) show = false;
+        card.style.display = show ? '' : 'none';
+    });
+};
             function setupReference() { document.querySelectorAll('.disease-card').forEach(card => { card.addEventListener('click', function(e) { this.classList.toggle('active'); }); }); }
 window.filterDiseases = () => {
     const q = document.getElementById('searchDisease')?.value.toLowerCase() || '';
