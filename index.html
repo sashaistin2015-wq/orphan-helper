@@ -1791,11 +1791,16 @@ window.PalliativeCalc = {
 };
 // ======= ДОПОЛНИТЕЛЬНЫЕ ГЛОБАЛЬНЫЕ ФУНКЦИИ (ВНЕ ОБЪЕКТА) =======
 window.switchPallcalcTab = function(tab) {
-    document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    const el = document.getElementById(`tab-${tab}`);
+    // Убираем активный класс у всех вкладок и кнопок
+    document.querySelectorAll('.pallcalc-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+
+    // Находим нужную вкладку и активируем
+    var el = document.getElementById('tab-' + tab);
     if (el) el.classList.add('active');
-    const btn = document.querySelector(`[onclick="switchPallcalcTab('${tab}')"]`);
+
+    // Находим и активируем соответствующую кнопку
+    var btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
     if (btn) btn.classList.add('active');
 };
 
@@ -1805,16 +1810,13 @@ document.getElementById('btnReportMain')?.addEventListener('click', function() {
 });
 
 // Экспорт данных с генерацией синтаксиса
+// Экспорт данных с генерацией синтаксиса
 function exportStatisticalSyntax() {
-    // Собрать данные пациента (если выбран конкретный) или всех
-    const patientName = profile ? profile.fullName : '';
     const diary = DB.getData('diary');
     const palliative = DB.getData('palliative');
-    const lab = DB.getData('lab');
-    
-    // Формируем таблицу с показателями
+
     let rows = [];
-    const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]);
+    const allDates = new Set([...diary.map(e => e.date), ...palliative.map(e => e.date)]);
     allDates.forEach(date => {
         const d = diary.find(e => e.date === date) || {};
         const p = palliative.find(e => e.date === date) || {};
@@ -1829,89 +1831,70 @@ function exportStatisticalSyntax() {
             fatigue: p.fatigue || ''
         });
     });
-    
-    // Генерируем CSV строку
-    const headers = ['date','temperature','weight','wellbeing','pain','quality','dyspnea','fatigue'];
+
+    const headers = ['date', 'temperature', 'weight', 'wellbeing', 'pain', 'quality', 'dyspnea', 'fatigue'];
     let csv = headers.join(',') + '\n';
     rows.forEach(r => {
         csv += headers.map(h => r[h] || '').join(',') + '\n';
     });
-    
-    // Генерируем синтаксис для R
-    const rSyntax = `
-# Импорт данных
-data <- read.csv("data.csv", stringsAsFactors = FALSE)
-data$date <- as.Date(data$date)
-# Описательные статистики
-summary(data)
-# Корреляционная матрица
-cor(data[, sapply(data, is.numeric)], use = "complete.obs")
-# График динамики температуры
-plot(data$date, data$temperature, type="l", xlab="Дата", ylab="Температура")
-# t-тест для сравнения боли до/после вмешательства (если есть метка)
-# ...
-    `;
-    
-    // Генерируем синтаксис для SPSS
-    const spssSyntax = `
-* Импорт данных.
-GET DATA /TYPE=TXT
-  /FILE="data.csv"
-  /DELCASE=LINE
-  /DELIMITERS=","
-  /QUALIFIER='"'
-  /ARRANGEMENT=DELIMITED
-  /FIRSTCASE=2
-  /IMPORTCASE=ALL
-  /VARIABLES=
-    date A10
-    temperature F8.2
-    weight F8.2
-    wellbeing F8.0
-    pain F8.0
-    quality F8.0
-    dyspnea F8.0
-    fatigue F8.0.
-CACHE.
-EXECUTE.
-* Дескриптивы.
-DESCRIPTIVES VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue
-  /STATISTICS=MEAN STDDEV MIN MAX.
-* Корреляции.
-CORRELATIONS /VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue.
-    `;
-    
-    // Скачиваем CSV и синтаксис
-    const blobCsv = new Blob([csv], { type: 'text/csv' });
-    const urlCsv = URL.createObjectURL(blobCsv);
-    const aCsv = document.createElement('a');
-    aCsv.href = urlCsv;
-    aCsv.download = 'data.csv';
-    aCsv.click();
-    URL.revokeObjectURL(urlCsv);
-    
-    // Скачиваем R скрипт
-    const blobR = new Blob([rSyntax], { type: 'text/plain' });
-    const urlR = URL.createObjectURL(blobR);
-    const aR = document.createElement('a');
-    aR.href = urlR;
-    aR.download = 'analysis.R';
-    aR.click();
-    URL.revokeObjectURL(urlR);
-    
-    // Скачиваем SPSS синтаксис
-    const blobSpss = new Blob([spssSyntax], { type: 'text/plain' });
-    const urlSpss = URL.createObjectURL(blobSpss);
-    const aSpss = document.createElement('a');
-    aSpss.href = urlSpss;
-    aSpss.download = 'analysis.sps';
-    aSpss.click();
-    URL.revokeObjectURL(urlSpss);
-    
+
+    const rSyntax =
+        '# Импорт данных\n' +
+        'data <- read.csv("data.csv", stringsAsFactors = FALSE)\n' +
+        'data$date <- as.Date(data$date)\n' +
+        '# Описательные статистики\n' +
+        'summary(data)\n' +
+        '# Корреляционная матрица\n' +
+        'cor(data[, sapply(data, is.numeric)], use = "complete.obs")\n' +
+        '# График динамики температуры\n' +
+        'plot(data$date, data$temperature, type="l", xlab="Дата", ylab="Температура")\n' +
+        '# t-тест для сравнения боли до/после вмешательства (если есть метка)\n' +
+        '# ...\n';
+
+    const spssSyntax =
+        '* Импорт данных.\n' +
+        'GET DATA /TYPE=TXT\n' +
+        '  /FILE="data.csv"\n' +
+        '  /DELCASE=LINE\n' +
+        '  /DELIMITERS=","\n' +
+        '  /QUALIFIER=\'"\'\n' +
+        '  /ARRANGEMENT=DELIMITED\n' +
+        '  /FIRSTCASE=2\n' +
+        '  /IMPORTCASE=ALL\n' +
+        '  /VARIABLES=\n' +
+        '    date A10\n' +
+        '    temperature F8.2\n' +
+        '    weight F8.2\n' +
+        '    wellbeing F8.0\n' +
+        '    pain F8.0\n' +
+        '    quality F8.0\n' +
+        '    dyspnea F8.0\n' +
+        '    fatigue F8.0.\n' +
+        'CACHE.\n' +
+        'EXECUTE.\n' +
+        '* Дескриптивы.\n' +
+        'DESCRIPTIVES VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue\n' +
+        '  /STATISTICS=MEAN STDDEV MIN MAX.\n' +
+        '* Корреляции.\n' +
+        'CORRELATIONS /VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue.\n';
+
+    function download(content, filename, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    download(csv, 'data.csv', 'text/csv');
+    download(rSyntax, 'analysis.R', 'text/plain');
+    download(spssSyntax, 'analysis.sps', 'text/plain');
+
     notify('Экспорт статистических файлов выполнен', 'info');
 }
 window.exportStatisticalSyntax = exportStatisticalSyntax;
-    }
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
     // Вспомогательная функция: генерирует HTML-блок с вопросами
