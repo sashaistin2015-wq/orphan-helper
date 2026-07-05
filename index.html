@@ -1809,8 +1809,9 @@ document.getElementById('btnReportMain')?.addEventListener('click', function() {
     window.PalliativeCalc.generateFullReport();
 });
 
-// Экспорт данных с генерацией синтаксиса
-// Экспорт данных с генерацией синтаксиса
+// ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ =====
+
+// Экспорт статистических синтаксисов
 function exportStatisticalSyntax() {
     const diary = DB.getData('diary');
     const palliative = DB.getData('palliative');
@@ -1842,14 +1843,9 @@ function exportStatisticalSyntax() {
         '# Импорт данных\n' +
         'data <- read.csv("data.csv", stringsAsFactors = FALSE)\n' +
         'data$date <- as.Date(data$date)\n' +
-        '# Описательные статистики\n' +
         'summary(data)\n' +
-        '# Корреляционная матрица\n' +
         'cor(data[, sapply(data, is.numeric)], use = "complete.obs")\n' +
-        '# График динамики температуры\n' +
-        'plot(data$date, data$temperature, type="l", xlab="Дата", ylab="Температура")\n' +
-        '# t-тест для сравнения боли до/после вмешательства (если есть метка)\n' +
-        '# ...\n';
+        'plot(data$date, data$temperature, type="l", xlab="Дата", ylab="Температура")\n';
 
     const spssSyntax =
         '* Импорт данных.\n' +
@@ -1857,25 +1853,12 @@ function exportStatisticalSyntax() {
         '  /FILE="data.csv"\n' +
         '  /DELCASE=LINE\n' +
         '  /DELIMITERS=","\n' +
-        '  /QUALIFIER=\'"\'\n' +
         '  /ARRANGEMENT=DELIMITED\n' +
         '  /FIRSTCASE=2\n' +
-        '  /IMPORTCASE=ALL\n' +
-        '  /VARIABLES=\n' +
-        '    date A10\n' +
-        '    temperature F8.2\n' +
-        '    weight F8.2\n' +
-        '    wellbeing F8.0\n' +
-        '    pain F8.0\n' +
-        '    quality F8.0\n' +
-        '    dyspnea F8.0\n' +
-        '    fatigue F8.0.\n' +
-        'CACHE.\n' +
-        'EXECUTE.\n' +
-        '* Дескриптивы.\n' +
+        '  /VARIABLES= date A10 temperature F8.2 weight F8.2 wellbeing F8.0 pain F8.0 quality F8.0 dyspnea F8.0 fatigue F8.0.\n' +
+        'CACHE.\nEXECUTE.\n' +
         'DESCRIPTIVES VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue\n' +
         '  /STATISTICS=MEAN STDDEV MIN MAX.\n' +
-        '* Корреляции.\n' +
         'CORRELATIONS /VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue.\n';
 
     function download(content, filename, mime) {
@@ -1894,7 +1877,29 @@ function exportStatisticalSyntax() {
 
     notify('Экспорт статистических файлов выполнен', 'info');
 }
-window.exportStatisticalSyntax = exportStatisticalSyntax;
+window.exportStatisticalSyntax = exportStatisticalSyntax; // без лишней }
+
+// Переключение вкладок калькулятора
+window.switchPallcalcTab = function(tab) {
+    document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const el = document.getElementById('tab-' + tab);
+    if (el) el.classList.add('active');
+    const btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
+    if (btn) btn.classList.add('active');
+};
+
+// Анкеты
+function renderSurveys() {
+    // Вспомогательная функция внутри, если нужна
+    const generateQuestions = (questions, prefix) => {
+        return questions.map((q, i) =>
+            '<div class="col-md-6"><label>' + q +
+            ' <input type="number" id="' + prefix + (i + 1) +
+            '" class="form-control" min="0" max="4" value="0"></label></div>'
+        ).join('');
+    };
+
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
     // Вспомогательная функция: генерирует HTML-блок с вопросами
