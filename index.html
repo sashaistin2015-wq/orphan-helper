@@ -1817,17 +1817,6 @@ window.switchPallcalcTab = function(tab) {
     if (btn) btn.classList.add('active');
 };
 
-// Анкеты
-function renderSurveys() {
-    // Вспомогательная функция внутри, если нужна
-    const generateQuestions = (questions, prefix) => {
-        return questions.map((q, i) =>
-            '<div class="col-md-6"><label>' + q +
-            ' <input type="number" id="' + prefix + (i + 1) +
-            '" class="form-control" min="0" max="4" value="0"></label></div>'
-        ).join('');
-    };
-
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
     const generateQuestions = (questions, prefix) => {
