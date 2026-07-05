@@ -496,49 +496,62 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
             window.toggleTheme = toggleTheme;
 
            // ==================== НАВИГАЦИЯ (исправлена) ====================
-            async function updateNav() {
-                const nav = document.getElementById('navMenu');
-                const mob = document.getElementById('mobileNav');
-                if (!nav) return;
-                const items = (role) => {
-                    let html = `<button class="btn btn-sm btn-outline" onclick="App.navigate('/dashboard')"><i class="bi bi-house"></i></button>
-                    <button class="btn btn-sm btn-outline" onclick="toggleTheme()"><i class="bi bi-moon-stars"></i></button>`;
-                    if (role === 'parent') {
-                        html += `<div class="dropdown d-inline">
-                            <button class="btn btn-sm btn-outline dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-journal-medical"></i></button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="App.navigate('/diary');this.blur();"><i class="bi bi-journal"></i> Дневник</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="App.navigate('/palliative');this.blur();"><i class="bi bi-heart-pulse"></i> Паллиатив</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="App.navigate('/medications');this.blur();"><i class="bi bi-capsule"></i> Лекарства</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="App.navigate('/nutrition');this.blur();"><i class="bi bi-egg-fried"></i> Питание</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="App.navigate('/lab');this.blur();"><i class="bi bi-virus"></i> Анализы</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="App.navigate('/timeline');this.blur();"><i class="bi bi-calendar-event"></i> Таймлайн</a></li>
-                            </ul>
-                        </div>`;
-                    } else {
-                        html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')"><i class="bi bi-people"></i></button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>
-                        <button class="btn btn-primary" onclick="exportStatisticalSyntax()">📊 Экспорт для SPSS/R</button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')"><i class="bi bi-calculator"></i> Калькулятор</button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')"><i class="bi bi-clipboard-check"></i> Анкеты</button>`;
-                    }
-                    html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')"><i class="bi bi-book"></i></button>
-                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')"><i class="bi bi-diagram-3"></i></button>
-                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')"><i class="bi bi-question-circle"></i></button>
-                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')"><i class="bi bi-heart"></i></button>
-                    <span class="sync-badge ms-2" id="syncBadge"><span class="sync-dot"></span> Синхронизировано</span>
-                    <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()"><i class="bi bi-box-arrow-right"></i></button>`;
-                    return html;
-                };
-                if (profile) {
-                    nav.innerHTML = items(profile.role);
-                    if (mob) mob.innerHTML = items(profile.role);
-                } else {
-                    nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
-                    if (mob) mob.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
-                }
-                SyncManager.updateSyncIndicator();
-            }
+       async function updateNav() {
+    const nav = document.getElementById('navMenu');
+    const mob = document.getElementById('mobileNav');
+    if (!nav) return;
+    const items = (role) => {
+        let html = `
+            <button class="btn btn-sm btn-outline" onclick="App.navigate('/dashboard')" title="Главная"><i class="bi bi-house"></i></button>
+            <button class="btn btn-sm btn-outline" onclick="toggleTheme()" title="Сменить тему"><i class="bi bi-moon-stars"></i></button>
+        `;
+        if (role === 'parent') {
+            // Для пациента
+            html += `
+             <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')" title="Анкеты"><i class="bi bi-clipboard-check"></i></button>
+                <div class="dropdown d-inline">
+                    <button class="btn btn-sm btn-outline dropdown-toggle" data-bs-toggle="dropdown" title="Модули">
+                        <i class="bi bi-journal-medical"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/diary');this.blur();"><i class="bi bi-journal"></i> Дневник</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/palliative');this.blur();"><i class="bi bi-heart-pulse"></i> Паллиатив</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/medications');this.blur();"><i class="bi bi-capsule"></i> Лекарства</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/nutrition');this.blur();"><i class="bi bi-egg-fried"></i> Питание</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/lab');this.blur();"><i class="bi bi-virus"></i> Анализы</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/timeline');this.blur();"><i class="bi bi-calendar-event"></i> Таймлайн</a></li>
+                    </ul>
+                </div>
+            `;
+        } else {
+            // Для врача
+            html += `
+                <button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')" title="Пациенты"><i class="bi bi-people"></i></button>
+                <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')" title="Аналитика"><i class="bi bi-graph-up"></i></button>
+                <button class="btn btn-sm btn-outline" onclick="exportStatisticalSyntax()" title="Экспорт для SPSS/R"><i class="bi bi-file-earmark-spreadsheet"></i></button>
+                <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')" title="Калькулятор"><i class="bi bi-calculator"></i></button>
+                <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')" title="Анкеты"><i class="bi bi-clipboard-check"></i></button>
+            `;
+        }
+        html += `
+            <button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')" title="Справочник"><i class="bi bi-book"></i></button>
+            <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')" title="Генетика"><i class="bi bi-diagram-3"></i></button>
+            <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')" title="FAQ"><i class="bi bi-question-circle"></i></button>
+            <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')" title="Поддержка"><i class="bi bi-heart"></i></button>
+            <span class="sync-badge ms-2" id="syncBadge"><span class="sync-dot"></span> Синхронизировано</span>
+            <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
+        `;
+        return html;
+    };
+    if (profile) {
+        nav.innerHTML = items(profile.role);
+        if (mob) mob.innerHTML = items(profile.role);
+    } else {
+        nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
+        if (mob) mob.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
+    }
+    SyncManager.updateSyncIndicator();
+}
             setInterval(() => SyncManager.processQueue(), 30000);
 
             async function render() {
@@ -961,22 +974,131 @@ window.filterDiseases = () => {
             }
 // ==================== ПАЛЛИАТИВНЫЙ КАЛЬКУЛЯТОР (ВРАЧ) ====================
 function renderPallcalc() {
-    return `<h2><i class="bi bi-calculator"></i> Калькулятор комплексной оценки (врач)</h2>
+    const diseaseOptions = getDiseaseOptions(); // используем существующую базу
+    return `
+    <h2><i class="bi bi-calculator"></i> Калькулятор комплексной оценки (врач)</h2>
     <div class="d-flex flex-wrap gap-2 mb-3">
         <button class="btn btn-sm btn-outline tab-btn active" onclick="switchPallcalcTab('clinical')">🩺 Клинические параметры</button>
-        <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('efficiency')">📈 Эффективность</button>
-        <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('clustering')">🔬 Кластеризация</button>
-        <button class="btn btn-warning" onclick="PalliativeCalc.predictRisk()">🔮 Прогноз риска</button>
-        <button class="btn btn-success" onclick="PalliativeCalc.calculateAdaptiveIndex()">📊 Адаптивный индекс</button>
+        <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('efficiency')">📊 Эффективность</button>
+        <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('clustering')">🧩 Кластеризация</button>
         <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('report')">📋 Отчёт</button>
     </div>
-    <div id="tab-clinical" class="pallcalc-tab active"><div class="card mb-3"><h5>Антропометрия</h5><div class="row g-3"><div class="col-md-4"><select id="calcDiagnosis" class="form-select"><option value="">— Выберите —</option>${getDiseaseOptions()}</select></div><div class="col-md-2"><select id="calcGender" class="form-select"><option value="male">М</option><option value="female">Ж</option></select></div><div class="col-md-2"><input type="number" id="calcAgeYears" class="form-control" placeholder="Возраст"></div><div class="col-md-2"><input type="number" id="calcHeightCm" class="form-control" placeholder="Рост"></div><div class="col-md-2"><input type="number" id="calcWeightKg" class="form-control" placeholder="Вес"></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateBMI()">Рассчитать ИМТ</button><div id="bmi-result-container" class="mt-3"></div></div><div class="card"><h5>Функциональные показатели</h5><div class="row g-3"><div class="col-md-3"><input type="number" id="calcHR" class="form-control" placeholder="ЧСС"></div><div class="col-md-3"><input type="number" id="calcRR" class="form-control" placeholder="ЧДД"></div><div class="col-md-3"><input type="number" id="calcSpO2" class="form-control" placeholder="SpO2"></div><div class="col-md-3"><input type="number" id="calcSBP" class="form-control" placeholder="АД сист."></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateVitals()">Оценить</button><div id="vitals-result-container" class="mt-3"></div></div></div>
-    <div id="tab-efficiency" class="pallcalc-tab"><div class="card"><h5>Эффективность терапии</h5><div class="row"><div class="col-md-6"><input type="number" id="effWeightBefore" class="form-control mb-2" placeholder="Вес до"><input type="number" id="effPainBefore" class="form-control" placeholder="Боль до"></div><div class="col-md-6"><input type="number" id="effWeightAfter" class="form-control mb-2" placeholder="Вес после"><input type="number" id="effPainAfter" class="form-control" placeholder="Боль после"></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateEfficiency()">Рассчитать</button><div id="efficiency-result-container" class="mt-3"></div></div></div>
-    <div id="tab-clustering" class="pallcalc-tab"><div class="card"><h5>Кластеризация</h5><div class="row g-3"><div class="col-md-4"><input type="number" id="clustBMI" class="form-control" placeholder="ИМТ"></div><div class="col-md-4"><label>Боль (0-10)<input type="range" id="clustPain" class="form-range" min="0" max="10" value="3" oninput="document.getElementById('clustPainVal').textContent=this.value"><span id="clustPainVal">3</span></label></div><div class="col-md-4"><label>КЖ (0-10)<input type="range" id="clustQOL" class="form-range" min="0" max="10" value="6" oninput="document.getElementById('clustQOLVal').textContent=this.value"><span id="clustQOLVal">6</span></label></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.clusterPatient()">Определить кластер</button><div id="cluster-result-container" class="mt-3"></div></div></div>
-    <div id="tab-report" class="pallcalc-tab"><div class="card"><h5>Отчёт</h5><button class="btn btn-primary" onclick="PalliativeCalc.generateFullReport()">Сформировать</button><div id="report-result-container" class="mt-3"></div></div></div>`;
+
+    <!-- Вкладка: Клинические параметры -->
+    <div id="tab-clinical" class="pallcalc-tab active">
+        <div class="card mb-3">
+            <h5>📋 Диагноз и антропометрия</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Диагноз (МКБ-10)</label>
+                    <select id="calcDiagnosis" class="form-select">
+                        <option value="">— Выберите —</option>
+                        ${diseaseOptions}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Пол</label>
+                    <select id="calcGender" class="form-select">
+                        <option value="male">Мужской</option>
+                        <option value="female">Женский</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Возраст (лет)</label>
+                    <input type="number" id="calcAgeYears" class="form-control" min="2" max="18" step="0.1" placeholder="5.5">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Рост (см)</label>
+                    <input type="number" id="calcHeightCm" class="form-control" min="40" max="200" step="0.1" placeholder="110">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Вес (кг)</label>
+                    <input type="number" id="calcWeightKg" class="form-control" min="2" max="150" step="0.1" placeholder="18.5">
+                </div>
+            </div>
+            <button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateBMI()">🧮 Рассчитать ИМТ и центили</button>
+            <button class="btn btn-secondary mt-2" onclick="PalliativeCalc.resetTab('clinical')">Сброс</button>
+            <div id="bmi-result-container" class="mt-3"></div>
+        </div>
+
+        <div class="card" id="vital-signs-section" style="display:none;">
+            <h5>🫀 Жизненно-важные показатели (опционально)</h5>
+            <div class="row g-3">
+                <div class="col-md-2"><label class="form-label">ЧСС (уд/мин)</label><input type="number" id="calcHR" class="form-control" min="30" max="250" placeholder="90"></div>
+                <div class="col-md-2"><label class="form-label">ЧДД (в мин)</label><input type="number" id="calcRR" class="form-control" min="10" max="80" placeholder="22"></div>
+                <div class="col-md-2"><label class="form-label">АД сист.</label><input type="number" id="calcSBP" class="form-control" min="40" max="200" placeholder="100"></div>
+                <div class="col-md-2"><label class="form-label">АД диаст.</label><input type="number" id="calcDBP" class="form-control" min="20" max="140" placeholder="65"></div>
+                <div class="col-md-2"><label class="form-label">SpO₂ (%)</label><input type="number" id="calcSpO2" class="form-control" min="70" max="100" placeholder="98"></div>
+            </div>
+            <button class="btn btn-accent mt-2" onclick="PalliativeCalc.assessVitalSigns()">📈 Оценить показатели</button>
+            <div id="vital-result-container" class="mt-3"></div>
+        </div>
+    </div>
+
+    <!-- Вкладка: Эффективность -->
+    <div id="tab-efficiency" class="pallcalc-tab">
+        <div class="card">
+            <h5>📝 Анкетирование родителей / пациентов (1–5)</h5>
+            <button class="btn btn-info mt-2" onclick="PalliativeCalc.loadFromSurveys('efficiency')">📥 Загрузить из анкет</button>
+            <div class="row g-3">
+                <div class="col-md-2"><label class="form-label">Клинический индекс</label><input type="number" id="effPatClinical" class="form-control" min="1" max="5"></div>
+                <div class="col-md-2"><label class="form-label">Психоэмоциональный</label><input type="number" id="effPatPsycho" class="form-control" min="1" max="5"></div>
+                <div class="col-md-2"><label class="form-label">Качество жизни</label><input type="number" id="effPatQuality" class="form-control" min="1" max="5"></div>
+                <div class="col-md-2"><label class="form-label">Организационный</label><input type="number" id="effPatOrganizational" class="form-control" min="1" max="5"></div>
+                <div class="col-md-2"><label class="form-label">Дополнительный</label><input type="number" id="effPatAdditional" class="form-control" min="1" max="5"></div>
+            </div>
+            <h5 class="mt-3">👨‍⚕️ Анкетирование врачей (1–5)</h5>
+            <div class="row g-3">
+                <div class="col-md-3"><label class="form-label">Своевременность инф.</label><input type="number" id="effDocTimeliness" class="form-control" min="1" max="5"></div>
+                <div class="col-md-3"><label class="form-label">Качество документации</label><input type="number" id="effDocDocumentation" class="form-control" min="1" max="5"></div>
+                <div class="col-md-3"><label class="form-label">Согласованность</label><input type="number" id="effDocCoordination" class="form-control" min="1" max="5"></div>
+                <div class="col-md-3"><label class="form-label">Междисциплинарное</label><input type="number" id="effDocInteraction" class="form-control" min="1" max="5"></div>
+            </div>
+            <button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateEfficiency()">📊 Рассчитать эффективность</button>
+            <button class="btn btn-secondary mt-2" onclick="PalliativeCalc.resetTab('efficiency')">Сброс</button>
+            <div id="efficiency-result" class="mt-3"></div>
+            <div id="efficiency-chart" class="chart-box mt-3"></div>
+        </div>
+    </div>
+
+    <!-- Вкладка: Кластеризация -->
+    <div id="tab-clustering" class="pallcalc-tab">
+        <div class="card">
+            <h5>🧩 Параметры для кластеризации</h5>
+            <button class="btn btn-info mt-2" onclick="PalliativeCalc.loadFromSurveys('clustering')">📥 Загрузить из анкет</button>
+            <div class="row g-3">
+                <div class="col-md-2"><label class="form-label">Боль (0–10)</label><input type="number" id="clustPain" class="form-control" min="0" max="10" step="0.1"></div>
+                <div class="col-md-2"><label class="form-label">Нутритивный риск (0–5)</label><input type="number" id="clustNutrition" class="form-control" min="0" max="5" step="0.1"></div>
+                <div class="col-md-2"><label class="form-label">Физ. функционирование (0–100)</label><input type="number" id="clustPhysFunc" class="form-control" min="0" max="100"></div>
+                <div class="col-md-2"><label class="form-label">Эмоц. функционирование (0–100)</label><input type="number" id="clustEmoFunc" class="form-control" min="0" max="100"></div>
+                <div class="col-md-2"><label class="form-label">Соц. функционирование (0–100)</label><input type="number" id="clustSocFunc" class="form-control" min="0" max="100"></div>
+                <div class="col-md-2"><label class="form-label">Ролевое функционирование (0–100)</label><input type="number" id="clustRoleFunc" class="form-control" min="0" max="100"></div>
+            </div>
+            <button class="btn btn-primary mt-2" onclick="PalliativeCalc.clusterPatient()">🔍 Определить профиль</button>
+            <button class="btn btn-secondary mt-2" onclick="PalliativeCalc.resetTab('clustering')">Сброс</button>
+            <div id="clustering-result" class="mt-3"></div>
+            <div class="chart-box mt-3">
+                <div class="chart-wrapper" id="radar-container"></div>
+                <div class="chart-wrapper" id="gain-chart-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка: Отчёт -->
+    <div id="tab-report" class="pallcalc-tab">
+        <div class="card">
+            <h5>📄 Сводный отчёт</h5>
+            <div class="d-flex gap-2 mb-2">
+                <button class="btn btn-primary" onclick="window.print()">🖨️ Печать</button>
+                <button class="btn btn-secondary" onclick="PalliativeCalc.copyReport()">📋 Скопировать</button>
+            </div>
+            <div class="report-preview" id="report-content" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; font-family: monospace; white-space: pre-wrap;"></div>
+        </div>
+    </div>`;
 }
+
 function setupPallcalc() {
-    // ======= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (из deepseek) =======
+    // ======= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =======
     function getBMIRef(gender, age) {
         const a = Math.min(18, Math.max(2, age));
         if (gender === 'male') {
@@ -1036,7 +1158,7 @@ function setupPallcalc() {
         return {median_sys:115, median_dia:70, sd_sys:12, sd_dia:10};
     }
 
-    // ======= ПРОФИЛИ ДЛЯ КЛАСТЕРИЗАЦИИ =======
+    // Профили для кластеризации
     const profiles = {
         "Болевой": {
             center: { боль: 7.3, нутр: 2.3, физ: 26.1, эмо: 14.0, соц: 24.5, рол: 17.2 },
@@ -1065,7 +1187,7 @@ function setupPallcalc() {
         }
     };
 
-    // ======= САМИ МЕТОДЫ =======
+    // ======= ГЛАВНЫЙ ОБЪЕКТ С ФУНКЦИЯМИ =======
     window.PalliativeCalc = {
         calculateBMI: function() {
             const diagnosis = document.getElementById('calcDiagnosis')?.value || '';
@@ -1076,9 +1198,8 @@ function setupPallcalc() {
             const container = document.getElementById('bmi-result-container');
             if (!container) return;
 
-            // проверка
-            if (isNaN(age) || isNaN(height) || isNaN(weight) || age < 2 || height < 40 || weight < 2) {
-                container.innerHTML = '<div class="alert alert-warning">Заполните все поля корректно (возраст ≥2 лет, рост >40 см, вес >2 кг).</div>';
+            if (isNaN(age) || isNaN(height) || isNaN(weight) || age < 2 || age > 18 || height < 40 || weight < 2) {
+                container.innerHTML = '<div class="alert alert-warning">Заполните все поля корректно (возраст 2–18 лет, рост >40 см, вес >2 кг).</div>';
                 return;
             }
             const heightM = height / 100;
@@ -1087,6 +1208,61 @@ function setupPallcalc() {
             const zScore = ref.sd > 0 ? (bmi - ref.median) / ref.sd : 0;
             const percentile = zScoreToPercentile(zScore);
             const category = getBMICategory(percentile);
+            loadFromSurveys: function(target) {
+    const data = JSON.parse(localStorage.getItem('surveyData') || '{}');
+    if (!data.pedsql && !data.papascale) {
+        notify('Данные анкет не найдены. Сначала заполните анкеты в разделе "Анкеты".', 'error');
+        return;
+    }
+    const pedsql = data.pedsql || {};
+    const papascale = data.papascale || {};
+
+    if (target === 'efficiency') {
+        // Заполняем поля эффективности
+        if (pedsql.total !== undefined) {
+            // Общий балл PedsQL переводим в шкалу 1-5 (0-100 -> 1-5)
+            const quality = 1 + (pedsql.total / 100) * 4;
+            document.getElementById('effPatQuality').value = Math.round(quality);
+            // Психоэмоциональный – из домена эмоционального
+            const psycho = 1 + (pedsql.emotional / 100) * 4;
+            document.getElementById('effPatPsycho').value = Math.round(psycho);
+            // Клинический – средний по доменам
+            const clinical = (pedsql.physical + pedsql.emotional + pedsql.social + pedsql.school) / 4;
+            document.getElementById('effPatClinical').value = Math.round(1 + (clinical / 100) * 4);
+            notify('Данные PedsQL загружены в поля эффективности.', 'info');
+        } else {
+            notify('Нет данных PedsQL. Заполните анкету PedsQL.', 'error');
+        }
+    } else if (target === 'clustering') {
+        // Заполняем поля кластеризации
+        if (pedsql.physical !== undefined) {
+            document.getElementById('clustPhysFunc').value = Math.round(pedsql.physical);
+        }
+        if (pedsql.emotional !== undefined) {
+            document.getElementById('clustEmoFunc').value = Math.round(pedsql.emotional);
+        }
+        if (pedsql.social !== undefined) {
+            document.getElementById('clustSocFunc').value = Math.round(pedsql.social);
+        }
+        if (pedsql.school !== undefined) {
+            document.getElementById('clustRoleFunc').value = Math.round(pedsql.school);
+        }
+        // Если есть PaPaScale, можно попытаться извлечь боль (например, из блока симптомов)
+        if (papascale.total !== undefined) {
+            // Условно: если PaPaScale > 15, боль высокая
+            const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
+            document.getElementById('clustPain').value = pain;
+        } else {
+            document.getElementById('clustPain').value = 3; // значение по умолчанию
+        }
+        notify('Данные анкет загружены в поля кластеризации.', 'info');
+    }
+}
+
+            // Сохраняем данные для отчёта
+            window._pallData = window._pallData || {};
+            window._pallData.bmi = { bmi, percentile, zScore, category, age, gender, height, weight, diagnosis };
+
             container.innerHTML = `
                 <div class="alert alert-info">
                     <strong>ИМТ:</strong> ${bmi.toFixed(1)} кг/м²<br>
@@ -1094,21 +1270,20 @@ function setupPallcalc() {
                     <strong>Категория:</strong> ${category}
                 </div>
             `;
-            // сохраняем в хранилище (для отчёта)
-            window._pallData = window._pallData || {};
-            window._pallData.bmi = { bmi, percentile, zScore, category, age, gender, height, weight, diagnosis };
+            document.getElementById('vital-signs-section').style.display = 'block';
         },
 
-        calculateVitals: function() {
+        assessVitalSigns: function() {
             const age = parseFloat(document.getElementById('calcAgeYears')?.value);
             const hr = parseFloat(document.getElementById('calcHR')?.value);
             const rr = parseFloat(document.getElementById('calcRR')?.value);
             const spo2 = parseFloat(document.getElementById('calcSpO2')?.value);
-            const sbp = parseFloat(document.getElementById('calcSBP')?.value);
-            const container = document.getElementById('vitals-result-container');
+            const sys = parseFloat(document.getElementById('calcSBP')?.value);
+            const dia = parseFloat(document.getElementById('calcDBP')?.value);
+            const container = document.getElementById('vital-result-container');
             if (!container) return;
             if (isNaN(age) || age < 2) {
-                container.innerHTML = '<div class="alert alert-warning">Сначала укажите возраст.</div>';
+                container.innerHTML = '<div class="alert alert-warning">Сначала укажите возраст (≥2 лет).</div>';
                 return;
             }
             let html = '<div class="alert alert-secondary"><strong>Оценка жизненных показателей:</strong><br>';
@@ -1121,65 +1296,125 @@ function setupPallcalc() {
                 const refRR = getRRRef(age);
                 html += `• ЧДД: ${rr} в мин (норма ${refRR.min}–${refRR.max})<br>`;
             }
-            if (!isNaN(sbp)) {
+            if (!isNaN(sys) && !isNaN(dia)) {
                 const ref = getBPRef(age);
-                const sds = ref.sd_sys ? ((sbp - ref.median_sys) / ref.sd_sys).toFixed(2) : '—';
-                html += `• АД сист.: ${sbp} мм рт.ст. (норма ~${ref.median_sys}) → SDS = ${sds}<br>`;
+                const sdsS = ref.sd_sys ? ((sys - ref.median_sys) / ref.sd_sys).toFixed(2) : '—';
+                const sdsD = ref.sd_dia ? ((dia - ref.median_dia) / ref.sd_dia).toFixed(2) : '—';
+                html += `• АД: ${sys}/${dia} мм рт.ст. (норма ~${ref.median_sys}/${ref.median_dia}) → SDS сист.=${sdsS}, диаст.=${sdsD}<br>`;
             }
             if (!isNaN(spo2)) {
-                html += `• SpO₂: ${spo2}% (норма ≥94%)<br>`;
+                html += `• SpO₂: ${spo2}% (норма ≥94%; гипоксемия при <90%)<br>`;
             }
             html += '<small>Референсы: NHLBI 2011, ВОЗ. SDS > |2| – повод для дообследования.</small></div>';
             container.innerHTML = html;
             window._pallData = window._pallData || {};
-            window._pallData.vitals = { hr, rr, sbp, spo2 };
+            window._pallData.vitals = { hr, rr, sys, dia, spo2 };
         },
 
         calculateEfficiency: function() {
-            const beforeWeight = parseFloat(document.getElementById('effWeightBefore')?.value);
-            const afterWeight = parseFloat(document.getElementById('effWeightAfter')?.value);
-            const beforePain = parseFloat(document.getElementById('effPainBefore')?.value);
-            const afterPain = parseFloat(document.getElementById('effPainAfter')?.value);
-            const container = document.getElementById('efficiency-result-container');
-            if (!container) return;
-            if (isNaN(beforeWeight) || isNaN(afterWeight) || isNaN(beforePain) || isNaN(afterPain)) {
-                container.innerHTML = '<div class="alert alert-warning">Заполните все поля.</div>';
+            const patFields = ['effPatClinical','effPatPsycho','effPatQuality','effPatOrganizational','effPatAdditional'];
+            const docFields = ['effDocTimeliness','effDocDocumentation','effDocCoordination','effDocInteraction'];
+            let valid = true;
+            const vals = {};
+            [...patFields, ...docFields].forEach(id => {
+                const el = document.getElementById(id);
+                const v = parseInt(el.value);
+                if (isNaN(v) || v < 1 || v > 5) { el.classList.add('invalid'); valid = false; }
+                else { el.classList.remove('invalid'); vals[id] = v; }
+            });
+            if (!valid) {
+                notify('Все поля должны быть целыми числами от 1 до 5.', 'error');
                 return;
             }
-            const weightChange = ((afterWeight - beforeWeight) / beforeWeight * 100).toFixed(1);
-            const painChange = ((beforePain - afterPain) / (beforePain || 1) * 100).toFixed(1);
-            let overall = 0;
-            if (weightChange > 0) overall += 50;
-            if (painChange > 20) overall += 50;
-            const level = overall >= 80 ? 'Высокая' : overall >= 50 ? 'Средняя' : 'Низкая';
+
+            const pat = (vals.effPatClinical + vals.effPatPsycho + vals.effPatQuality + vals.effPatOrganizational + vals.effPatAdditional) / 5;
+            const doc = (vals.effDocTimeliness + vals.effDocDocumentation + vals.effDocCoordination + vals.effDocInteraction) / 4;
+            const total = ((pat + doc) / 2) * 20;
+
+            let level, color, interp;
+            if (total >= 85) { level = 'Высокая'; color = '#28a745'; interp = 'Отличная работа. Поддерживайте стандарты.'; }
+            else if (total >= 70) { level = 'Хорошая'; color = '#ffc107'; interp = 'Есть потенциал улучшения.'; }
+            else if (total >= 55) { level = 'Удовлетворительная'; color = '#fd7e14'; interp = 'Требуется корректировка процессов.'; }
+            else { level = 'Требует улучшения'; color = '#dc3545'; interp = 'Критично – аудит и обучение персонала.'; }
+
+            window._pallData = window._pallData || {};
+            window._pallData.efficiency = { total, level, pat, doc, vals, color, interp };
+
+            const container = document.getElementById('efficiency-result');
             container.innerHTML = `
-                <div class="alert alert-success">
-                    <strong>Изменение веса:</strong> ${weightChange}%<br>
-                    <strong>Изменение боли:</strong> ${painChange}%<br>
-                    <strong>Общая эффективность:</strong> ${overall}% (${level})
+                <div style="border-left:5px solid ${color}; padding-left:1rem;">
+                    <h5 style="color:${color}">Интегральная эффективность: ${total.toFixed(1)}% (${level})</h5>
+                    <p>${interp}</p>
+                    <div class="row">
+                        <div class="col-md-4"><strong>Пациенты:</strong> ${pat.toFixed(1)}/5</div>
+                        <div class="col-md-4"><strong>Врачи:</strong> ${doc.toFixed(1)}/5</div>
+                        <div class="col-md-4"><strong>Общая:</strong> ${total.toFixed(1)}%</div>
+                    </div>
                 </div>
             `;
-            window._pallData = window._pallData || {};
-            window._pallData.efficiency = { weightChange, painChange, overall, level };
+            this.drawEfficiencyCharts(pat, doc, vals, color);
+        },
+
+        drawEfficiencyCharts: function(pat, doc, vals, color) {
+            const container = document.getElementById('efficiency-chart');
+            if (typeof Chart === 'undefined') {
+                container.innerHTML = '<p class="text-danger">⚠️ Библиотека Chart.js не загружена.</p>';
+                return;
+            }
+            container.innerHTML = `
+                <div class="chart-wrapper"><h6>Профиль компонентов (1–5)</h6><canvas id="effBar"></canvas></div>
+                <div class="chart-wrapper"><h6>Вклад пациентов и врачей</h6><canvas id="effPie"></canvas></div>
+            `;
+            const barCtx = document.getElementById('effBar').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Клин.','Психо','КЖ','Орг.','Доп.','Своевр.','Докум.','Согл.','Взаим.'],
+                    datasets: [{
+                        data: [
+                            vals.effPatClinical, vals.effPatPsycho, vals.effPatQuality,
+                            vals.effPatOrganizational, vals.effPatAdditional,
+                            vals.effDocTimeliness, vals.effDocDocumentation,
+                            vals.effDocCoordination, vals.effDocInteraction
+                        ],
+                        backgroundColor: ['#007bff','#6f42c1','#17a2b8','#ffc107','#fd7e14','#28a745','#20c997','#e83e8c','#6c757d']
+                    }]
+                },
+                options: { responsive: true, scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+            });
+            const pieCtx = document.getElementById('effPie').getContext('2d');
+            new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Пациенты', 'Врачи'],
+                    datasets: [{ data: [pat*20, doc*20], backgroundColor: ['#007bff','#28a745'] }]
+                },
+                options: { responsive: true }
+            });
         },
 
         clusterPatient: function() {
-            const bmi = parseFloat(document.getElementById('clustBMI')?.value);
-            const pain = parseFloat(document.getElementById('clustPain')?.value);
-            const qol = parseFloat(document.getElementById('clustQOL')?.value);
-            const container = document.getElementById('cluster-result-container');
-            if (!container) return;
-            if (isNaN(bmi) || isNaN(pain) || isNaN(qol)) {
-                container.innerHTML = '<div class="alert alert-warning">Заполните ИМТ, боль и КЖ.</div>';
+            const fields = {
+                pain: 'clustPain',
+                nutrition: 'clustNutrition',
+                phys_func: 'clustPhysFunc',
+                emo_func: 'clustEmoFunc',
+                soc_func: 'clustSocFunc',
+                role_func: 'clustRoleFunc'
+            };
+            const limits = { pain:[0,10], nutrition:[0,5], phys_func:[0,100], emo_func:[0,100], soc_func:[0,100], role_func:[0,100] };
+            let valid = true;
+            const vals = {};
+            for (const [key, id] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                const v = parseFloat(el.value);
+                if (isNaN(v) || v < limits[key][0] || v > limits[key][1]) { el.classList.add('invalid'); valid = false; }
+                else { el.classList.remove('invalid'); vals[key] = v; }
+            }
+            if (!valid) {
+                notify('Введите корректные значения для всех полей.', 'error');
                 return;
             }
-            // Оценочные параметры для кластеризации (имитация)
-            const phys = 50 - pain * 4 + (qol / 2);
-            const emo = 30 + qol * 3 - pain * 2;
-            const soc = 40 + qol * 2 - pain * 1.5;
-            const role = 35 + qol * 2 - pain * 2;
-            const nutrition = (bmi < 18.5) ? 4 : (bmi < 25 ? 2 : 3);
-            const vals = { pain, nutrition, phys_func: phys, emo_func: emo, soc_func: soc, role_func: role };
 
             let best = null, minDist = Infinity;
             for (const [name, cfg] of Object.entries(profiles)) {
@@ -1190,10 +1425,14 @@ function setupPallcalc() {
                 if (dist < minDist) { minDist = dist; best = name; }
             }
             const p = profiles[best];
-            const deltaQoL = 4.87 - 0.41 * vals.nutrition - 0.52 * vals.pain - 0.09 * vals.phys_func;
-            const orMapping = { "Болевой": 6.1, "Нутритивный": 3.5, "Двигательный": 1.4, "Относительно компенсированный": 1.0, "Социально-депривированный": 2.8 };
+            const deltaQoL = 4.87 - 0.41*vals.nutrition - 0.52*vals.pain - 0.09*vals.phys_func;
+            const orMapping = { "Болевой":6.1, "Нутритивный":3.5, "Двигательный":1.4, "Относительно компенсированный":1.0, "Социально-депривированный":2.8 };
             const orVal = orMapping[best] || 1.0;
 
+            window._pallData = window._pallData || {};
+            window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs, desc: p.desc, center: p.center };
+
+            const container = document.getElementById('clustering-result');
             container.innerHTML = `
                 <div class="alert alert-primary">
                     <h5>Профиль: «${best}»</h5>
@@ -1203,8 +1442,41 @@ function setupPallcalc() {
                     <p><strong>OR выраженного улучшения:</strong> ${orVal} (p<0.05)</p>
                 </div>
             `;
-            window._pallData = window._pallData || {};
-            window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs };
+            this.drawClusterCharts(vals, p.center, best, deltaQoL, orVal);
+        },
+
+        drawClusterCharts: function(patient, center, profileName, deltaQoL, orVal) {
+            const radarDiv = document.getElementById('radar-container');
+            const gainDiv = document.getElementById('gain-chart-container');
+            if (typeof Chart === 'undefined') {
+                radarDiv.innerHTML = '<p class="text-danger">⚠️ Chart.js не загружен.</p>';
+                gainDiv.innerHTML = '';
+                return;
+            }
+            radarDiv.innerHTML = '<h6>🕸️ Радар</h6><canvas id="radarChart"></canvas>';
+            gainDiv.innerHTML = '<h6>📈 Прогноз</h6><canvas id="gainChart"></canvas>';
+
+            const rctx = document.getElementById('radarChart').getContext('2d');
+            new Chart(rctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Боль','Нутр.риск','Физ.','Эмоц.','Соц.','Рол.'],
+                    datasets: [
+                        { label: 'Пациент', data: [patient.pain, patient.nutrition, patient.phys_func, patient.emo_func, patient.soc_func, patient.role_func], borderColor: '#dc3545' },
+                        { label: `Центроид «${profileName}»`, data: [center.боль, center.нутр, center.физ, center.эмо, center.соц, center.рол], borderColor: '#007bff', borderDash: [5,5] }
+                    ]
+                },
+                options: { responsive: true, scales: { r: { min:0, max:100 } } }
+            });
+            const gctx = document.getElementById('gainChart').getContext('2d');
+            new Chart(gctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Δ КЖ (баллы)', 'OR улучшения'],
+                    datasets: [{ data: [deltaQoL.toFixed(2), orVal], backgroundColor: ['#17a2b8','#ffc107'] }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
         },
 
         generateFullReport: function() {
@@ -1226,15 +1498,14 @@ function setupPallcalc() {
                 report += '▶ ВИТАЛЬНЫЕ ПОКАЗАТЕЛИ:\n';
                 if (data.vitals.hr) report += `  ЧСС: ${data.vitals.hr} уд/мин\n`;
                 if (data.vitals.rr) report += `  ЧДД: ${data.vitals.rr} в мин\n`;
-                if (data.vitals.sbp) report += `  АД сист.: ${data.vitals.sbp} мм рт.ст.\n`;
+                if (data.vitals.sys) report += `  АД: ${data.vitals.sys}/${data.vitals.dia} мм рт.ст.\n`;
                 if (data.vitals.spo2) report += `  SpO₂: ${data.vitals.spo2}%\n`;
                 report += '\n';
             }
             if (data.efficiency) {
-                report += '▶ ЭФФЕКТИВНОСТЬ ТЕРАПИИ:\n';
-                report += `  Изменение веса: ${data.efficiency.weightChange}%\n`;
-                report += `  Изменение боли: ${data.efficiency.painChange}%\n`;
-                report += `  Общая эффективность: ${data.efficiency.overall}% (${data.efficiency.level})\n\n`;
+                report += '▶ ЭФФЕКТИВНОСТЬ:\n';
+                report += `  Общая: ${data.efficiency.total.toFixed(1)}% (${data.efficiency.level})\n`;
+                report += `  Пациенты: ${data.efficiency.pat.toFixed(1)}/5, Врачи: ${data.efficiency.doc.toFixed(1)}/5\n\n`;
             }
             if (data.clustering) {
                 report += '▶ КЛАСТЕРИЗАЦИЯ:\n';
@@ -1244,191 +1515,62 @@ function setupPallcalc() {
                 report += `  Рекомендации: ${data.clustering.recs}\n\n`;
             }
             report += '══════════════════════════════════════════\n';
-            document.getElementById('report-result-container').innerHTML = `<pre class="bg-light p-3 rounded">${report}</pre>`;
-            // Также можно скопировать в буфер
+            document.getElementById('report-content').textContent = report;
+            switchPallcalcTab('report');
+        },
+
+        copyReport: function() {
+            const text = document.getElementById('report-content').textContent;
+            navigator.clipboard.writeText(text).then(() => notify('Отчёт скопирован в буфер обмена!', 'info'));
+        },
+
+        resetTab: function(tab) {
+            const mapping = {
+                clinical: ['calcDiagnosis', 'calcGender', 'calcAgeYears', 'calcHeightCm', 'calcWeightKg', 'calcHR', 'calcRR', 'calcSBP', 'calcDBP', 'calcSpO2'],
+                efficiency: ['effPatClinical','effPatPsycho','effPatQuality','effPatOrganizational','effPatAdditional','effDocTimeliness','effDocDocumentation','effDocCoordination','effDocInteraction'],
+                clustering: ['clustPain','clustNutrition','clustPhysFunc','clustEmoFunc','clustSocFunc','clustRoleFunc']
+            };
+            (mapping[tab] || []).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.value = ''; el.classList.remove('invalid'); }
+            });
+            if (tab === 'clinical') {
+                document.getElementById('bmi-result-container').innerHTML = '';
+                document.getElementById('vital-result-container').innerHTML = '';
+                document.getElementById('vital-signs-section').style.display = 'none';
+                window._pallData = window._pallData || {};
+                delete window._pallData.bmi;
+                delete window._pallData.vitals;
+            }
+            if (tab === 'efficiency') {
+                document.getElementById('efficiency-result').innerHTML = '';
+                document.getElementById('efficiency-chart').innerHTML = '';
+                if (window._pallData) delete window._pallData.efficiency;
+            }
+            if (tab === 'clustering') {
+                document.getElementById('clustering-result').innerHTML = '';
+                document.getElementById('radar-container').innerHTML = '';
+                document.getElementById('gain-chart-container').innerHTML = '';
+                if (window._pallData) delete window._pallData.clustering;
+            }
         }
     };
-function getClusterHistory() {
-                    try { return JSON.parse(localStorage.getItem('clusterHistory')) || []; } catch(e) { return []; }
-                }
-                function saveClusterHistory(entry) {
-                    const hist = getClusterHistory();
-                    hist.push({ date: new Date().toISOString(), ...entry });
-                    localStorage.setItem('clusterHistory', JSON.stringify(hist));
-                }
-                function showClusterTrajectory() {
-                    const hist = getClusterHistory();
-                    if (hist.length < 2) { notify('Недостаточно данных для траектории', 'info'); return; }
-                    const labels = hist.map(e => new Date(e.date).toLocaleDateString());
-                    const data = hist.map(e => e.cluster);
-                    const container = document.getElementById('cluster-result-container');
-                    // Удаляем старый график, если есть
-                    const oldCanvas = document.getElementById('trajectoryChart');
-                    if (oldCanvas) oldCanvas.remove();
-                    const canvas = document.createElement('canvas');
-                    canvas.id = 'trajectoryChart';
-                    canvas.width = 400; canvas.height = 200;
-                    container.appendChild(canvas);
-                    if (typeof Chart === 'undefined') { notify('Chart.js не загружен', 'error'); return; }
-                    new Chart(canvas, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Кластер',
-                                data: data.map(c => Object.keys(profiles).indexOf(c)),
-                                borderColor: '#0d7377',
-                                fill: false,
-                                tension: 0.1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                y: {
-                                    ticks: {
-                                        callback: (val) => Object.keys(profiles)[Math.round(val)] || ''
-                                    },
-                                    min: -0.5,
-                                    max: Object.keys(profiles).length - 0.5
-                                }
-                            },
-                            plugins: {
-                                tooltip: {
-                                    callbacks: {
-                                        label: (ctx) => Object.keys(profiles)[Math.round(ctx.parsed.y)] || ''
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
 
-                // Переопределяем clusterPatient с сохранением истории
-                window.PalliativeCalc.clusterPatient = function() {
-                    const bmi = parseFloat(document.getElementById('clustBMI')?.value);
-                    const pain = parseFloat(document.getElementById('clustPain')?.value);
-                    const qol = parseFloat(document.getElementById('clustQOL')?.value);
-                    const container = document.getElementById('cluster-result-container');
-                    if (!container) return;
-                    if (isNaN(bmi) || isNaN(pain) || isNaN(qol)) {
-                        container.innerHTML = '<div class="alert alert-warning">Заполните ИМТ, боль и КЖ.</div>';
-                        return;
-                    }
-                    const phys = 50 - pain * 4 + (qol / 2);
-                    const emo = 30 + qol * 3 - pain * 2;
-                    const soc = 40 + qol * 2 - pain * 1.5;
-                    const role = 35 + qol * 2 - pain * 2;
-                    const nutrition = (bmi < 18.5) ? 4 : (bmi < 25 ? 2 : 3);
-                    const vals = { pain, nutrition, phys_func: phys, emo_func: emo, soc_func: soc, role_func: role };
+    // Переключение вкладок
+    window.switchPallcalcTab = function(tab) {
+        document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const el = document.getElementById(`tab-${tab}`);
+        if (el) el.classList.add('active');
+        const btn = document.querySelector(`[onclick="switchPallcalcTab('${tab}')"]`);
+        if (btn) btn.classList.add('active');
+    };
 
-                    let best = null, minDist = Infinity;
-                    const profiles = {
-                        "Болевой": { center: { боль: 7.3, нутр: 2.3, физ: 26.1, эмо: 14.0, соц: 24.5, рол: 17.2 }, desc: "Ведущий драйвер – боль.", recs: "Обезболивание по ВОЗ, КПТ." },
-                        "Нутритивный": { center: { боль: 3.1, нутр: 4.6, физ: 18.2, эмо: 21.4, соц: 26.8, рол: 19.5 }, desc: "Высокий нутритивный риск.", recs: "Диетолог, зондовое питание." },
-                        "Двигательный": { center: { боль: 5.6, нутр: 3.4, физ: 11.5, эмо: 19.0, соц: 16.2, рол: 11.0 }, desc: "Тяжёлые двигательные ограничения.", recs: "ЛФК, ТСР." },
-                        "Относительно компенсированный": { center: { боль: 2.9, нутр: 2.0, физ: 43.8, эмо: 31.2, соц: 48.5, рол: 42.3 }, desc: "Относительно сохранное КЖ.", recs: "Наблюдение." },
-                        "Социально-депривированный": { center: { боль: 3.0, нутр: 2.2, физ: 41.2, эмо: 30.8, соц: 18.1, рол: 15.2 }, desc: "Изоляция.", recs: "Психосоциальная реабилитация." }
-                    };
-                    for (const [name, cfg] of Object.entries(profiles)) {
-                        const c = cfg.center;
-                        const dist = Math.hypot(vals.pain - c.боль, vals.nutrition - c.нутр,
-                            vals.phys_func - c.физ, vals.emo_func - c.эмо,
-                            vals.soc_func - c.соц, vals.role_func - c.рол);
-                        if (dist < minDist) { minDist = dist; best = name; }
-                    }
-                    const p = profiles[best];
-                    const deltaQoL = 4.87 - 0.41 * vals.nutrition - 0.52 * vals.pain - 0.09 * vals.phys_func;
-                    const orMapping = { "Болевой": 6.1, "Нутритивный": 3.5, "Двигательный": 1.4, "Относительно компенсированный": 1.0, "Социально-депривированный": 2.8 };
-                    const orVal = orMapping[best] || 1.0;
-
-                    // Сохраняем историю
-                    saveClusterHistory({ cluster: best, bmi, pain, qol });
-
-                    container.innerHTML = `
-                        <div class="alert alert-primary">
-                            <h5>Профиль: «${best}»</h5>
-                            <p>${p.desc}</p>
-                            <p><strong>Рекомендации:</strong> ${p.recs}</p>
-                            <p><strong>Прогнозируемый прирост КЖ (Δ):</strong> ${deltaQoL.toFixed(2)} балла</p>
-                            <p><strong>OR выраженного улучшения:</strong> ${orVal} (p<0.05)</p>
-                            <button class="btn btn-info mt-2" onclick="showClusterTrajectory()">📈 Показать траекторию</button>
-                        </div>
-                    `;
-                    window._pallData = window._pallData || {};
-                    window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs };
-                };
-
-                // Прогноз риска на 7 дней (линейная регрессия)
-                window.PalliativeCalc.predictRisk = function() {
-                    const diary = DB.getData('diary').slice(-7);
-                    if (diary.length < 5) { notify('Недостаточно данных для прогноза (нужно ≥5 дней)', 'error'); return; }
-                    const temps = diary.map((e, i) => ({ x: i, y: parseFloat(e.temperature) || 36.6 }));
-                    const n = temps.length;
-                    const sumX = temps.reduce((s, p) => s + p.x, 0);
-                    const sumY = temps.reduce((s, p) => s + p.y, 0);
-                    const sumXY = temps.reduce((s, p) => s + p.x * p.y, 0);
-                    const sumX2 = temps.reduce((s, p) => s + p.x * p.x, 0);
-                    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-                    const intercept = (sumY - slope * sumX) / n;
-                    const nextDay = n;
-                    const predictedTemp = slope * nextDay + intercept;
-                    const risk = predictedTemp > 37.5 ? 'Повышенный риск лихорадки' : 'Стабильно';
-                    const container = document.getElementById('vitals-result-container');
-                    container.innerHTML += `<div class="alert alert-warning mt-2"><strong>Прогноз на завтра:</strong> ${predictedTemp.toFixed(1)}°C – ${risk}</div>`;
-                };
-
-                // Адаптивный индекс
-                window.PalliativeCalc.calculateAdaptiveIndex = function() {
-                    const diagnosis = document.getElementById('calcDiagnosis')?.value || '';
-                    if (!diagnosis) { notify('Выберите диагноз', 'error'); return; }
-                    const diary = DB.getData('diary');
-                    if (!diary.length) { notify('Нет записей дневника', 'error'); return; }
-                    const last = diary[diary.length-1];
-                    const weights = {
-                        'Муковисцидоз': { temperature: 0.3, weight: 0.2, wellbeing: 0.2, symptoms: 0.3 },
-                        'Фенилкетонурия': { temperature: 0.2, weight: 0.3, wellbeing: 0.2, symptoms: 0.3 },
-                        'default': { temperature: 0.25, weight: 0.25, wellbeing: 0.25, symptoms: 0.25 }
-                    };
-                    const w = weights[diagnosis] || weights.default;
-                    const normTemp = (parseFloat(last.temperature) || 36.6) / 40;
-                    const normWeight = (parseFloat(last.weight) || 50) / 100;
-                    const normWellbeing = (parseInt(last.wellbeing) || 5) / 10;
-                    const symptomsPresent = (last.symptoms && last.symptoms.length > 0) ? 1 : 0;
-                    const index = w.temperature * normTemp + w.weight * normWeight + w.wellbeing * normWellbeing + w.symptoms * symptomsPresent;
-                    const container = document.getElementById('bmi-result-container');
-                    container.innerHTML += `<div class="alert alert-success mt-2"><strong>Адаптивный индекс состояния:</strong> ${(index * 100).toFixed(1)}%</div>`;
-                };
-
-                // Семантический анализ симптомов
-                window.PalliativeCalc.analyzeSymptoms = function() {
-                    const diary = DB.getData('diary');
-                    if (!diary.length) { notify('Нет записей', 'error'); return; }
-                    const last = diary[diary.length-1];
-                    const text = last.symptoms || '';
-                    const keywords = ['кашель', 'одышка', 'кровь', 'рвота', 'судороги', 'головная боль'];
-                    const found = keywords.filter(k => text.toLowerCase().includes(k));
-                    let alertMsg = '';
-                    if (found.length) {
-                        alertMsg = `Обнаружены тревожные симптомы: ${found.join(', ')}. Обратитесь к врачу.`;
-                        notify(alertMsg, 'error');
-                    } else {
-                        alertMsg = 'Критических симптомов не обнаружено.';
-                        notify(alertMsg, 'info');
-                    }
-                    const container = document.getElementById('vitals-result-container');
-                    container.innerHTML += `<div class="alert alert-secondary mt-2">${alertMsg}</div>`;
-                };
-
-                // Переключение вкладок
-                window.switchPallcalcTab = function(tab) {
-                    document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    const el = document.getElementById(`tab-${tab}`);
-                    if (el) el.classList.add('active');
-                    const btn = document.querySelector(`[onclick="switchPallcalcTab('${tab}')"]`);
-                    if (btn) btn.classList.add('active');
-                };
-            }
+    // Привязываем генерацию отчёта к кнопке в заголовке (если есть)
+    document.getElementById('btnReportMain')?.addEventListener('click', function() {
+        window.PalliativeCalc.generateFullReport();
+    });
+}
 // Экспорт данных с генерацией синтаксиса
 function exportStatisticalSyntax() {
     // Собрать данные пациента (если выбран конкретный) или всех
@@ -1535,6 +1677,7 @@ CORRELATIONS /VARIABLES=temperature weight wellbeing pain quality dyspnea fatigu
     
     notify('Экспорт статистических файлов выполнен', 'info');
 }
+window.exportStatisticalSyntax = exportStatisticalSyntax;
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
     // Вспомогательная функция: генерирует HTML-блок с вопросами
@@ -1610,12 +1753,34 @@ function setupSurveys() {
         let cat = total>=80 ? 'Хорошее КЖ' : total>=60 ? 'Среднее КЖ' : 'Низкое КЖ';
         document.getElementById('pedsql-result').innerHTML = `<div class="alert alert-info">Общий балл PedsQL: <strong>${total.toFixed(1)}</strong> – ${cat}</div>`;
     };
+      // Внутри calculatePedsQL, после расчёта total и cat:
+const surveyData = {
+    pedsql: {
+        total: total,
+        physical: (allItems.slice(0,8).reduce((a,b)=>a+b,0) / 8) * 100 / 4, // средний балл по домену
+        emotional: (allItems.slice(8,13).reduce((a,b)=>a+b,0) / 5) * 100 / 4,
+        social: (allItems.slice(13,18).reduce((a,b)=>a+b,0) / 5) * 100 / 4,
+        school: (allItems.slice(18,23).reduce((a,b)=>a+b,0) / 5) * 100 / 4,
+        category: cat
+    }
+};
+// Если уже есть PaPaScale – объединить
+const existing = JSON.parse(localStorage.getItem('surveyData') || '{}');
+localStorage.setItem('surveyData', JSON.stringify({ ...existing, ...surveyData }));
     window.calculatePaPaScale = function() {
         const vals = ['1_1','1_2','2_1','2_2','3_1','3_2','3_3','4_1','4_2','5_1','5_2'];
         const total = vals.reduce((s,id)=>{ const el=document.getElementById(`papa_${id}`); return s + (el ? parseInt(el.value)||0 : 0); },0);
         let cat = total>25 ? 'Показана ПП (вынести на ВК)' : total>15 ? 'Скорее всего нуждается в ПП' : total>10 ? 'Может нуждаться в ПП' : 'Не нуждается в ПП';
         document.getElementById('papascale-result').innerHTML = `<div class="alert alert-info">Суммарный балл PaPaScale: <strong>${total}</strong> – ${cat}</div>`;
     };
+    // После расчёта total и cat:
+const surveyData = JSON.parse(localStorage.getItem('surveyData') || '{}');
+surveyData.papascale = {
+    total: total,
+    category: cat
+};
+localStorage.setItem('surveyData', JSON.stringify(surveyData));
+  
     // логика скрытия блоков при выборе Да
     document.getElementById('papa_4_1')?.addEventListener('change', function() {
         const wrapper = document.getElementById('papa_4_2_wrapper');
