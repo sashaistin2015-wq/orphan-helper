@@ -1145,184 +1145,114 @@ window.filterDiseases = () => {
 // ==================== ПАЛЛИАТИВНЫЙ КАЛЬКУЛЯТОР (ВРАЧ) ====================
 function renderPallcalc() {
     const diseaseOptions = getDiseaseOptions();
-    return `
-    <h2 class="mb-4"><i class="bi bi-calculator"></i> Калькулятор комплексной оценки (врач)</h2>
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <button class="btn btn-sm tab-btn active" onclick="switchPallcalcTab('clinical')">🩺 Клинические параметры</button>
-        <button class="btn btn-sm tab-btn" onclick="switchPallcalcTab('efficiency')">📊 Эффективность</button>
-        <button class="btn btn-sm tab-btn" onclick="switchPallcalcTab('clustering')">🧩 Кластеризация</button>
-        <button class="btn btn-sm tab-btn" onclick="switchPallcalcTab('report')">📋 Отчёт</button>
-    </div>
+    return '<h2><i class="bi bi-calculator"></i> Калькулятор комплексной оценки (врач)</h2>' +
+    '<div class="d-flex flex-wrap gap-2 mb-3">' +
+        '<button class="btn btn-sm tab-btn active" onclick="switchPallcalcTab(\'clinical\')">🩺 Клинические параметры</button>' +
+        '<button class="btn btn-sm tab-btn" onclick="switchPallcalcTab(\'efficiency\')">📊 Эффективность</button>' +
+        '<button class="btn btn-sm tab-btn" onclick="switchPallcalcTab(\'clustering\')">🧩 Кластеризация</button>' +
+        '<button class="btn btn-sm tab-btn" onclick="switchPallcalcTab(\'report\')">📋 Отчёт</button>' +
+    '</div>' +
 
-    <!-- Вкладка: Клинические параметры -->
-<div id="tab-clinical" class="pallcalc-tab active">
-  <div class="pallcalc-card">
-    <div class="section-title"><i class="bi bi-clipboard2-pulse"></i> Диагноз и антропометрия</div>
-    <div class="params-grid">
-      <div class="param-field">
-        <label>Диагноз (МКБ-10)</label>
-        <select id="calcDiagnosis" class="form-select">${diseaseOptions}</select>
-      </div>
-      <div class="param-field">
-        <label>Пол</label>
-        <select id="calcGender" class="form-select">
-          <option value="male">Мужской</option>
-          <option value="female">Женский</option>
-        </select>
-      </div>
-      <div class="param-field">
-        <label>Возраст <span class="badge bg-light text-dark">2–18 лет</span></label>
-        <input type="number" id="calcAgeYears" class="form-control" min="2" max="18" step="0.1" placeholder="5.5">
-      </div>
-      <div class="param-field">
-        <label>Рост (см)</label>
-        <input type="number" id="calcHeightCm" class="form-control" min="40" max="200" step="0.1" placeholder="110">
-      </div>
-      <div class="param-field">
-        <label>Вес (кг)</label>
-        <input type="number" id="calcWeightKg" class="form-control" min="2" max="150" step="0.1" placeholder="18.5">
-      </div>
-    </div>
-    <div class="d-flex gap-2 mt-3">
-      <button class="btn btn-primary btn-clust" onclick="PalliativeCalc.calculateBMI()">
-        <i class="bi bi-calculator"></i> Рассчитать ИМТ и центили
-      </button>
-      <button class="btn btn-outline-secondary btn-clust" onclick="PalliativeCalc.resetTab('clinical')">
-        <i class="bi bi-arrow-counterclockwise"></i> Сброс
-      </button>
-    </div>
-    <div id="bmi-result-container" class="mt-3"></div>
-  </div>
+    '<!-- Вкладка: Клинические параметры -->' +
+    '<div id="tab-clinical" class="pallcalc-tab active">' +
+        '<div class="pallcalc-card">' +
+            '<div class="section-title"><i class="bi bi-clipboard2-pulse"></i> Диагноз и антропометрия</div>' +
+            '<div class="params-grid">' +
+                '<div class="param-field"><label>Диагноз (МКБ-10)</label><select id="calcDiagnosis" class="form-select">' + diseaseOptions + '</select></div>' +
+                '<div class="param-field"><label>Пол</label><select id="calcGender" class="form-select"><option value="male">Мужской</option><option value="female">Женский</option></select></div>' +
+                '<div class="param-field"><label>Возраст (лет) <span class="badge bg-light text-dark">2–18</span></label><input type="number" id="calcAgeYears" class="form-control" min="2" max="18" step="0.1" placeholder="5.5"></div>' +
+                '<div class="param-field"><label>Рост (см)</label><input type="number" id="calcHeightCm" class="form-control" min="40" max="200" step="0.1" placeholder="110"></div>' +
+                '<div class="param-field"><label>Вес (кг)</label><input type="number" id="calcWeightKg" class="form-control" min="2" max="150" step="0.1" placeholder="18.5"></div>' +
+            '</div>' +
+            '<div class="d-flex gap-2 mt-3">' +
+                '<button class="btn btn-primary" onclick="PalliativeCalc.calculateBMI()">🧮 Рассчитать ИМТ</button>' +
+                '<button class="btn btn-outline-secondary" onclick="PalliativeCalc.resetTab(\'clinical\')">Сброс</button>' +
+            '</div>' +
+            '<div id="bmi-result-container" class="mt-3"></div>' +
+        '</div>' +
+        '<div class="pallcalc-card" id="vital-signs-section" style="display:none;">' +
+            '<div class="section-title"><i class="bi bi-heart-pulse"></i> Жизненно-важные показатели</div>' +
+            '<div class="params-grid">' +
+                '<div class="param-field"><label>ЧСС (уд/мин)</label><input type="number" id="calcHR" class="form-control" placeholder="90"></div>' +
+                '<div class="param-field"><label>ЧДД (в мин)</label><input type="number" id="calcRR" class="form-control" placeholder="22"></div>' +
+                '<div class="param-field"><label>АД систолическое</label><input type="number" id="calcSBP" class="form-control" placeholder="100"></div>' +
+                '<div class="param-field"><label>АД диастолическое</label><input type="number" id="calcDBP" class="form-control" placeholder="65"></div>' +
+                '<div class="param-field"><label>SpO₂ (%)</label><input type="number" id="calcSpO2" class="form-control" placeholder="98"></div>' +
+            '</div>' +
+            '<button class="btn btn-accent mt-3" onclick="PalliativeCalc.assessVitalSigns()">📈 Оценить показатели</button>' +
+            '<div id="vital-result-container" class="mt-3"></div>' +
+        '</div>' +
+    '</div>' +
 
-  <div class="pallcalc-card" id="vital-signs-section" style="display:none;">
-    <div class="section-title"><i class="bi bi-heart-pulse"></i> Жизненно-важные показатели</div>
-    <div class="params-grid">
-      <div class="param-field">
-        <label>ЧСС (уд/мин)</label>
-        <input type="number" id="calcHR" class="form-control" placeholder="90">
-      </div>
-      <div class="param-field">
-        <label>ЧДД (в мин)</label>
-        <input type="number" id="calcRR" class="form-control" placeholder="22">
-      </div>
-      <div class="param-field">
-        <label>АД систолическое</label>
-        <input type="number" id="calcSBP" class="form-control" placeholder="100">
-      </div>
-      <div class="param-field">
-        <label>АД диастолическое</label>
-        <input type="number" id="calcDBP" class="form-control" placeholder="65">
-      </div>
-      <div class="param-field">
-        <label>SpO₂ (%)</label>
-        <input type="number" id="calcSpO2" class="form-control" placeholder="98">
-      </div>
-    </div>
-    <button class="btn btn-accent btn-clust mt-3" onclick="PalliativeCalc.assessVitalSigns()">
-      <i class="bi bi-graph-up"></i> Оценить показатели
-    </button>
-    <div id="vital-result-container" class="mt-3"></div>
-  </div>
-</div>
+    '<!-- Вкладка: Эффективность -->' +
+    '<div id="tab-efficiency" class="pallcalc-tab">' +
+        '<div class="pallcalc-card">' +
+            '<div class="section-title"><i class="bi bi-chat-left-text"></i> Анкетирование родителей / пациентов (1–5)</div>' +
+            '<button class="btn btn-outline-info btn-sm mb-3" onclick="PalliativeCalc.loadFromSurveys(\'efficiency\')">📥 Загрузить из анкет</button>' +
+            '<div class="params-grid">' +
+                '<div class="param-field"><label>Клинический индекс</label><input type="number" id="effPatClinical" class="form-control" min="1" max="5"></div>' +
+                '<div class="param-field"><label>Психоэмоциональный индекс</label><input type="number" id="effPatPsycho" class="form-control" min="1" max="5"></div>' +
+                '<div class="param-field"><label>Качество жизни</label><input type="number" id="effPatQuality" class="form-control" min="1" max="5"></div>' +
+                '<div class="param-field"><label>Организационный аспект</label><input type="number" id="effPatOrganizational" class="form-control" min="1" max="5"></div>' +
+                '<div class="param-field"><label>Дополнительный параметр</label><input type="number" id="effPatAdditional" class="form-control" min="1" max="5"></div>' +
+            '</div>' +
+            '<div class="section-title mt-4"><i class="bi bi-clipboard2-check"></i> Анкетирование врачей (1–5)</div>' +
+            '<div class="params-grid">' +
+                '<div class="param-field"><label>Своевременность информации</label><input type="number" id="effDocTimeliness" class="form-control" min="1" max="5"></div>' +
+                '<div class="param-field"><label>Качество документации</label><input type="number" id="effDocDocumentation" class="form-control" min="1" max="5"></div>' +
+                '<div class="param-field"><label>Согласованность действий</label><input type="number" id="effDocCoordination" class="form-control" min="1" max="5"></div>' +
+                '<div class="param-field"><label>Междисциплинарное взаимодействие</label><input type="number" id="effDocInteraction" class="form-control" min="1" max="5"></div>' +
+            '</div>' +
+            '<div class="d-flex gap-2 mt-3">' +
+                '<button class="btn btn-primary" onclick="PalliativeCalc.calculateEfficiency()">📊 Рассчитать эффективность</button>' +
+                '<button class="btn btn-outline-secondary" onclick="PalliativeCalc.resetTab(\'efficiency\')">Сброс</button>' +
+            '</div>' +
+            '<div id="efficiency-result" class="mt-3"></div>' +
+            '<div id="efficiency-chart" class="chart-box"></div>' +
+        '</div>' +
+    '</div>' +
 
-   <!-- Вкладка: Эффективность -->
-<div id="tab-efficiency" class="pallcalc-tab">
-  <div class="pallcalc-card">
-    <div class="section-title"><i class="bi bi-chat-left-text"></i> Анкетирование родителей / пациентов (1–5)</div>
-    <button class="btn btn-outline-info btn-sm mb-3" onclick="PalliativeCalc.loadFromSurveys('efficiency')">
-      <i class="bi bi-download"></i> Загрузить из анкет
-    </button>
-    <div class="params-grid">
-      <div class="param-field">
-        <label>Клинический индекс</label>
-        <input type="number" id="effPatClinical" class="form-control" min="1" max="5" placeholder="3">
-      </div>
-      <div class="param-field">
-        <label>Психоэмоциональный индекс</label>
-        <input type="number" id="effPatPsycho" class="form-control" min="1" max="5" placeholder="2">
-      </div>
-      <div class="param-field">
-        <label>Качество жизни</label>
-        <input type="number" id="effPatQuality" class="form-control" min="1" max="5" placeholder="4">
-      </div>
-      <div class="param-field">
-        <label>Организационный аспект</label>
-        <input type="number" id="effPatOrganizational" class="form-control" min="1" max="5" placeholder="3">
-      </div>
-      <div class="param-field">
-        <label>Дополнительный параметр</label>
-        <input type="number" id="effPatAdditional" class="form-control" min="1" max="5" placeholder="2">
-      </div>
-    </div>
+    '<!-- Вкладка: Кластеризация -->' +
+    '<div id="tab-clustering" class="pallcalc-tab">' +
+        '<div class="pallcalc-card">' +
+            '<div class="section-title"><i class="bi bi-pie-chart-fill"></i> Профиль пациента (кластерный анализ)</div>' +
+            '<p class="text-muted mb-3">Заполните все параметры для определения доминирующего профиля.</p>' +
+            '<button class="btn btn-outline-info btn-sm mb-3" onclick="PalliativeCalc.loadFromSurveys(\'clustering\')">📥 Загрузить из анкет</button>' +
+            '<div class="params-group"><div class="params-group-title">🔹 Физические параметры</div>' +
+            '<div class="params-grid">' +
+                '<div class="param-field"><label><i class="bi bi-speedometer2"></i> Интенсивность боли <span class="badge bg-light text-dark">0–10</span></label><input type="number" id="clustPain" class="form-control" min="0" max="10" step="0.1" placeholder="4.5"></div>' +
+                '<div class="param-field"><label><i class="bi bi-activity"></i> Нутритивный риск <span class="badge bg-light text-dark">0–5</span></label><input type="number" id="clustNutrition" class="form-control" min="0" max="5" step="0.1" placeholder="2.3"></div>' +
+                '<div class="param-field"><label><i class="bi bi-heart-pulse"></i> Физическое функционирование <span class="badge bg-light text-dark">0–100</span></label><input type="number" id="clustPhysFunc" class="form-control" min="0" max="100" placeholder="65"></div>' +
+            '</div></div>' +
+            '<div class="params-group"><div class="params-group-title">🔸 Психосоциальные аспекты</div>' +
+            '<div class="params-grid">' +
+                '<div class="param-field"><label><i class="bi bi-emoji-smile"></i> Эмоциональное функционирование <span class="badge bg-light text-dark">0–100</span></label><input type="number" id="clustEmoFunc" class="form-control" min="0" max="100" placeholder="42"></div>' +
+                '<div class="param-field"><label><i class="bi bi-people"></i> Социальное функционирование <span class="badge bg-light text-dark">0–100</span></label><input type="number" id="clustSocFunc" class="form-control" min="0" max="100" placeholder="58"></div>' +
+                '<div class="param-field"><label><i class="bi bi-briefcase"></i> Ролевое функционирование <span class="badge bg-light text-dark">0–100</span></label><input type="number" id="clustRoleFunc" class="form-control" min="0" max="100" placeholder="33"></div>' +
+            '</div></div>' +
+            '<div class="d-flex gap-2 mt-3">' +
+                '<button class="btn btn-primary" onclick="PalliativeCalc.clusterPatient()">🔍 Определить профиль</button>' +
+                '<button class="btn btn-outline-secondary" onclick="PalliativeCalc.resetTab(\'clustering\')">Сброс</button>' +
+            '</div>' +
+            '<div id="clustering-result" class="mt-4"></div>' +
+            '<div class="chart-box mt-4">' +
+                '<div class="chart-wrapper"><h6>🕸️ Радарная диаграмма</h6><canvas id="radarChart"></canvas></div>' +
+                '<div class="chart-wrapper"><h6>📈 Прогноз улучшения</h6><canvas id="gainChart"></canvas></div>' +
+            '</div>' +
+        '</div>' +
+    '</div>' +
 
-    <div class="section-title mt-4"><i class="bi bi-clipboard2-check"></i> Анкетирование врачей (1–5)</div>
-    <div class="params-grid">
-      <div class="param-field">
-        <label>Своевременность информации</label>
-        <input type="number" id="effDocTimeliness" class="form-control" min="1" max="5" placeholder="4">
-      </div>
-      <div class="param-field">
-        <label>Качество документации</label>
-        <input type="number" id="effDocDocumentation" class="form-control" min="1" max="5" placeholder="3">
-      </div>
-      <div class="param-field">
-        <label>Согласованность действий</label>
-        <input type="number" id="effDocCoordination" class="form-control" min="1" max="5" placeholder="3">
-      </div>
-      <div class="param-field">
-        <label>Междисциплинарное взаимодействие</label>
-        <input type="number" id="effDocInteraction" class="form-control" min="1" max="5" placeholder="4">
-      </div>
-    </div>
-    <div class="d-flex gap-2 mt-3">
-      <button class="btn btn-primary btn-clust" onclick="PalliativeCalc.calculateEfficiency()">
-        <i class="bi bi-bar-chart"></i> Рассчитать эффективность
-      </button>
-      <button class="btn btn-outline-secondary btn-clust" onclick="PalliativeCalc.resetTab('efficiency')">
-        <i class="bi bi-arrow-counterclockwise"></i> Сброс
-      </button>
-    </div>
-    <div id="efficiency-result" class="mt-3"></div>
-    <div id="efficiency-chart" class="chart-box"></div>
-  </div>
-</div>
-
-    <!-- Вкладка: Кластеризация -->
-    <div id="tab-clustering" class="pallcalc-tab">
-        <div class="pallcalc-card">
-            <div class="section-title">🧩 Параметры для кластеризации</div>
-            <button class="btn btn-info btn-sm mb-3" onclick="PalliativeCalc.loadFromSurveys('clustering')">📥 Загрузить из анкет</button>
-            <div class="pallcalc-row">
-                <div class="pallcalc-field"><label>Боль (0–10)</label><input type="number" id="clustPain" class="form-control" min="0" max="10" step="0.1"></div>
-                <div class="pallcalc-field"><label>Нутритивный риск (0–5)</label><input type="number" id="clustNutrition" class="form-control" min="0" max="5" step="0.1"></div>
-                <div class="pallcalc-field"><label>Физ. функционирование (0–100)</label><input type="number" id="clustPhysFunc" class="form-control" min="0" max="100"></div>
-                <div class="pallcalc-field"><label>Эмоц. функционирование (0–100)</label><input type="number" id="clustEmoFunc" class="form-control" min="0" max="100"></div>
-                <div class="pallcalc-field"><label>Соц. функционирование (0–100)</label><input type="number" id="clustSocFunc" class="form-control" min="0" max="100"></div>
-                <div class="pallcalc-field"><label>Ролевое функционирование (0–100)</label><input type="number" id="clustRoleFunc" class="form-control" min="0" max="100"></div>
-            </div>
-            <div class="mt-3 d-flex gap-2">
-                <button class="btn btn-primary" onclick="PalliativeCalc.clusterPatient()">🔍 Определить профиль</button>
-                <button class="btn btn-outline-secondary" onclick="PalliativeCalc.resetTab('clustering')">Сброс</button>
-            </div>
-            <div id="clustering-result" class="mt-3"></div>
-            <div class="chart-box mt-3">
-                <div class="chart-wrapper" id="radar-container"></div>
-                <div class="chart-wrapper" id="gain-chart-container"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Вкладка: Отчёт -->
-<div id="tab-report" class="pallcalc-tab">
-  <div class="pallcalc-card">
-    <div class="section-title"><i class="bi bi-file-earmark-text"></i> Сводный отчёт</div>
-    <div class="d-flex gap-2 mb-3">
-      <button class="btn btn-primary btn-clust" onclick="window.print()">🖨️ Печать</button>
-      <button class="btn btn-secondary btn-clust" onclick="PalliativeCalc.copyReport()">📋 Скопировать</button>
-    </div>
-    <div id="report-content" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; font-family: monospace; white-space: pre-wrap;"></div>
-  </div>
-</div>
+    '<!-- Вкладка: Отчёт -->' +
+    '<div id="tab-report" class="pallcalc-tab">' +
+        '<div class="pallcalc-card">' +
+            '<div class="section-title"><i class="bi bi-file-earmark-text"></i> Сводный отчёт</div>' +
+            '<div class="d-flex gap-2 mb-3">' +
+                '<button class="btn btn-primary" onclick="window.print()">🖨️ Печать</button>' +
+                '<button class="btn btn-secondary" onclick="PalliativeCalc.copyReport()">📋 Скопировать</button>' +
+            '</div>' +
+            '<div id="report-content" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; font-family: monospace; white-space: pre-wrap;"></div>' +
+        '</div>' +
+    '</div>';
 }
 
 function setupPallcalc() {
@@ -1809,9 +1739,7 @@ document.getElementById('btnReportMain')?.addEventListener('click', function() {
     window.PalliativeCalc.generateFullReport();
 });
 
-// ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ =====
-
-// Экспорт статистических синтаксисов
+// ===== ГЛОБАЛЬНАЯ ФУНКЦИЯ ЭКСПОРТА СТАТИСТИЧЕСКИХ ДАННЫХ =====
 function exportStatisticalSyntax() {
     const diary = DB.getData('diary');
     const palliative = DB.getData('palliative');
@@ -1877,9 +1805,9 @@ function exportStatisticalSyntax() {
 
     notify('Экспорт статистических файлов выполнен', 'info');
 }
-window.exportStatisticalSyntax = exportStatisticalSyntax; // без лишней }
+window.exportStatisticalSyntax = exportStatisticalSyntax;
 
-// Переключение вкладок калькулятора
+// ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК КАЛЬКУЛЯТОРА =====
 window.switchPallcalcTab = function(tab) {
     document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1902,81 +1830,79 @@ function renderSurveys() {
 
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
-    // Вспомогательная функция: генерирует HTML-блок с вопросами
     const generateQuestions = (questions, prefix) => {
-        return questions.map((q, i) => 
-            '<div class="col-md-6"><label>' + q + 
-            ' <input type="number" id="' + prefix + (i + 1) + 
+        return questions.map((q, i) =>
+            '<div class="col-md-6"><label>' + q +
+            ' <input type="number" id="' + prefix + (i + 1) +
             '" class="form-control" min="0" max="4" value="0"></label></div>'
         ).join('');
     };
 
-    return <h2><i class="bi bi-clipboard-check"></i> Анкеты качества жизни</h2>
-    <div class="d-flex flex-wrap gap-2 mb-3">
-        <button class="btn btn-sm btn-outline tab-btn active" onclick="switchSurveyTab('pedsql')">📝 PedsQL (8–12 лет)</button>
-        <button class="btn btn-sm btn-outline tab-btn" onclick="switchSurveyTab('papascale')">💛 PaPaScale</button>
-    </div>
-    <!-- PedsQL -->
-    <div id="tab-pedsql" class="survey-tab active">
-        <div class="card"><h5>PedsQL™ 4.0 – Опросник для детей 8–12 лет</h5><p>Насколько каждая ситуация была проблемой <strong>за последний месяц</strong>?<br>0 – никогда, 1 – почти никогда, 2 – иногда, 3 – часто, 4 – почти всегда</p>
-            <h6>1. Здоровье и активность</h6>
-            <div class="row g-2">${generateQuestions(['Трудно пройти пешком более одной остановки','Трудно бегать','Трудно играть в спортивные игры / делать зарядку','Трудно поднимать тяжелые вещи','Трудно самостоятельно принимать ванну или душ','Трудно выполнять обязанности по дому','Беспокоила боль','Было мало сил'], 'pedsql_a')}</div>
-            <h6 class="mt-3">2. Мои ощущения</h6>
-            <div class="row g-2">${generateQuestions(['Мне бывало страшно','Мне бывало грустно','Я был разозлен чем-либо','Я плохо спал','Я переживал о том, что может случиться'], 'pedsql_b')}</div>
-            <h6 class="mt-3">3. Общение с другими</h6>
-            <div class="row g-2">${generateQuestions(['Трудно общаться с другими детьми','Другие дети не хотели со мной дружить','Другие дети дразнили меня','Я не умел делать то, что умеют мои ровесники','Трудно чувствовать себя наравне с другими детьми'], 'pedsql_c')}</div>
-            <h6 class="mt-3">4. Школа</h6>
-            <div class="row g-2">${generateQuestions(['Трудно быть внимательным на уроках','Я был забывчив','Трудно справляться со школьными заданиями','Пропускал школу из-за плохого самочувствия','Пропускал школу из-за визитов к врачу / в больницу'], 'pedsql_d')}</div>
-            <button class="btn btn-primary mt-3" onclick="calculatePedsQL()">Рассчитать PedsQL</button>
-            <div id="pedsql-result" class="mt-3"></div>
-        </div>
-    </div>
-    <!-- PaPaScale -->
-    <div id="tab-papascale" class="survey-tab">
-        <div class="card"><h5>Шкала PaPaS Scale – Показания к паллиативной помощи</h5>
-            <h6>Блок 1. Траектория болезни</h6>
-            <div class="mb-2"><label>1.1 Влияние на ежедневную активность</label><select id="papa_1_1" class="form-select"><option value="0">Стабильное состояние</option><option value="1">Медленное прогрессирование без влияния</option><option value="2">Нестабильное, ограничивает активность</option><option value="4">Значительное ухудшение, тяжёлые ограничения</option></select></div>
-            <div class="mb-2"><label>1.2 Увеличение числа госпитализаций за год</label><select id="papa_1_2" class="form-select"><option value="0">Нет</option><option value="3">Да</option></select></div>
-            <h6>Блок 2. Исход лечения</h6>
-            <div class="mb-2"><label>2.1 Лечение основного заболевания</label><select id="papa_2_1" class="form-select"><option value="0">Куративное</option><option value="1">Не излечивает, но контролирует</option><option value="2">Не излечивает, но улучшает КЖ</option><option value="4">Не излечивает и не улучшает КЖ</option></select></div>
-            <div class="mb-2"><label>2.2 Побочные эффекты лечения</label><select id="papa_2_2" class="form-select"><option value="0">Нет</option><option value="1">Лёгкая степень</option><option value="2">Средняя степень</option><option value="4">Высокая степень</option></select></div>
-            <h6>Блок 3. Симптомы и психология</h6>
-            <div class="mb-2"><label>3.1 Тяжесть симптомов (последние 4 недели)</label><select id="papa_3_1" class="form-select"><option value="0">Нет симптомов</option><option value="1">Слабые, легко контролируются</option><option value="2">Один симптом средней тяжести</option><option value="4">Тяжёлый симптом, плохо поддаётся лечению</option></select></div>
-            <div class="mb-2"><label>3.2 Дистресс пациента</label><select id="papa_3_2" class="form-select"><option value="0">Нет</option><option value="1">Лёгкий</option><option value="2">Умеренный</option><option value="4">Тяжёлый</option></select></div>
-            <div class="mb-2"><label>3.3 Дистресс родителей / ухаживающих</label><select id="papa_3_3" class="form-select"><option value="0">Нет</option><option value="1">Лёгкий</option><option value="2">Умеренный</option><option value="4">Тяжёлый</option></select></div>
-            <h6>Блок 4. Мнение о необходимости ПП</h6>
-            <div class="mb-2"><label>4.1 Пациент / родители хотят получать ПП</label><select id="papa_4_1" class="form-select"><option value="0">Нет</option><option value="4">Да</option></select></div>
-<div class="mb-2" id="papa_4_2_wrapper"><label>4.2 Специалисты считают, что показана ПП</label><select id="papa_4_2" class="form-select"><option value="0">Нет</option><option value="4">Да</option></select></div>
-            <h6>Блок 5. Продолжительность жизни</h6>
-            <div class="mb-2"><label>5.1 Предполагаемая продолжительность жизни</label><select id="papa_5_1" class="form-select"><option value="0">Годы</option><option value="1">От месяца до 1–2 лет</option><option value="3">Недели – несколько месяцев</option><option value="4">Дни – недели</option></select></div>
-            <div class="mb-2" id="papa_5_2_wrapper"><label>5.2 Удивитесь ли вы, если ребёнок внезапно умрёт в ближайшие 6–12 месяцев?</label><select id="papa_5_2" class="form-select"><option value="0">Да</option><option value="2">Нет</option></select></div>
-            <button class="btn btn-primary mt-3" onclick="calculatePaPaScale()">Рассчитать PaPaScale</button>
-            <div id="papascale-result" class="mt-3"></div>
-        </div>
-    </div>`;
+    return '<h2><i class="bi bi-clipboard-check"></i> Анкеты качества жизни</h2>' +
+    '<div class="d-flex flex-wrap gap-2 mb-3">' +
+        '<button class="btn btn-sm btn-outline tab-btn active" onclick="switchSurveyTab(\'pedsql\')">📝 PedsQL (8–12 лет)</button>' +
+        '<button class="btn btn-sm btn-outline tab-btn" onclick="switchSurveyTab(\'papascale\')">💛 PaPaScale</button>' +
+    '</div>' +
+    '<!-- PedsQL -->' +
+    '<div id="tab-pedsql" class="survey-tab active">' +
+        '<div class="card"><h5>PedsQL™ 4.0 – Опросник для детей 8–12 лет</h5><p>Насколько каждая ситуация была проблемой <strong>за последний месяц</strong>?<br>0 – никогда, 1 – почти никогда, 2 – иногда, 3 – часто, 4 – почти всегда</p>' +
+            '<h6>1. Здоровье и активность</h6>' +
+            '<div class="row g-2">' + generateQuestions(['Трудно пройти пешком более одной остановки','Трудно бегать','Трудно играть в спортивные игры / делать зарядку','Трудно поднимать тяжелые вещи','Трудно самостоятельно принимать ванну или душ','Трудно выполнять обязанности по дому','Беспокоила боль','Было мало сил'], 'pedsql_a') + '</div>' +
+            '<h6 class="mt-3">2. Мои ощущения</h6>' +
+            '<div class="row g-2">' + generateQuestions(['Мне бывало страшно','Мне бывало грустно','Я был разозлен чем-либо','Я плохо спал','Я переживал о том, что может случиться'], 'pedsql_b') + '</div>' +
+            '<h6 class="mt-3">3. Общение с другими</h6>' +
+            '<div class="row g-2">' + generateQuestions(['Трудно общаться с другими детьми','Другие дети не хотели со мной дружить','Другие дети дразнили меня','Я не умел делать то, что умеют мои ровесники','Трудно чувствовать себя наравне с другими детьми'], 'pedsql_c') + '</div>' +
+            '<h6 class="mt-3">4. Школа</h6>' +
+            '<div class="row g-2">' + generateQuestions(['Трудно быть внимательным на уроках','Я был забывчив','Трудно справляться со школьными заданиями','Пропускал школу из-за плохого самочувствия','Пропускал школу из-за визитов к врачу / в больницу'], 'pedsql_d') + '</div>' +
+            '<button class="btn btn-primary mt-3" onclick="calculatePedsQL()">Рассчитать PedsQL</button>' +
+            '<div id="pedsql-result" class="mt-3"></div>' +
+        '</div>' +
+    '</div>' +
+    '<!-- PaPaScale -->' +
+    '<div id="tab-papascale" class="survey-tab">' +
+        '<div class="card"><h5>Шкала PaPaS Scale – Показания к паллиативной помощи</h5>' +
+            '<h6>Блок 1. Траектория болезни</h6>' +
+            '<div class="mb-2"><label>1.1 Влияние на ежедневную активность</label><select id="papa_1_1" class="form-select"><option value="0">Стабильное состояние</option><option value="1">Медленное прогрессирование без влияния</option><option value="2">Нестабильное, ограничивает активность</option><option value="4">Значительное ухудшение, тяжёлые ограничения</option></select></div>' +
+            '<div class="mb-2"><label>1.2 Увеличение числа госпитализаций за год</label><select id="papa_1_2" class="form-select"><option value="0">Нет</option><option value="3">Да</option></select></div>' +
+            '<h6>Блок 2. Исход лечения</h6>' +
+            '<div class="mb-2"><label>2.1 Лечение основного заболевания</label><select id="papa_2_1" class="form-select"><option value="0">Куративное</option><option value="1">Не излечивает, но контролирует</option><option value="2">Не излечивает, но улучшает КЖ</option><option value="4">Не излечивает и не улучшает КЖ</option></select></div>' +
+            '<div class="mb-2"><label>2.2 Побочные эффекты лечения</label><select id="papa_2_2" class="form-select"><option value="0">Нет</option><option value="1">Лёгкая степень</option><option value="2">Средняя степень</option><option value="4">Высокая степень</option></select></div>' +
+            '<h6>Блок 3. Симптомы и психология</h6>' +
+            '<div class="mb-2"><label>3.1 Тяжесть симптомов (последние 4 недели)</label><select id="papa_3_1" class="form-select"><option value="0">Нет симптомов</option><option value="1">Слабые, легко контролируются</option><option value="2">Один симптом средней тяжести</option><option value="4">Тяжёлый симптом, плохо поддаётся лечению</option></select></div>' +
+            '<div class="mb-2"><label>3.2 Дистресс пациента</label><select id="papa_3_2" class="form-select"><option value="0">Нет</option><option value="1">Лёгкий</option><option value="2">Умеренный</option><option value="4">Тяжёлый</option></select></div>' +
+            '<div class="mb-2"><label>3.3 Дистресс родителей / ухаживающих</label><select id="papa_3_3" class="form-select"><option value="0">Нет</option><option value="1">Лёгкий</option><option value="2">Умеренный</option><option value="4">Тяжёлый</option></select></div>' +
+            '<h6>Блок 4. Мнение о необходимости ПП</h6>' +
+            '<div class="mb-2"><label>4.1 Пациент / родители хотят получать ПП</label><select id="papa_4_1" class="form-select"><option value="0">Нет</option><option value="4">Да</option></select></div>' +
+            '<div class="mb-2" id="papa_4_2_wrapper"><label>4.2 Специалисты считают, что показана ПП</label><select id="papa_4_2" class="form-select"><option value="0">Нет</option><option value="4">Да</option></select></div>' +
+            '<h6>Блок 5. Продолжительность жизни</h6>' +
+            '<div class="mb-2"><label>5.1 Предполагаемая продолжительность жизни</label><select id="papa_5_1" class="form-select"><option value="0">Годы</option><option value="1">От месяца до 1–2 лет</option><option value="3">Недели – несколько месяцев</option><option value="4">Дни – недели</option></select></div>' +
+            '<div class="mb-2" id="papa_5_2_wrapper"><label>5.2 Удивитесь ли вы, если ребёнок внезапно умрёт в ближайшие 6–12 месяцев?</label><select id="papa_5_2" class="form-select"><option value="0">Да</option><option value="2">Нет</option></select></div>' +
+            '<button class="btn btn-primary mt-3" onclick="calculatePaPaScale()">Рассчитать PaPaScale</button>' +
+            '<div id="papascale-result" class="mt-3"></div>' +
+        '</div>' +
+    '</div>';
 }
 
 function setupSurveys() {
     window.switchSurveyTab = function(tab) {
         document.querySelectorAll('.survey-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        const el = document.getElementById(`tab-${tab}`);
+        const el = document.getElementById('tab-' + tab);
         if (el) el.classList.add('active');
-        const btn = document.querySelector(`[onclick="switchSurveyTab('${tab}')"]`);
+        const btn = document.querySelector('[onclick="switchSurveyTab(\'' + tab + '\')"]');
         if (btn) btn.classList.add('active');
     };
 
     window.calculatePedsQL = function() {
-        const allItems = [...Array(8)].map((_, i) => parseInt(document.getElementById(`pedsql_a${i+1}`)?.value) || 0)
-            .concat([...Array(5)].map((_, i) => parseInt(document.getElementById(`pedsql_b${i+1}`)?.value) || 0))
-            .concat([...Array(5)].map((_, i) => parseInt(document.getElementById(`pedsql_c${i+1}`)?.value) || 0))
-            .concat([...Array(5)].map((_, i) => parseInt(document.getElementById(`pedsql_d${i+1}`)?.value) || 0));
+        const allItems = [...Array(8)].map((_, i) => parseInt(document.getElementById('pedsql_a' + (i+1))?.value) || 0)
+            .concat([...Array(5)].map((_, i) => parseInt(document.getElementById('pedsql_b' + (i+1))?.value) || 0))
+            .concat([...Array(5)].map((_, i) => parseInt(document.getElementById('pedsql_c' + (i+1))?.value) || 0))
+            .concat([...Array(5)].map((_, i) => parseInt(document.getElementById('pedsql_d' + (i+1))?.value) || 0));
         const sum = allItems.reduce((a, b) => a + b, 0);
         const total = 100 - (sum / (allItems.length * 4) * 100);
         const cat = total >= 80 ? 'Хорошее КЖ' : total >= 60 ? 'Среднее КЖ' : 'Низкое КЖ';
-        document.getElementById('pedsql-result').innerHTML = `<div class="alert alert-info">Общий балл PedsQL: <strong>${total.toFixed(1)}</strong> – ${cat}</div>`;
+        document.getElementById('pedsql-result').innerHTML = '<div class="alert alert-info">Общий балл PedsQL: <strong>' + total.toFixed(1) + '</strong> – ' + cat + '</div>';
 
-        // Сохраняем в localStorage
         const surveyData = {
             pedsql: {
                 total: total,
@@ -1995,20 +1921,18 @@ function setupSurveys() {
     window.calculatePaPaScale = function() {
         const vals = ['1_1','1_2','2_1','2_2','3_1','3_2','3_3','4_1','4_2','5_1','5_2'];
         const total = vals.reduce((s, id) => {
-            const el = document.getElementById(`papa_${id}`);
+            const el = document.getElementById('papa_' + id);
             return s + (el ? parseInt(el.value) || 0 : 0);
         }, 0);
         const cat = total > 25 ? 'Показана ПП (вынести на ВК)' : total > 15 ? 'Скорее всего нуждается в ПП' : total > 10 ? 'Может нуждаться в ПП' : 'Не нуждается в ПП';
-        document.getElementById('papascale-result').innerHTML = `<div class="alert alert-info">Суммарный балл PaPaScale: <strong>${total}</strong> – ${cat}</div>`;
+        document.getElementById('papascale-result').innerHTML = '<div class="alert alert-info">Суммарный балл PaPaScale: <strong>' + total + '</strong> – ' + cat + '</div>';
 
-        // Сохраняем в localStorage
         const surveyData = JSON.parse(localStorage.getItem('surveyData') || '{}');
         surveyData.papascale = { total, category: cat };
         localStorage.setItem('surveyData', JSON.stringify(surveyData));
         notify('Данные PaPaScale сохранены для использования в калькуляторе.', 'info');
     };
 
-    // Логика скрытия блоков
     document.getElementById('papa_4_1')?.addEventListener('change', function() {
         const wrapper = document.getElementById('papa_4_2_wrapper');
         if (this.value === '4') wrapper.style.display = 'none';
