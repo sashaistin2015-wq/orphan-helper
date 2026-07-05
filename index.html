@@ -944,7 +944,6 @@ function renderPallcalc() {
     <div id="tab-clustering" class="pallcalc-tab"><div class="card"><h5>Кластеризация</h5><div class="row g-3"><div class="col-md-4"><input type="number" id="clustBMI" class="form-control" placeholder="ИМТ"></div><div class="col-md-4"><label>Боль (0-10)<input type="range" id="clustPain" class="form-range" min="0" max="10" value="3" oninput="document.getElementById('clustPainVal').textContent=this.value"><span id="clustPainVal">3</span></label></div><div class="col-md-4"><label>КЖ (0-10)<input type="range" id="clustQOL" class="form-range" min="0" max="10" value="6" oninput="document.getElementById('clustQOLVal').textContent=this.value"><span id="clustQOLVal">6</span></label></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.clusterPatient()">Определить кластер</button><div id="cluster-result-container" class="mt-3"></div></div></div>
     <div id="tab-report" class="pallcalc-tab"><div class="card"><h5>Отчёт</h5><button class="btn btn-primary" onclick="PalliativeCalc.generateFullReport()">Сформировать</button><div id="report-result-container" class="mt-3"></div></div></div>`;
 }
-
 function setupPallcalc() {
     // ======= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (из deepseek) =======
     function getBMIRef(gender, age) {
