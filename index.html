@@ -518,6 +518,7 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
                     } else {
                         html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')"><i class="bi bi-people"></i></button>
                         <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>
+                        <button class="btn btn-primary" onclick="exportStatisticalSyntax()">📊 Экспорт для SPSS/R</button>
                         <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')"><i class="bi bi-calculator"></i> Калькулятор</button>
                         <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')"><i class="bi bi-clipboard-check"></i> Анкеты</button>`;
                     }
@@ -738,7 +739,10 @@ case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
                 const formHtml = generateFormHtml(fields);
                 const history = DB.getData('palliative').slice(-10).reverse();
                 let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain} | Тошнота: ${e.nausea} | Аппетит: ${e.appetite} | Сон: ${e.sleep} | Настроение: ${e.mood} | Одышка: ${e.dyspnea} | Усталость: ${e.fatigue} | КЖ: ${e.quality}</div>`).join('');
-                return `<h2>❤️ Паллиативный модуль</h2><div class="card"><form id="pallForm">${formHtml}<button type="button" class="btn btn-primary w-100 mt-2" onclick="savePalliativeLocally()">💾 Сохранить локально</button><button type="button" class="btn btn-success w-100 mt-2" onclick="sendPalliative()">📤 Отправить врачу</button></form></div><div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
+                return `<h2>❤️ Паллиативный модуль</h2><div class="card"><form id="pallForm">${formHtml}<button type="button" class="btn btn-primary w-100 mt-2" onclick="savePalliativeLocally()">💾 Сохранить локально</button><button type="button" class="btn btn-success w-100 mt-2" onclick="sendPalliative()">📤 Отправить врачу</button></form></div><div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || <div class="input-group">
+    <input id="symptoms" class="form-control" placeholder="Опишите симптомы">
+    <button class="btn btn-outline-secondary" onclick="startVoiceInput('symptoms')">🎤</button>
+</div>'<p class="text-muted">Нет записей</p>'}</div>`;
             }
             window.savePalliativeLocally = function() { const f = document.getElementById('pallForm'); if(!f) return; const fields = getFields('palliative', 'default'); const d = {}; fields.forEach(field => { const el = document.querySelector(`[name="${field.name}"]`); d[field.name] = el ? el.value : ''; }); saveLocally('palliative', d); updatePatientStats(profile.fullName, 'palliativeCount'); render(); };
             window.sendPalliative = function() { const f = document.getElementById('pallForm'); if(!f) return; const fields = getFields('palliative', 'default'); const d = {}; fields.forEach(field => { const el = document.querySelector(`[name="${field.name}"]`); d[field.name] = el ? el.value : ''; }); saveLocally('palliative', d); updatePatientStats(profile.fullName, 'palliativeCount'); d.patient = profile.fullName; const priority = RiskPredictor.getPriority(d, (profile && profile.diagnosis) ? profile.diagnosis : ''); SyncManager.enqueue({ module: 'palliative', data: d, priority }); };
@@ -795,6 +799,28 @@ case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
             async function renderAnalytics() { if (profile.role !== 'doctor') return '<p>Только для врачей</p>'; return `<h2>📈 Аналитика</h2><div class="card mb-3"><h5>📊 Единая таблица ответов</h5><a href="https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit" target="_blank" class="btn btn-outline me-2">📂 Открыть таблицу</a><a href="https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=xlsx" target="_blank" class="btn btn-success">📥 Скачать Excel</a></div><div class="card"><h5>📤 Загрузить локальный Excel</h5><input type="file" id="localExcel" accept=".xlsx,.xls" class="form-control mb-2"><button class="btn btn-primary" onclick="loadLocalExcel()">Показать данные</button><div id="excelPreview" class="mt-3"></div></div>`; }
             window.loadLocalExcel = function() { const file = document.getElementById('localExcel')?.files[0]; if (!file) return notify('Выберите файл', 'error'); const reader = new FileReader(); reader.onload = function(e) { try { const wb = XLSX.read(e.target.result, { type: 'array' }); let html = ''; wb.SheetNames.forEach(name => { const ws = wb.Sheets[name]; html += `<h6>${name}</h6><div class="table-responsive">${XLSX.utils.sheet_to_html(ws)}</div>`; }); document.getElementById('excelPreview').innerHTML = html; } catch(err) { notify('Ошибка чтения файла', 'error'); } }; reader.readAsArrayBuffer(file); };
 
+// Функция голосового ввода
+function startVoiceInput(fieldId) {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    if (!recognition) {
+        notify('Голосовой ввод не поддерживается вашим браузером', 'error');
+        return;
+    }
+    recognition.lang = 'ru-RU';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById(fieldId).value = transcript;
+        notify('Распознано: ' + transcript, 'info');
+    };
+    recognition.onerror = function(event) {
+        notify('Ошибка распознавания: ' + event.error, 'error');
+    };
+    recognition.start();
+}
+            
             function renderReference() {
     const diseases = getDiseaseList();
     return `<h2>📚 Справочник орфанных заболеваний (${diseases.length})</h2>
@@ -1385,7 +1411,112 @@ function getClusterHistory() {
                     if (btn) btn.classList.add('active');
                 };
             }
-
+// Экспорт данных с генерацией синтаксиса
+function exportStatisticalSyntax() {
+    // Собрать данные пациента (если выбран конкретный) или всех
+    const patientName = profile ? profile.fullName : '';
+    const diary = DB.getData('diary');
+    const palliative = DB.getData('palliative');
+    const lab = DB.getData('lab');
+    
+    // Формируем таблицу с показателями
+    let rows = [];
+    const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]);
+    allDates.forEach(date => {
+        const d = diary.find(e => e.date === date) || {};
+        const p = palliative.find(e => e.date === date) || {};
+        rows.push({
+            date,
+            temperature: d.temperature || '',
+            weight: d.weight || '',
+            wellbeing: d.wellbeing || '',
+            pain: p.pain || '',
+            quality: p.quality || '',
+            dyspnea: p.dyspnea || '',
+            fatigue: p.fatigue || ''
+        });
+    });
+    
+    // Генерируем CSV строку
+    const headers = ['date','temperature','weight','wellbeing','pain','quality','dyspnea','fatigue'];
+    let csv = headers.join(',') + '\n';
+    rows.forEach(r => {
+        csv += headers.map(h => r[h] || '').join(',') + '\n';
+    });
+    
+    // Генерируем синтаксис для R
+    const rSyntax = `
+# Импорт данных
+data <- read.csv("data.csv", stringsAsFactors = FALSE)
+data$date <- as.Date(data$date)
+# Описательные статистики
+summary(data)
+# Корреляционная матрица
+cor(data[, sapply(data, is.numeric)], use = "complete.obs")
+# График динамики температуры
+plot(data$date, data$temperature, type="l", xlab="Дата", ylab="Температура")
+# t-тест для сравнения боли до/после вмешательства (если есть метка)
+# ...
+    `;
+    
+    // Генерируем синтаксис для SPSS
+    const spssSyntax = `
+* Импорт данных.
+GET DATA /TYPE=TXT
+  /FILE="data.csv"
+  /DELCASE=LINE
+  /DELIMITERS=","
+  /QUALIFIER='"'
+  /ARRANGEMENT=DELIMITED
+  /FIRSTCASE=2
+  /IMPORTCASE=ALL
+  /VARIABLES=
+    date A10
+    temperature F8.2
+    weight F8.2
+    wellbeing F8.0
+    pain F8.0
+    quality F8.0
+    dyspnea F8.0
+    fatigue F8.0.
+CACHE.
+EXECUTE.
+* Дескриптивы.
+DESCRIPTIVES VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue
+  /STATISTICS=MEAN STDDEV MIN MAX.
+* Корреляции.
+CORRELATIONS /VARIABLES=temperature weight wellbeing pain quality dyspnea fatigue.
+    `;
+    
+    // Скачиваем CSV и синтаксис
+    const blobCsv = new Blob([csv], { type: 'text/csv' });
+    const urlCsv = URL.createObjectURL(blobCsv);
+    const aCsv = document.createElement('a');
+    aCsv.href = urlCsv;
+    aCsv.download = 'data.csv';
+    aCsv.click();
+    URL.revokeObjectURL(urlCsv);
+    
+    // Скачиваем R скрипт
+    const blobR = new Blob([rSyntax], { type: 'text/plain' });
+    const urlR = URL.createObjectURL(blobR);
+    const aR = document.createElement('a');
+    aR.href = urlR;
+    aR.download = 'analysis.R';
+    aR.click();
+    URL.revokeObjectURL(urlR);
+    
+    // Скачиваем SPSS синтаксис
+    const blobSpss = new Blob([spssSyntax], { type: 'text/plain' });
+    const urlSpss = URL.createObjectURL(blobSpss);
+    const aSpss = document.createElement('a');
+    aSpss.href = urlSpss;
+    aSpss.download = 'analysis.sps';
+    aSpss.click();
+    URL.revokeObjectURL(urlSpss);
+    
+    notify('Экспорт статистических файлов выполнен', 'info');
+}
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
     // Вспомогательная функция: генерирует HTML-блок с вопросами
