@@ -1388,6 +1388,15 @@ function getClusterHistory() {
 
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
+    // Вспомогательная функция: генерирует HTML-блок с вопросами
+    const generateQuestions = (questions, prefix) => {
+        return questions.map((q, i) => 
+            '<div class="col-md-6"><label>' + q + 
+            ' <input type="number" id="' + prefix + (i + 1) + 
+            '" class="form-control" min="0" max="4" value="0"></label></div>'
+        ).join('');
+    };
+
     return `<h2><i class="bi bi-clipboard-check"></i> Анкеты качества жизни</h2>
     <div class="d-flex flex-wrap gap-2 mb-3">
         <button class="btn btn-sm btn-outline tab-btn active" onclick="switchSurveyTab('pedsql')">📝 PedsQL (8–12 лет)</button>
@@ -1397,13 +1406,13 @@ function renderSurveys() {
     <div id="tab-pedsql" class="survey-tab active">
         <div class="card"><h5>PedsQL™ 4.0 – Опросник для детей 8–12 лет</h5><p>Насколько каждая ситуация была проблемой <strong>за последний месяц</strong>?<br>0 – никогда, 1 – почти никогда, 2 – иногда, 3 – часто, 4 – почти всегда</p>
             <h6>1. Здоровье и активность</h6>
-            <div class="row g-2">${['Трудно пройти пешком более одной остановки','Трудно бегать','Трудно играть в спортивные игры / делать зарядку','Трудно поднимать тяжелые вещи','Трудно самостоятельно принимать ванну или душ','Трудно выполнять обязанности по дому','Беспокоила боль','Было мало сил'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_a${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <div class="row g-2">${generateQuestions(['Трудно пройти пешком более одной остановки','Трудно бегать','Трудно играть в спортивные игры / делать зарядку','Трудно поднимать тяжелые вещи','Трудно самостоятельно принимать ванну или душ','Трудно выполнять обязанности по дому','Беспокоила боль','Было мало сил'], 'pedsql_a')}</div>
             <h6 class="mt-3">2. Мои ощущения</h6>
-            <div class="row g-2">${['Мне бывало страшно','Мне бывало грустно','Я был разозлен чем-либо','Я плохо спал','Я переживал о том, что может случиться'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_b${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <div class="row g-2">${generateQuestions(['Мне бывало страшно','Мне бывало грустно','Я был разозлен чем-либо','Я плохо спал','Я переживал о том, что может случиться'], 'pedsql_b')}</div>
             <h6 class="mt-3">3. Общение с другими</h6>
-            <div class="row g-2">${['Трудно общаться с другими детьми','Другие дети не хотели со мной дружить','Другие дети дразнили меня','Я не умел делать то, что умеют мои ровесники','Трудно чувствовать себя наравне с другими детьми'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_c${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <div class="row g-2">${generateQuestions(['Трудно общаться с другими детьми','Другие дети не хотели со мной дружить','Другие дети дразнили меня','Я не умел делать то, что умеют мои ровесники','Трудно чувствовать себя наравне с другими детьми'], 'pedsql_c')}</div>
             <h6 class="mt-3">4. Школа</h6>
-            <div class="row g-2">${['Трудно быть внимательным на уроках','Я был забывчив','Трудно справляться со школьными заданиями','Пропускал школу из-за плохого самочувствия','Пропускал школу из-за визитов к врачу / в больницу'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_d${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <div class="row g-2">${generateQuestions(['Трудно быть внимательным на уроках','Я был забывчив','Трудно справляться со школьными заданиями','Пропускал школу из-за плохого самочувствия','Пропускал школу из-за визитов к врачу / в больницу'], 'pedsql_d')}</div>
             <button class="btn btn-primary mt-3" onclick="calculatePedsQL()">Рассчитать PedsQL</button>
             <div id="pedsql-result" class="mt-3"></div>
         </div>
@@ -1432,6 +1441,7 @@ function renderSurveys() {
         </div>
     </div>`;
 }
+
 function setupSurveys() {
     window.switchSurveyTab = (tab) => {
         document.querySelectorAll('.survey-tab').forEach(t=>t.classList.remove('active'));
@@ -1469,6 +1479,8 @@ function setupSurveys() {
         else wrapper.style.display = '';
     });
 }
+
+// Остальной ваш код (initClock, initCalendar, render и т.д.) остаётся без изменений
             function initClock() { const update = () => { const now = new Date(); const c = document.getElementById('liveClock'), d = document.getElementById('liveDate'); if(c) c.textContent = now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); if(d) d.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }; update(); if(clockTimer)clearInterval(clockTimer); clockTimer = setInterval(update, 1000); }
             function initCalendar() { const cal = document.getElementById('miniCalendar'); if(!cal)return; const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']; const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const diary = DB.getData('diary'); const palliative = DB.getData('palliative'); const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]); let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`; for(let i=1;i<fd;i++)h+='<td></td>'; for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>'; const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; h+=`<td class="${d===now.getDate()?'today':''} ${allDates.has(dateStr)?'has-entry':''}">${d}</td>`;} h+='</tr></table>'; cal.innerHTML = h; }
 
