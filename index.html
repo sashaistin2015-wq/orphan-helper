@@ -2002,10 +2002,6 @@ function setupSurveys() {
        const existing = JSON.parse(localStorage.getItem('surveyData') || '{}');
 localStorage.setItem('surveyData', JSON.stringify({ ...existing, ...surveyData }));
 notify('Данные PedsQL сохранены локально.', 'info');
-        const existing = JSON.parse(localStorage.getItem('surveyData') || '{}');
-        localStorage.setItem('surveyData', JSON.stringify({ ...existing, ...surveyData }));
-        notify('Данные PedsQL сохранены для использования в калькуляторе.', 'info');
-        syncSurveyToCloud('pedsql', surveyData.pedsql);
     };
 
     window.calculatePaPaScale = function() {
