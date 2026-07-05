@@ -933,7 +933,6 @@ function renderPallcalc() {
     return `<h2><i class="bi bi-calculator"></i> Калькулятор комплексной оценки (врач)</h2>
     <div class="d-flex flex-wrap gap-2 mb-3">
         <button class="btn btn-sm btn-outline tab-btn active" onclick="switchPallcalcTab('clinical')">🩺 Клинические параметры</button>
-        <button class="btn btn-secondary" onclick="PalliativeCalc.analyzeSymptoms()">🔍 Анализ симптомов</button>
         <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('efficiency')">📈 Эффективность</button>
         <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('clustering')">🔬 Кластеризация</button>
         <button class="btn btn-warning" onclick="PalliativeCalc.predictRisk()">🔮 Прогноз риска</button>
@@ -1447,7 +1446,6 @@ function renderSurveys() {
         </div>
     </div>`;
 }
-
 function setupSurveys() {
     window.switchSurveyTab = (tab) => {
         document.querySelectorAll('.survey-tab').forEach(t=>t.classList.remove('active'));
