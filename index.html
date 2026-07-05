@@ -706,6 +706,16 @@ case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
                 const diagnosis = (profile && profile.diagnosis) ? profile.diagnosis : 'default';
                 const fields = getFields('diary', diagnosis);
                 const formHtml = generateFormHtml(fields);
+                // Добавляем кнопку голосового ввода для симптомов (если поле существует)
+const hasSymptoms = fields.some(f => f.name === 'symptoms');
+let voiceButton = '';
+if (hasSymptoms) {
+    voiceButton = `<div class="input-group mt-2">
+        <input id="voiceSymptoms" class="form-control" placeholder="Озвучьте симптомы" disabled>
+        <button class="btn btn-outline-secondary" onclick="startVoiceInput('voiceSymptoms')">🎤</button>
+    </div>
+    <small class="text-muted">Нажмите 🎤 и произнесите симптомы, текст появится в поле выше.</small>`;
+}
                 const history = DB.getData('diary').slice(-10).reverse();
                 let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | ${e.temperature||'—'}°C | ${e.pressure||'—'} | ${e.weight||'—'} кг | Самочувствие: ${e.wellbeing}/10</div>`).join('');
                 return `<h2>📋 Дневник — ${fmtDate(today)}</h2><div class="card"><form id="diaryForm">${formHtml}<button type="button" class="btn btn-primary w-100 mt-2" onclick="saveDiaryLocally()">💾 Сохранить локально</button><button type="button" class="btn btn-success w-100 mt-2" onclick="sendDiary()">📤 Отправить врачу</button></form></div><div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
@@ -734,16 +744,24 @@ case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
                 notify(`📊 Прогноз риска: ${risk}%`, 'info');
             };
 
-            async function renderPalliative() {
-                const fields = getFields('palliative', 'default');
-                const formHtml = generateFormHtml(fields);
-                const history = DB.getData('palliative').slice(-10).reverse();
-                let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain} | Тошнота: ${e.nausea} | Аппетит: ${e.appetite} | Сон: ${e.sleep} | Настроение: ${e.mood} | Одышка: ${e.dyspnea} | Усталость: ${e.fatigue} | КЖ: ${e.quality}</div>`).join('');
-                return `<h2>❤️ Паллиативный модуль</h2><div class="card"><form id="pallForm">${formHtml}<button type="button" class="btn btn-primary w-100 mt-2" onclick="savePalliativeLocally()">💾 Сохранить локально</button><button type="button" class="btn btn-success w-100 mt-2" onclick="sendPalliative()">📤 Отправить врачу</button></form></div><div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || <div class="input-group">
-    <input id="symptoms" class="form-control" placeholder="Опишите симптомы">
-    <button class="btn btn-outline-secondary" onclick="startVoiceInput('symptoms')">🎤</button>
-</div>'<p class="text-muted">Нет записей</p>'}</div>`;
-            }
+          async function renderPalliative() {
+    const fields = getFields('palliative', 'default');
+    const formHtml = generateFormHtml(fields);
+    const history = DB.getData('palliative').slice(-10).reverse();
+    let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain} | Тошнота: ${e.nausea} | Аппетит: ${e.appetite} | Сон: ${e.sleep} | Настроение: ${e.mood} | Одышка: ${e.dyspnea} | Усталость: ${e.fatigue} | КЖ: ${e.quality}</div>`).join('');
+    return `<h2>❤️ Паллиативный модуль</h2>
+            <div class="card">
+                <form id="pallForm">
+                    ${formHtml}
+                    <button type="button" class="btn btn-primary w-100 mt-2" onclick="savePalliativeLocally()">💾 Сохранить локально</button>
+                    <button type="button" class="btn btn-success w-100 mt-2" onclick="sendPalliative()">📤 Отправить врачу</button>
+                </form>
+            </div>
+            <div class="card mt-3">
+                <h5>📊 История записей (последние 10)</h5>
+                ${histHtml || '<p class="text-muted">Нет записей</p>'}
+            </div>`;
+}
             window.savePalliativeLocally = function() { const f = document.getElementById('pallForm'); if(!f) return; const fields = getFields('palliative', 'default'); const d = {}; fields.forEach(field => { const el = document.querySelector(`[name="${field.name}"]`); d[field.name] = el ? el.value : ''; }); saveLocally('palliative', d); updatePatientStats(profile.fullName, 'palliativeCount'); render(); };
             window.sendPalliative = function() { const f = document.getElementById('pallForm'); if(!f) return; const fields = getFields('palliative', 'default'); const d = {}; fields.forEach(field => { const el = document.querySelector(`[name="${field.name}"]`); d[field.name] = el ? el.value : ''; }); saveLocally('palliative', d); updatePatientStats(profile.fullName, 'palliativeCount'); d.patient = profile.fullName; const priority = RiskPredictor.getPriority(d, (profile && profile.diagnosis) ? profile.diagnosis : ''); SyncManager.enqueue({ module: 'palliative', data: d, priority }); };
 
