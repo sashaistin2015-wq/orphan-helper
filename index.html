@@ -1949,9 +1949,9 @@ function setupSurveys() {
             function initClock() { const update = () => { const now = new Date(); const c = document.getElementById('liveClock'), d = document.getElementById('liveDate'); if(c) c.textContent = now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); if(d) d.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }; update(); if(clockTimer)clearInterval(clockTimer); clockTimer = setInterval(update, 1000); }
             function initCalendar() { const cal = document.getElementById('miniCalendar'); if(!cal)return; const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']; const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const diary = DB.getData('diary'); const palliative = DB.getData('palliative'); const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]); let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`; for(let i=1;i<fd;i++)h+='<td></td>'; for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>'; const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; h+=`<td class="${d===now.getDate()?'today':''} ${allDates.has(dateStr)?'has-entry':''}">${d}</td>`;} h+='</tr></table>'; cal.innerHTML = h; }
     
-    window.onhashchange = () => { if(clockTimer)clearInterval(clockTimer); render(); };
-            window.onload = render;
-        })();
+       window.onhashchange = () => { if (clockTimer) clearInterval(clockTimer); render(); };
+    window.onload = render;
+})();
     </script>
 </body>
 </html>
