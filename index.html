@@ -515,19 +515,17 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
                             </ul>
                         </div>`;
                     } else {
-                        html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')"><i class="bi bi-people"></i></button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>
-                        html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')"><i class="bi bi-calculator"></i> Калькулятор</button>`;
-                    }
-                    html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')"><i class="bi bi-book"></i></button>
-                 html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')"><i class="bi bi-clipboard-check"></i> Анкеты</button>`
-                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')"><i class="bi bi-diagram-3"></i></button>
-                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')"><i class="bi bi-question-circle"></i></button>
-                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')"><i class="bi bi-heart"></i></button>
-                    <span class="sync-badge ms-2" id="syncBadge"><span class="sync-dot"></span> Синхронизировано</span>
-                    <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()"><i class="bi bi-box-arrow-right"></i></button>`;
-                    return html;
-                };
+    html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')"><i class="bi bi-people"></i></button>
+             <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>
+             <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')"><i class="bi bi-calculator"></i> Калькулятор</button>
+             <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')"><i class="bi bi-clipboard-check"></i> Анкеты</button>`;
+}
+html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')"><i class="bi bi-book"></i></button>
+         <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')"><i class="bi bi-diagram-3"></i></button>
+         <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')"><i class="bi bi-question-circle"></i></button>
+         <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')"><i class="bi bi-heart"></i></button>
+         <span class="sync-badge ms-2" id="syncBadge"><span class="sync-dot"></span> Синхронизировано</span>
+         <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()"><i class="bi bi-box-arrow-right"></i></button>`;
                 if (profile) {
                     nav.innerHTML = items(profile.role);
                     if (mob) mob.innerHTML = items(profile.role);
