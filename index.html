@@ -72,6 +72,10 @@
         .sync-dot.error { background: #ef4444; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @media (max-width: 768px) { .hero-title { font-size: 2.5rem; } .hero-section { padding: 3rem 1rem; } .btn { padding: 6px 14px; font-size: 0.8rem; } .navbar-brand { font-size: 1.1rem; } .card { padding: 1rem; } }
+        .pallcalc-tab, .survey-tab { display: none; }
+.pallcalc-tab.active, .survey-tab.active { display: block; }
+.tab-btn { border-radius: 20px 20px 0 0; }
+.tab-btn.active { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
@@ -512,9 +516,11 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
                         </div>`;
                     } else {
                         html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')"><i class="bi bi-people"></i></button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>`;
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>
+                        html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')"><i class="bi bi-calculator"></i> Калькулятор</button>`;
                     }
                     html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')"><i class="bi bi-book"></i></button>
+                 html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')"><i class="bi bi-clipboard-check"></i> Анкеты</button>`
                     <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')"><i class="bi bi-diagram-3"></i></button>
                     <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')"><i class="bi bi-question-circle"></i></button>
                     <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')"><i class="bi bi-heart"></i></button>
@@ -560,6 +566,8 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
                         case '/genetics': app.innerHTML = renderGenetics(); setupGenetics(); break;
                         case '/faq': app.innerHTML = renderFAQ(); break;
                         case '/support': app.innerHTML = renderSupport(); break;
+                            case '/pallcalc': app.innerHTML = renderPallcalc(); setupPallcalc(); break;
+case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
                         default: app.innerHTML = '<h2 class="text-center mt-5">404</h2>';
                     }
                 } catch (e) {
@@ -920,7 +928,390 @@ window.filterDiseases = () => {
                 </div>
                 <div class="card mb-3"><h5>Полезные ресурсы</h5><a href="https://cr.minzdrav.gov.ru/" target="_blank" class="btn btn-outline me-2">Рубрикатор КР</a><a href="https://rcpcf.ru/" target="_blank" class="btn btn-outline">Фонд "Детский паллиатив"</a></div>`;
             }
+// ==================== ПАЛЛИАТИВНЫЙ КАЛЬКУЛЯТОР (ВРАЧ) ====================
+function renderPallcalc() {
+    return `<h2><i class="bi bi-calculator"></i> Калькулятор комплексной оценки (врач)</h2>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-sm btn-outline tab-btn active" onclick="switchPallcalcTab('clinical')">🩺 Клинические параметры</button>
+        <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('efficiency')">📈 Эффективность</button>
+        <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('clustering')">🔬 Кластеризация</button>
+        <button class="btn btn-sm btn-outline tab-btn" onclick="switchPallcalcTab('report')">📋 Отчёт</button>
+    </div>
+    <div id="tab-clinical" class="pallcalc-tab active"><div class="card mb-3"><h5>Антропометрия</h5><div class="row g-3"><div class="col-md-4"><select id="calcDiagnosis" class="form-select"><option value="">— Выберите —</option>${getDiseaseOptions()}</select></div><div class="col-md-2"><select id="calcGender" class="form-select"><option value="male">М</option><option value="female">Ж</option></select></div><div class="col-md-2"><input type="number" id="calcAgeYears" class="form-control" placeholder="Возраст"></div><div class="col-md-2"><input type="number" id="calcHeightCm" class="form-control" placeholder="Рост"></div><div class="col-md-2"><input type="number" id="calcWeightKg" class="form-control" placeholder="Вес"></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateBMI()">Рассчитать ИМТ</button><div id="bmi-result-container" class="mt-3"></div></div><div class="card"><h5>Функциональные показатели</h5><div class="row g-3"><div class="col-md-3"><input type="number" id="calcHR" class="form-control" placeholder="ЧСС"></div><div class="col-md-3"><input type="number" id="calcRR" class="form-control" placeholder="ЧДД"></div><div class="col-md-3"><input type="number" id="calcSpO2" class="form-control" placeholder="SpO2"></div><div class="col-md-3"><input type="number" id="calcSBP" class="form-control" placeholder="АД сист."></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateVitals()">Оценить</button><div id="vitals-result-container" class="mt-3"></div></div></div>
+    <div id="tab-efficiency" class="pallcalc-tab"><div class="card"><h5>Эффективность терапии</h5><div class="row"><div class="col-md-6"><input type="number" id="effWeightBefore" class="form-control mb-2" placeholder="Вес до"><input type="number" id="effPainBefore" class="form-control" placeholder="Боль до"></div><div class="col-md-6"><input type="number" id="effWeightAfter" class="form-control mb-2" placeholder="Вес после"><input type="number" id="effPainAfter" class="form-control" placeholder="Боль после"></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.calculateEfficiency()">Рассчитать</button><div id="efficiency-result-container" class="mt-3"></div></div></div>
+    <div id="tab-clustering" class="pallcalc-tab"><div class="card"><h5>Кластеризация</h5><div class="row g-3"><div class="col-md-4"><input type="number" id="clustBMI" class="form-control" placeholder="ИМТ"></div><div class="col-md-4"><label>Боль (0-10)<input type="range" id="clustPain" class="form-range" min="0" max="10" value="3" oninput="document.getElementById('clustPainVal').textContent=this.value"><span id="clustPainVal">3</span></label></div><div class="col-md-4"><label>КЖ (0-10)<input type="range" id="clustQOL" class="form-range" min="0" max="10" value="6" oninput="document.getElementById('clustQOLVal').textContent=this.value"><span id="clustQOLVal">6</span></label></div></div><button class="btn btn-primary mt-2" onclick="PalliativeCalc.clusterPatient()">Определить кластер</button><div id="cluster-result-container" class="mt-3"></div></div></div>
+    <div id="tab-report" class="pallcalc-tab"><div class="card"><h5>Отчёт</h5><button class="btn btn-primary" onclick="PalliativeCalc.generateFullReport()">Сформировать</button><div id="report-result-container" class="mt-3"></div></div></div>`;
+}
 
+function setupPallcalc() {
+    // ======= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (из deepseek) =======
+    function getBMIRef(gender, age) {
+        const a = Math.min(18, Math.max(2, age));
+        if (gender === 'male') {
+            if (a < 5) return { median: 15.8 + (a-2)*0.4, sd: 1.9 };
+            if (a < 10) return { median: 16.2 + (a-5)*0.8, sd: 2.2 };
+            if (a < 15) return { median: 18.0 + (a-10)*1.2, sd: 2.8 };
+            return { median: 21.5 + (a-15)*0.5, sd: 3.0 };
+        } else {
+            if (a < 5) return { median: 15.5 + (a-2)*0.3, sd: 1.8 };
+            if (a < 10) return { median: 15.8 + (a-5)*0.9, sd: 2.3 };
+            if (a < 15) return { median: 18.3 + (a-10)*1.1, sd: 2.9 };
+            return { median: 21.8 + (a-15)*0.4, sd: 3.1 };
+        }
+    }
+
+    function zScoreToPercentile(z) {
+        const sign = z < 0 ? -1 : 1;
+        const absZ = Math.abs(z);
+        const t = 1 / (1 + 0.278393*absZ + 0.230389*absZ*absZ + 0.000972*absZ*absZ*absZ + 0.078108*absZ*absZ*absZ*absZ);
+        const erf = 1 - t * Math.exp(-absZ*absZ - 1.26551223 + t*(1.00002368 + t*(0.37409196 + t*(0.09678418 + t*(-0.18628806 + t*(0.27886807 + t*(-1.13520398 + t*(1.48851587 + t*(-0.82215223 + t*0.17087277)))))))));
+        return 50 + sign * (erf * 50 - 50);
+    }
+
+    function getBMICategory(p) {
+        if (p < 3) return 'Тяжёлый дефицит массы тела';
+        if (p < 10) return 'Умеренный дефицит';
+        if (p < 25) return 'Пониженная масса';
+        if (p < 75) return 'Норма';
+        if (p < 90) return 'Избыточная масса';
+        if (p < 97) return 'Ожирение';
+        return 'Тяжёлое ожирение';
+    }
+
+    function getHRRef(age) {
+        if (age<1) return {median:130, sd:25};
+        if (age<3) return {median:115, sd:20};
+        if (age<6) return {median:100, sd:18};
+        if (age<10) return {median:90, sd:16};
+        if (age<15) return {median:80, sd:14};
+        return {median:75, sd:12};
+    }
+
+    function getRRRef(age) {
+        if (age<1) return {min:30, max:40};
+        if (age<3) return {min:24, max:30};
+        if (age<6) return {min:22, max:24};
+        if (age<12) return {min:18, max:22};
+        return {min:12, max:18};
+    }
+
+    function getBPRef(age) {
+        if (age<1) return {median_sys:85, median_dia:50, sd_sys:12, sd_dia:10};
+        if (age<3) return {median_sys:90, median_dia:55, sd_sys:11, sd_dia:9};
+        if (age<6) return {median_sys:95, median_dia:58, sd_sys:10, sd_dia:8};
+        if (age<10) return {median_sys:100, median_dia:62, sd_sys:10, sd_dia:8};
+        if (age<14) return {median_sys:108, median_dia:66, sd_sys:11, sd_dia:9};
+        return {median_sys:115, median_dia:70, sd_sys:12, sd_dia:10};
+    }
+
+    // ======= ПРОФИЛИ ДЛЯ КЛАСТЕРИЗАЦИИ =======
+    const profiles = {
+        "Болевой": {
+            center: { боль: 7.3, нутр: 2.3, физ: 26.1, эмо: 14.0, соц: 24.5, рол: 17.2 },
+            desc: "Ведущий драйвер – боль.",
+            recs: "Обезболивание по ВОЗ, КПТ, обучение семьи."
+        },
+        "Нутритивный": {
+            center: { боль: 3.1, нутр: 4.6, физ: 18.2, эмо: 21.4, соц: 26.8, рол: 19.5 },
+            desc: "Высокий нутритивный риск.",
+            recs: "Диетолог, зондовое питание, еженедельный контроль веса."
+        },
+        "Двигательный": {
+            center: { боль: 5.6, нутр: 3.4, физ: 11.5, эмо: 19.0, соц: 16.2, рол: 11.0 },
+            desc: "Тяжёлые двигательные ограничения.",
+            recs: "ЛФК, ТСР, профилактика контрактур."
+        },
+        "Относительно компенсированный": {
+            center: { боль: 2.9, нутр: 2.0, физ: 43.8, эмо: 31.2, соц: 48.5, рол: 42.3 },
+            desc: "Относительно сохранное качество жизни.",
+            recs: "Наблюдение, поддержка."
+        },
+        "Социально-депривированный": {
+            center: { боль: 3.0, нутр: 2.2, физ: 41.2, эмо: 30.8, соц: 18.1, рол: 15.2 },
+            desc: "Изоляция и низкая социализация.",
+            recs: "Психосоциальная реабилитация."
+        }
+    };
+
+    // ======= САМИ МЕТОДЫ =======
+    window.PalliativeCalc = {
+        calculateBMI: function() {
+            const diagnosis = document.getElementById('calcDiagnosis')?.value || '';
+            const gender = document.getElementById('calcGender')?.value || 'male';
+            const age = parseFloat(document.getElementById('calcAgeYears')?.value);
+            const height = parseFloat(document.getElementById('calcHeightCm')?.value);
+            const weight = parseFloat(document.getElementById('calcWeightKg')?.value);
+            const container = document.getElementById('bmi-result-container');
+            if (!container) return;
+
+            // проверка
+            if (isNaN(age) || isNaN(height) || isNaN(weight) || age < 2 || height < 40 || weight < 2) {
+                container.innerHTML = '<div class="alert alert-warning">Заполните все поля корректно (возраст ≥2 лет, рост >40 см, вес >2 кг).</div>';
+                return;
+            }
+            const heightM = height / 100;
+            const bmi = weight / (heightM * heightM);
+            const ref = getBMIRef(gender, age);
+            const zScore = ref.sd > 0 ? (bmi - ref.median) / ref.sd : 0;
+            const percentile = zScoreToPercentile(zScore);
+            const category = getBMICategory(percentile);
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    <strong>ИМТ:</strong> ${bmi.toFixed(1)} кг/м²<br>
+                    <strong>Перцентиль:</strong> ${percentile.toFixed(1)}% (Z-score: ${zScore.toFixed(2)})<br>
+                    <strong>Категория:</strong> ${category}
+                </div>
+            `;
+            // сохраняем в хранилище (для отчёта)
+            window._pallData = window._pallData || {};
+            window._pallData.bmi = { bmi, percentile, zScore, category, age, gender, height, weight, diagnosis };
+        },
+
+        calculateVitals: function() {
+            const age = parseFloat(document.getElementById('calcAgeYears')?.value);
+            const hr = parseFloat(document.getElementById('calcHR')?.value);
+            const rr = parseFloat(document.getElementById('calcRR')?.value);
+            const spo2 = parseFloat(document.getElementById('calcSpO2')?.value);
+            const sbp = parseFloat(document.getElementById('calcSBP')?.value);
+            const container = document.getElementById('vitals-result-container');
+            if (!container) return;
+            if (isNaN(age) || age < 2) {
+                container.innerHTML = '<div class="alert alert-warning">Сначала укажите возраст.</div>';
+                return;
+            }
+            let html = '<div class="alert alert-secondary"><strong>Оценка жизненных показателей:</strong><br>';
+            if (!isNaN(hr)) {
+                const ref = getHRRef(age);
+                const sds = ref.sd ? ((hr - ref.median) / ref.sd).toFixed(2) : '—';
+                html += `• ЧСС: ${hr} уд/мин (норма ~${ref.median}±${ref.sd.toFixed(0)}) → SDS = ${sds}<br>`;
+            }
+            if (!isNaN(rr)) {
+                const refRR = getRRRef(age);
+                html += `• ЧДД: ${rr} в мин (норма ${refRR.min}–${refRR.max})<br>`;
+            }
+            if (!isNaN(sbp)) {
+                const ref = getBPRef(age);
+                const sds = ref.sd_sys ? ((sbp - ref.median_sys) / ref.sd_sys).toFixed(2) : '—';
+                html += `• АД сист.: ${sbp} мм рт.ст. (норма ~${ref.median_sys}) → SDS = ${sds}<br>`;
+            }
+            if (!isNaN(spo2)) {
+                html += `• SpO₂: ${spo2}% (норма ≥94%)<br>`;
+            }
+            html += '<small>Референсы: NHLBI 2011, ВОЗ. SDS > |2| – повод для дообследования.</small></div>';
+            container.innerHTML = html;
+            window._pallData = window._pallData || {};
+            window._pallData.vitals = { hr, rr, sbp, spo2 };
+        },
+
+        calculateEfficiency: function() {
+            const beforeWeight = parseFloat(document.getElementById('effWeightBefore')?.value);
+            const afterWeight = parseFloat(document.getElementById('effWeightAfter')?.value);
+            const beforePain = parseFloat(document.getElementById('effPainBefore')?.value);
+            const afterPain = parseFloat(document.getElementById('effPainAfter')?.value);
+            const container = document.getElementById('efficiency-result-container');
+            if (!container) return;
+            if (isNaN(beforeWeight) || isNaN(afterWeight) || isNaN(beforePain) || isNaN(afterPain)) {
+                container.innerHTML = '<div class="alert alert-warning">Заполните все поля.</div>';
+                return;
+            }
+            const weightChange = ((afterWeight - beforeWeight) / beforeWeight * 100).toFixed(1);
+            const painChange = ((beforePain - afterPain) / (beforePain || 1) * 100).toFixed(1);
+            let overall = 0;
+            if (weightChange > 0) overall += 50;
+            if (painChange > 20) overall += 50;
+            const level = overall >= 80 ? 'Высокая' : overall >= 50 ? 'Средняя' : 'Низкая';
+            container.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Изменение веса:</strong> ${weightChange}%<br>
+                    <strong>Изменение боли:</strong> ${painChange}%<br>
+                    <strong>Общая эффективность:</strong> ${overall}% (${level})
+                </div>
+            `;
+            window._pallData = window._pallData || {};
+            window._pallData.efficiency = { weightChange, painChange, overall, level };
+        },
+
+        clusterPatient: function() {
+            const bmi = parseFloat(document.getElementById('clustBMI')?.value);
+            const pain = parseFloat(document.getElementById('clustPain')?.value);
+            const qol = parseFloat(document.getElementById('clustQOL')?.value);
+            const container = document.getElementById('cluster-result-container');
+            if (!container) return;
+            if (isNaN(bmi) || isNaN(pain) || isNaN(qol)) {
+                container.innerHTML = '<div class="alert alert-warning">Заполните ИМТ, боль и КЖ.</div>';
+                return;
+            }
+            // Оценочные параметры для кластеризации (имитация)
+            const phys = 50 - pain * 4 + (qol / 2);
+            const emo = 30 + qol * 3 - pain * 2;
+            const soc = 40 + qol * 2 - pain * 1.5;
+            const role = 35 + qol * 2 - pain * 2;
+            const nutrition = (bmi < 18.5) ? 4 : (bmi < 25 ? 2 : 3);
+            const vals = { pain, nutrition, phys_func: phys, emo_func: emo, soc_func: soc, role_func: role };
+
+            let best = null, minDist = Infinity;
+            for (const [name, cfg] of Object.entries(profiles)) {
+                const c = cfg.center;
+                const dist = Math.hypot(vals.pain - c.боль, vals.nutrition - c.нутр,
+                    vals.phys_func - c.физ, vals.emo_func - c.эмо,
+                    vals.soc_func - c.соц, vals.role_func - c.рол);
+                if (dist < minDist) { minDist = dist; best = name; }
+            }
+            const p = profiles[best];
+            const deltaQoL = 4.87 - 0.41 * vals.nutrition - 0.52 * vals.pain - 0.09 * vals.phys_func;
+            const orMapping = { "Болевой": 6.1, "Нутритивный": 3.5, "Двигательный": 1.4, "Относительно компенсированный": 1.0, "Социально-депривированный": 2.8 };
+            const orVal = orMapping[best] || 1.0;
+
+            container.innerHTML = `
+                <div class="alert alert-primary">
+                    <h5>Профиль: «${best}»</h5>
+                    <p>${p.desc}</p>
+                    <p><strong>Рекомендации:</strong> ${p.recs}</p>
+                    <p><strong>Прогнозируемый прирост КЖ (Δ):</strong> ${deltaQoL.toFixed(2)} балла</p>
+                    <p><strong>OR выраженного улучшения:</strong> ${orVal} (p<0.05)</p>
+                </div>
+            `;
+            window._pallData = window._pallData || {};
+            window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs };
+        },
+
+        generateFullReport: function() {
+            const data = window._pallData || {};
+            const diagnosis = document.getElementById('calcDiagnosis')?.value || 'Не указан';
+            let report = '══════════════════════════════════════════\n';
+            report += '   СВОДНЫЙ ОТЧЁТ ПО ПАЛЛИАТИВНОМУ ПАЦИЕНТУ\n';
+            report += '   Диссертация Истин А.А., ВГМУ, 2026\n';
+            report += '══════════════════════════════════════════\n\n';
+            report += `Дата: ${new Date().toLocaleString()}\n`;
+            report += `Диагноз: ${diagnosis}\n\n`;
+
+            if (data.bmi) {
+                report += '▶ АНТРОПОМЕТРИЯ:\n';
+                report += `  ИМТ: ${data.bmi.bmi.toFixed(1)} кг/м² (${data.bmi.percentile.toFixed(1)}%, Z=${data.bmi.zScore.toFixed(2)})\n`;
+                report += `  Категория: ${data.bmi.category}\n\n`;
+            }
+            if (data.vitals) {
+                report += '▶ ВИТАЛЬНЫЕ ПОКАЗАТЕЛИ:\n';
+                if (data.vitals.hr) report += `  ЧСС: ${data.vitals.hr} уд/мин\n`;
+                if (data.vitals.rr) report += `  ЧДД: ${data.vitals.rr} в мин\n`;
+                if (data.vitals.sbp) report += `  АД сист.: ${data.vitals.sbp} мм рт.ст.\n`;
+                if (data.vitals.spo2) report += `  SpO₂: ${data.vitals.spo2}%\n`;
+                report += '\n';
+            }
+            if (data.efficiency) {
+                report += '▶ ЭФФЕКТИВНОСТЬ ТЕРАПИИ:\n';
+                report += `  Изменение веса: ${data.efficiency.weightChange}%\n`;
+                report += `  Изменение боли: ${data.efficiency.painChange}%\n`;
+                report += `  Общая эффективность: ${data.efficiency.overall}% (${data.efficiency.level})\n\n`;
+            }
+            if (data.clustering) {
+                report += '▶ КЛАСТЕРИЗАЦИЯ:\n';
+                report += `  Профиль: ${data.clustering.best}\n`;
+                report += `  Δ КЖ: ${data.clustering.deltaQoL.toFixed(2)}\n`;
+                report += `  OR: ${data.clustering.orVal}\n`;
+                report += `  Рекомендации: ${data.clustering.recs}\n\n`;
+            }
+            report += '══════════════════════════════════════════\n';
+            document.getElementById('report-result-container').innerHTML = `<pre class="bg-light p-3 rounded">${report}</pre>`;
+            // Также можно скопировать в буфер
+        }
+    };
+
+    // Переключение вкладок (уже есть, но продублируем на всякий случай)
+    window.switchPallcalcTab = window.switchPallcalcTab || function(tab) {
+        document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const el = document.getElementById(`tab-${tab}`);
+        if (el) el.classList.add('active');
+        const btn = document.querySelector(`[onclick="switchPallcalcTab('${tab}')"]`);
+        if (btn) btn.classList.add('active');
+    };
+}
+
+// ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
+function renderSurveys() {
+    return `<h2><i class="bi bi-clipboard-check"></i> Анкеты качества жизни</h2>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-sm btn-outline tab-btn active" onclick="switchSurveyTab('pedsql')">📝 PedsQL (8–12 лет)</button>
+        <button class="btn btn-sm btn-outline tab-btn" onclick="switchSurveyTab('papascale')">💛 PaPaScale</button>
+    </div>
+    <!-- PedsQL -->
+    <div id="tab-pedsql" class="survey-tab active">
+        <div class="card"><h5>PedsQL™ 4.0 – Опросник для детей 8–12 лет</h5><p>Насколько каждая ситуация была проблемой <strong>за последний месяц</strong>?<br>0 – никогда, 1 – почти никогда, 2 – иногда, 3 – часто, 4 – почти всегда</p>
+            <h6>1. Здоровье и активность</h6>
+            <div class="row g-2">${['Трудно пройти пешком более одной остановки','Трудно бегать','Трудно играть в спортивные игры / делать зарядку','Трудно поднимать тяжелые вещи','Трудно самостоятельно принимать ванну или душ','Трудно выполнять обязанности по дому','Беспокоила боль','Было мало сил'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_a${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <h6 class="mt-3">2. Мои ощущения</h6>
+            <div class="row g-2">${['Мне бывало страшно','Мне бывало грустно','Я был разозлен чем-либо','Я плохо спал','Я переживал о том, что может случиться'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_b${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <h6 class="mt-3">3. Общение с другими</h6>
+            <div class="row g-2">${['Трудно общаться с другими детьми','Другие дети не хотели со мной дружить','Другие дети дразнили меня','Я не умел делать то, что умеют мои ровесники','Трудно чувствовать себя наравне с другими детьми'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_c${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <h6 class="mt-3">4. Школа</h6>
+            <div class="row g-2">${['Трудно быть внимательным на уроках','Я был забывчив','Трудно справляться со школьными заданиями','Пропускал школу из-за плохого самочувствия','Пропускал школу из-за визитов к врачу / в больницу'].map((q,i)=><div class="col-md-6"><label>${q} <input type="number" id="pedsql_d${i+1}" class="form-control" min="0" max="4" value="0"></label></div>).join('')}</div>
+            <button class="btn btn-primary mt-3" onclick="calculatePedsQL()">Рассчитать PedsQL</button>
+            <div id="pedsql-result" class="mt-3"></div>
+        </div>
+    </div>
+    <!-- PaPaScale -->
+    <div id="tab-papascale" class="survey-tab">
+        <div class="card"><h5>Шкала PaPaS Scale – Показания к паллиативной помощи</h5>
+            <h6>Блок 1. Траектория болезни</h6>
+            <div class="mb-2"><label>1.1 Влияние на ежедневную активность</label><select id="papa_1_1" class="form-select"><option value="0">Стабильное состояние</option><option value="1">Медленное прогрессирование без влияния</option><option value="2">Нестабильное, ограничивает активность</option><option value="4">Значительное ухудшение, тяжёлые ограничения</option></select></div>
+            <div class="mb-2"><label>1.2 Увеличение числа госпитализаций за год</label><select id="papa_1_2" class="form-select"><option value="0">Нет</option><option value="3">Да</option></select></div>
+            <h6>Блок 2. Исход лечения</h6>
+            <div class="mb-2"><label>2.1 Лечение основного заболевания</label><select id="papa_2_1" class="form-select"><option value="0">Куративное</option><option value="1">Не излечивает, но контролирует</option><option value="2">Не излечивает, но улучшает КЖ</option><option value="4">Не излечивает и не улучшает КЖ</option></select></div>
+            <div class="mb-2"><label>2.2 Побочные эффекты лечения</label><select id="papa_2_2" class="form-select"><option value="0">Нет</option><option value="1">Лёгкая степень</option><option value="2">Средняя степень</option><option value="4">Высокая степень</option></select></div>
+            <h6>Блок 3. Симптомы и психология</h6>
+            <div class="mb-2"><label>3.1 Тяжесть симптомов (последние 4 недели)</label><select id="papa_3_1" class="form-select"><option value="0">Нет симптомов</option><option value="1">Слабые, легко контролируются</option><option value="2">Один симптом средней тяжести</option><option value="4">Тяжёлый симптом, плохо поддаётся лечению</option></select></div>
+            <div class="mb-2"><label>3.2 Дистресс пациента</label><select id="papa_3_2" class="form-select"><option value="0">Нет</option><option value="1">Лёгкий</option><option value="2">Умеренный</option><option value="4">Тяжёлый</option></select></div>
+            <div class="mb-2"><label>3.3 Дистресс родителей / ухаживающих</label><select id="papa_3_3" class="form-select"><option value="0">Нет</option><option value="1">Лёгкий</option><option value="2">Умеренный</option><option value="4">Тяжёлый</option></select></div>
+            <h6>Блок 4. Мнение о необходимости ПП</h6>
+            <div class="mb-2"><label>4.1 Пациент / родители хотят получать ПП</label><select id="papa_4_1" class="form-select"><option value="0">Нет</option><option value="4">Да</option></select></div>
+            <div class="mb-2" id="papa_4_2_wrapper"><label>4.2 Специалисты считают, что показана ПП</label><select id="papa_4_2" class="form-select"><option value="0">Нет</option></select></div>
+            <h6>Блок 5. Продолжительность жизни</h6>
+            <div class="mb-2"><label>5.1 Предполагаемая продолжительность жизни</label><select id="papa_5_1" class="form-select"><option value="0">Годы</option><option value="1">От месяца до 1–2 лет</option><option value="3">Недели – несколько месяцев</option><option value="4">Дни – недели</option></select></div>
+            <div class="mb-2" id="papa_5_2_wrapper"><label>5.2 Удивитесь ли вы, если ребёнок внезапно умрёт в ближайшие 6–12 месяцев?</label><select id="papa_5_2" class="form-select"><option value="0">Да</option><option value="2">Нет</option></select></div>
+            <button class="btn btn-primary mt-3" onclick="calculatePaPaScale()">Рассчитать PaPaScale</button>
+            <div id="papascale-result" class="mt-3"></div>
+        </div>
+    </div>`;
+}
+
+function setupSurveys() {
+    window.switchSurveyTab = (tab) => {
+        document.querySelectorAll('.survey-tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        const el=document.getElementById(`tab-${tab}`);
+        if(el)el.classList.add('active');
+        const btn=document.querySelector(`[onclick="switchSurveyTab('${tab}')"]`);
+        if(btn)btn.classList.add('active');
+    };
+    window.calculatePedsQL = function() {
+        const allItems = [...Array(8)].map((_,i)=>parseInt(document.getElementById(`pedsql_a${i+1}`)?.value)||0)
+            .concat([...Array(5)].map((_,i)=>parseInt(document.getElementById(`pedsql_b${i+1}`)?.value)||0))
+            .concat([...Array(5)].map((_,i)=>parseInt(document.getElementById(`pedsql_c${i+1}`)?.value)||0))
+            .concat([...Array(5)].map((_,i)=>parseInt(document.getElementById(`pedsql_d${i+1}`)?.value)||0));
+        const sum = allItems.reduce((a,b)=>a+b,0);
+        const total = 100 - (sum / (allItems.length * 4) * 100);
+        let cat = total>=80 ? 'Хорошее КЖ' : total>=60 ? 'Среднее КЖ' : 'Низкое КЖ';
+        document.getElementById('pedsql-result').innerHTML = `<div class="alert alert-info">Общий балл PedsQL: <strong>${total.toFixed(1)}</strong> – ${cat}</div>`;
+    };
+    window.calculatePaPaScale = function() {
+        const vals = ['1_1','1_2','2_1','2_2','3_1','3_2','3_3','4_1','4_2','5_1','5_2'];
+        const total = vals.reduce((s,id)=>{ const el=document.getElementById(`papa_${id}`); return s + (el ? parseInt(el.value)||0 : 0); },0);
+        let cat = total>25 ? 'Показана ПП (вынести на ВК)' : total>15 ? 'Скорее всего нуждается в ПП' : total>10 ? 'Может нуждаться в ПП' : 'Не нуждается в ПП';
+        document.getElementById('papascale-result').innerHTML = `<div class="alert alert-info">Суммарный балл PaPaScale: <strong>${total}</strong> – ${cat}</div>`;
+    };
+    // логика скрытия блоков при выборе Да
+    document.getElementById('papa_4_1')?.addEventListener('change', function() {
+        const wrapper = document.getElementById('papa_4_2_wrapper');
+        if (this.value === '4') wrapper.style.display = 'none';
+        else wrapper.style.display = '';
+    });
+    document.getElementById('papa_5_1')?.addEventListener('change', function() {
+        const wrapper = document.getElementById('papa_5_2_wrapper');
+        if (this.value === '3' || this.value === '4') wrapper.style.display = 'none';
+        else wrapper.style.display = '';
+    });
+}
             function initClock() { const update = () => { const now = new Date(); const c = document.getElementById('liveClock'), d = document.getElementById('liveDate'); if(c) c.textContent = now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); if(d) d.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }; update(); if(clockTimer)clearInterval(clockTimer); clockTimer = setInterval(update, 1000); }
             function initCalendar() { const cal = document.getElementById('miniCalendar'); if(!cal)return; const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']; const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const diary = DB.getData('diary'); const palliative = DB.getData('palliative'); const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]); let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`; for(let i=1;i<fd;i++)h+='<td></td>'; for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>'; const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; h+=`<td class="${d===now.getDate()?'today':''} ${allDates.has(dateStr)?'has-entry':''}">${d}</td>`;} h+='</tr></table>'; cal.innerHTML = h; }
 
