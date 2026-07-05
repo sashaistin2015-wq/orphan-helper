@@ -373,7 +373,27 @@ const DISEASE_DATABASE = [
     { id:'osteoid', name:'Остеоид-остеома', icd:'D16.9', icon:'🦴', cat:'Опухоли', desc:'Ночные боли, купируются НПВП.', diag:'КТ, сцинтиграфия.', treat:'Радиочастотная абляция.', gene:'FOS (14q24.3)', mutations:'Перестройки', riskRules:[{param:'pain',cond:v=>parseInt(v)>=7,score:5},{param:'symptoms',cond:v=>/ночная боль|припухлость|ограничение движений/i.test(v||''),score:5}] },
     { id:'waldmann', name:'Болезнь Вальдмана', icd:'I89.0', icon:'💧', cat:'Гастроэнтерология', desc:'Гипопротеинемические отёки.', diag:'Эндоскопия, биопсия.', treat:'Диета с МСТ.', gene:'Спорадический', mutations:'—', riskRules:[{param:'wellbeing',cond:v=>parseInt(v)<=3,score:3},{param:'symptoms',cond:v=>/отёки|диарея|потеря веса|гипопротеинемия/i.test(v||''),score:5}] }
 ];
+// URL вашего опубликованного веб-приложения Google Apps Script (замените на свой)
+const SURVEY_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycb...ВАШ_ДЛИННЫЙ_URL.../exec';
 
+// Утилита для отправки анкеты в облачную Google Таблицу
+function syncSurveyToCloud(surveyType, data) {
+  // Если профиль ещё не загружен – тихо выходим
+  if (!profile || !profile.patientId) return;
+  const payload = {
+    patientId: profile.patientId,
+    patientName: profile.fullName || '',
+    type: surveyType,           // 'pedsql' или 'papascale'
+    timestamp: new Date().toISOString(),
+    data: data
+  };
+  fetch(SURVEY_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+    mode: 'no-cors' // Google Apps Script сам обработает, нам не нужен ответ
+  }).catch(e => console.warn('Не удалось отправить анкету в облако:', e));
+}
 // ========== Вспомогательные функции для работы с базой ==========
 function getDiseaseById(id) {
     return DISEASE_DATABASE.find(d => d.id === id);
@@ -762,15 +782,75 @@ case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
 
             function renderWelcome() { return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1><p class="hero-subtitle">Современный инструмент для ведения дневника здоровья и обмена данными с врачом</p><button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`; }
            function renderLogin() {
-    return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
-    <div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person-badge"></i> Врач</h4><input id="docName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="docCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i></div><button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button></div></div>
-    <div class="col-md-5 mb-3"><div class="card"><h4><i class="bi bi-person"></i> Пациент</h4><input id="patName" class="form-control" placeholder="ФИО"><div class="password-wrapper"><input id="patCode" type="password" class="form-control" placeholder="Код доступа"><i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i></div><select id="patDiagnosis" class="form-control"><option value="">Выберите диагноз (опционально)</option>${getDiseaseOptions()}</select><button class="btn btn-success w-100 mt-2" id="patientBtn">Войти как пациент</button></div></div>
-    </div></div>`;
+  return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
+  <div class="col-md-5 mb-3">
+    <div class="card">
+      <h4><i class="bi bi-person-badge"></i> Врач</h4>
+      <input id="docName" class="form-control" placeholder="ФИО">
+      <div class="password-wrapper">
+        <input id="docCode" type="password" class="form-control" placeholder="Код доступа">
+        <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i>
+      </div>
+      <button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button>
+    </div>
+  </div>
+  <div class="col-md-5 mb-3">
+    <div class="card">
+      <h4><i class="bi bi-person"></i> Пациент</h4>
+      <input id="patName" class="form-control" placeholder="ФИО">
+      <div class="password-wrapper">
+        <input id="patCode" type="password" class="form-control" placeholder="Код доступа">
+        <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i>
+      </div>
+      <input id="patPatientId" class="form-control mt-2" placeholder="ID пациента (выдаётся врачом)">
+      <select id="patDiagnosis" class="form-control mt-2">
+        <option value="">Выберите диагноз (опционально)</option>
+        ${getDiseaseOptions()}
+      </select>
+      <button class="btn btn-success w-100 mt-2" id="patientBtn">Войти как пациент</button>
+    </div>
+  </div>
+  </div></div>`;
 }
             window.togglePasswordVisibility = function(inputId, iconEl) { const input = document.getElementById(inputId); if (!input) return; if (input.type === 'password') { input.type = 'text'; iconEl.classList.remove('bi-eye'); iconEl.classList.add('bi-eye-slash'); } else { input.type = 'password'; iconEl.classList.remove('bi-eye-slash'); iconEl.classList.add('bi-eye'); } };
-            function setupLogin() { document.getElementById('doctorBtn')?.addEventListener('click', () => { const n = document.getElementById('docName').value.trim(); if(!n) return notify('Введите ФИО','error'); if(document.getElementById('docCode').value !== '123doc') return notify('Неверный код','error'); loginAs(n, 'doctor', ''); }); document.getElementById('patientBtn')?.addEventListener('click', () => { const n = document.getElementById('patName').value.trim(); if(!n) return notify('Введите ФИО','error'); if(document.getElementById('patCode').value !== 'pat2026') return notify('Неверный код','error'); const d = document.getElementById('patDiagnosis')?.value || ''; loginAs(n, 'parent', d); registerPatientIfNeeded(n); }); }
-            function loginAs(name, role, diagnosis = '') { profile = { fullName: name, role, diagnosis }; DB.setProfile(profile); updateNav(); App.navigate('/dashboard'); }
+function setupLogin() {
+  document.getElementById('doctorBtn')?.addEventListener('click', () => {
+    const n = document.getElementById('docName').value.trim();
+    if (!n) return notify('Введите ФИО', 'error');
+    if (document.getElementById('docCode').value !== '123doc')
+      return notify('Неверный код', 'error');
+    loginAs(n, 'doctor', '');
+  });
 
+  document.getElementById('patientBtn')?.addEventListener('click', () => {
+    const n = document.getElementById('patName').value.trim();
+    if (!n) return notify('Введите ФИО', 'error');
+    if (document.getElementById('patCode').value !== 'pat2026')
+      return notify('Неверный код', 'error');
+
+    const d = document.getElementById('patDiagnosis')?.value || '';
+    // Берём ID пациента из нового поля
+    let patientId = document.getElementById('patPatientId')?.value.trim() || '';
+    // Если не указан – генерируем временный
+    if (!patientId) {
+      patientId = 'pat_' + Math.random().toString(36).substr(2, 8);
+      notify('Вам присвоен временный ID: ' + patientId + '. Сообщите его врачу.', 'info');
+    }
+    loginAs(n, 'parent', d, patientId);
+    registerPatientIfNeeded(n);
+  });
+}            
+function loginAs(name, role, diagnosis = '', patientId = '') {
+  profile = {
+    fullName: name,
+    role: role,
+    diagnosis: diagnosis,
+    patientId: patientId || ''   // сохраняем ID
+  };
+  DB.setProfile(profile);
+  updateNav();
+  App.navigate('/dashboard');
+}
             async function renderDashboard() {
                 if (!profile) return '';
                 const isDoc = profile.role === 'doctor';
@@ -1675,50 +1755,67 @@ window.PalliativeCalc = {
         }
     },
 
-    loadFromSurveys: function(target) {
-        const data = JSON.parse(localStorage.getItem('surveyData') || '{}');
-        if (!data.pedsql && !data.papascale) {
-            notify('Данные анкет не найдены. Сначала заполните анкеты в разделе "Анкеты".', 'error');
-            return;
-        }
-        const pedsql = data.pedsql || {};
-        const papascale = data.papascale || {};
-
-        if (target === 'efficiency') {
-            if (pedsql.total !== undefined) {
-                const quality = 1 + (pedsql.total / 100) * 4;
-                document.getElementById('effPatQuality').value = Math.round(quality);
-                const psycho = 1 + (pedsql.emotional / 100) * 4;
-                document.getElementById('effPatPsycho').value = Math.round(psycho);
-                const clinical = (pedsql.physical + pedsql.emotional + pedsql.social + pedsql.school) / 4;
-                document.getElementById('effPatClinical').value = Math.round(1 + (clinical / 100) * 4);
-                notify('Данные PedsQL загружены в поля эффективности.', 'info');
-            } else {
-                notify('Нет данных PedsQL. Заполните анкету PedsQL.', 'error');
-            }
-        } else if (target === 'clustering') {
-            if (pedsql.physical !== undefined) {
-                document.getElementById('clustPhysFunc').value = Math.round(pedsql.physical);
-            }
-            if (pedsql.emotional !== undefined) {
-                document.getElementById('clustEmoFunc').value = Math.round(pedsql.emotional);
-            }
-            if (pedsql.social !== undefined) {
-                document.getElementById('clustSocFunc').value = Math.round(pedsql.social);
-            }
-            if (pedsql.school !== undefined) {
-                document.getElementById('clustRoleFunc').value = Math.round(pedsql.school);
-            }
-            if (papascale.total !== undefined) {
-                const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
-                document.getElementById('clustPain').value = pain;
-            } else {
-                document.getElementById('clustPain').value = 3;
-            }
-            notify('Данные анкет загружены в поля кластеризации.', 'info');
-        }
+// ======= НОВЫЙ МЕТОД ЗАГРУЗКИ ИЗ АНКЕТ (С ОБЛАКОМ) =======
+loadFromSurveys: function(target) {
+    // 1. Сначала пробуем загрузить из локального хранилища
+    const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
+    if (local.pedsql || local.papascale) {
+        this.applySurveyData(target, local.pedsql, local.papascale);
+        return;
     }
-};
+
+    // 2. Если локально пусто – запрашиваем из облака
+    const patientId = prompt('Введите ID пациента, чьи анкеты загрузить:');
+    if (!patientId) return;
+
+    // Показываем индикатор загрузки
+    notify('Загрузка анкет из облака...', 'info');
+
+    fetch(SURVEY_SCRIPT_URL + '?action=getSurvey&patientId=' + encodeURIComponent(patientId))
+      .then(function(response) { return response.json(); })
+      .then(function(result) {
+        if (result.success && result.data) {
+          // Кешируем полученные данные локально, чтобы не ходить в облако каждый раз
+          localStorage.setItem('surveyData', JSON.stringify(result.data));
+          this.applySurveyData(target, result.data.pedsql, result.data.papascale);
+        } else {
+          notify('Анкеты для этого пациента не найдены в облаке.', 'error');
+        }
+      }.bind(this))
+      .catch(function(e) {
+        console.error(e);
+        notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
+      });
+},
+
+// Вспомогательная функция: подстановка значений анкет в поля калькулятора
+applySurveyData: function(target, pedsql, papascale) {
+    if (target === 'efficiency') {
+        if (pedsql && pedsql.total !== undefined) {
+            document.getElementById('effPatQuality').value = Math.round(1 + (pedsql.total / 100) * 4);
+            document.getElementById('effPatPsycho').value = Math.round(1 + ((pedsql.emotional || 0) / 100) * 4);
+            const clinical = ((pedsql.physical || 0) + (pedsql.emotional || 0) + (pedsql.social || 0) + (pedsql.school || 0)) / 4;
+            document.getElementById('effPatClinical').value = Math.round(1 + (clinical / 100) * 4);
+            notify('Данные PedsQL загружены в поля эффективности.', 'info');
+        } else {
+            notify('Нет данных PedsQL. Заполните анкету или проверьте ID.', 'error');
+        }
+    } else if (target === 'clustering') {
+        if (pedsql) {
+            document.getElementById('clustPhysFunc').value = Math.round(pedsql.physical || 0);
+            document.getElementById('clustEmoFunc').value = Math.round(pedsql.emotional || 0);
+            document.getElementById('clustSocFunc').value = Math.round(pedsql.social || 0);
+            document.getElementById('clustRoleFunc').value = Math.round(pedsql.school || 0);
+        }
+        if (papascale && papascale.total !== undefined) {
+            const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
+            document.getElementById('clustPain').value = pain;
+        } else {
+            document.getElementById('clustPain').value = 3; // значение по умолчанию
+        }
+        notify('Данные анкет загружены в поля кластеризации.', 'info');
+    }
+},
 // ======= ДОПОЛНИТЕЛЬНЫЕ ГЛОБАЛЬНЫЕ ФУНКЦИИ (ВНЕ ОБЪЕКТА) =======
 window.switchPallcalcTab = function(tab) {
     // Убираем активный класс у всех вкладок и кнопок
@@ -1902,9 +1999,13 @@ function setupSurveys() {
                 category: cat
             }
         };
+       const existing = JSON.parse(localStorage.getItem('surveyData') || '{}');
+localStorage.setItem('surveyData', JSON.stringify({ ...existing, ...surveyData }));
+notify('Данные PedsQL сохранены локально.', 'info');
         const existing = JSON.parse(localStorage.getItem('surveyData') || '{}');
         localStorage.setItem('surveyData', JSON.stringify({ ...existing, ...surveyData }));
         notify('Данные PedsQL сохранены для использования в калькуляторе.', 'info');
+        syncSurveyToCloud('pedsql', surveyData.pedsql);
     };
 
     window.calculatePaPaScale = function() {
