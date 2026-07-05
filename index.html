@@ -845,21 +845,8 @@ case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
             </div>
         </div>`).join('')}
     </div>`;
-}
-
-window.filterDiseases = () => {
-    const q = document.getElementById('searchDisease')?.value.toLowerCase() || '';
-    const cat = document.getElementById('categoryFilter')?.value || '';
-    document.querySelectorAll('#diseaseList .col-md-4').forEach(card => {
-        const text = card.textContent.toLowerCase();
-        const category = card.dataset.category || '';
-        let show = true;
-        if (q && !text.includes(q)) show = false;
-        if (cat && category !== cat) show = false;
-        card.style.display = show ? '' : 'none';
-    });
-};
-            function setupReference() { document.querySelectorAll('.disease-card').forEach(card => { card.addEventListener('click', function(e) { this.classList.toggle('active'); }); }); }
+}         
+function setupReference() { document.querySelectorAll('.disease-card').forEach(card => { card.addEventListener('click', function(e) { this.classList.toggle('active'); }); }); }
 window.filterDiseases = () => {
     const q = document.getElementById('searchDisease')?.value.toLowerCase() || '';
     const cat = document.getElementById('categoryFilter')?.value || '';
