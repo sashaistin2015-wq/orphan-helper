@@ -495,6 +495,7 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
             function toggleTheme() { document.body.classList.toggle('dark-theme'); darkTheme = !darkTheme; localStorage.setItem('darkTheme', darkTheme); }
             window.toggleTheme = toggleTheme;
 
+           // ==================== НАВИГАЦИЯ (исправлена) ====================
             async function updateNav() {
                 const nav = document.getElementById('navMenu');
                 const mob = document.getElementById('mobileNav');
@@ -515,17 +516,19 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
                             </ul>
                         </div>`;
                     } else {
-    html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')"><i class="bi bi-people"></i></button>
-             <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>
-             <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')"><i class="bi bi-calculator"></i> Калькулятор</button>
-             <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')"><i class="bi bi-clipboard-check"></i> Анкеты</button>`;
-}
-html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')"><i class="bi bi-book"></i></button>
-         <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')"><i class="bi bi-diagram-3"></i></button>
-         <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')"><i class="bi bi-question-circle"></i></button>
-         <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')"><i class="bi bi-heart"></i></button>
-         <span class="sync-badge ms-2" id="syncBadge"><span class="sync-dot"></span> Синхронизировано</span>
-         <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()"><i class="bi bi-box-arrow-right"></i></button>`;
+                        html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')"><i class="bi bi-people"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')"><i class="bi bi-graph-up"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')"><i class="bi bi-calculator"></i> Калькулятор</button>
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')"><i class="bi bi-clipboard-check"></i> Анкеты</button>`;
+                    }
+                    html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')"><i class="bi bi-book"></i></button>
+                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')"><i class="bi bi-diagram-3"></i></button>
+                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')"><i class="bi bi-question-circle"></i></button>
+                    <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')"><i class="bi bi-heart"></i></button>
+                    <span class="sync-badge ms-2" id="syncBadge"><span class="sync-dot"></span> Синхронизировано</span>
+                    <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()"><i class="bi bi-box-arrow-right"></i></button>`;
+                    return html;
+                };
                 if (profile) {
                     nav.innerHTML = items(profile.role);
                     if (mob) mob.innerHTML = items(profile.role);
@@ -535,7 +538,6 @@ html += `<button class="btn btn-sm btn-outline" onclick="App.navigate('/referenc
                 }
                 SyncManager.updateSyncIndicator();
             }
-
             setInterval(() => SyncManager.processQueue(), 30000);
 
             async function render() {
@@ -1214,17 +1216,187 @@ function setupPallcalc() {
             // Также можно скопировать в буфер
         }
     };
+function getClusterHistory() {
+                    try { return JSON.parse(localStorage.getItem('clusterHistory')) || []; } catch(e) { return []; }
+                }
+                function saveClusterHistory(entry) {
+                    const hist = getClusterHistory();
+                    hist.push({ date: new Date().toISOString(), ...entry });
+                    localStorage.setItem('clusterHistory', JSON.stringify(hist));
+                }
+                function showClusterTrajectory() {
+                    const hist = getClusterHistory();
+                    if (hist.length < 2) { notify('Недостаточно данных для траектории', 'info'); return; }
+                    const labels = hist.map(e => new Date(e.date).toLocaleDateString());
+                    const data = hist.map(e => e.cluster);
+                    const container = document.getElementById('cluster-result-container');
+                    // Удаляем старый график, если есть
+                    const oldCanvas = document.getElementById('trajectoryChart');
+                    if (oldCanvas) oldCanvas.remove();
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'trajectoryChart';
+                    canvas.width = 400; canvas.height = 200;
+                    container.appendChild(canvas);
+                    if (typeof Chart === 'undefined') { notify('Chart.js не загружен', 'error'); return; }
+                    new Chart(canvas, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Кластер',
+                                data: data.map(c => Object.keys(profiles).indexOf(c)),
+                                borderColor: '#0d7377',
+                                fill: false,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    ticks: {
+                                        callback: (val) => Object.keys(profiles)[Math.round(val)] || ''
+                                    },
+                                    min: -0.5,
+                                    max: Object.keys(profiles).length - 0.5
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => Object.keys(profiles)[Math.round(ctx.parsed.y)] || ''
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
 
-    // Переключение вкладок (уже есть, но продублируем на всякий случай)
-    window.switchPallcalcTab = window.switchPallcalcTab || function(tab) {
-        document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        const el = document.getElementById(`tab-${tab}`);
-        if (el) el.classList.add('active');
-        const btn = document.querySelector(`[onclick="switchPallcalcTab('${tab}')"]`);
-        if (btn) btn.classList.add('active');
-    };
-}
+                // Переопределяем clusterPatient с сохранением истории
+                window.PalliativeCalc.clusterPatient = function() {
+                    const bmi = parseFloat(document.getElementById('clustBMI')?.value);
+                    const pain = parseFloat(document.getElementById('clustPain')?.value);
+                    const qol = parseFloat(document.getElementById('clustQOL')?.value);
+                    const container = document.getElementById('cluster-result-container');
+                    if (!container) return;
+                    if (isNaN(bmi) || isNaN(pain) || isNaN(qol)) {
+                        container.innerHTML = '<div class="alert alert-warning">Заполните ИМТ, боль и КЖ.</div>';
+                        return;
+                    }
+                    const phys = 50 - pain * 4 + (qol / 2);
+                    const emo = 30 + qol * 3 - pain * 2;
+                    const soc = 40 + qol * 2 - pain * 1.5;
+                    const role = 35 + qol * 2 - pain * 2;
+                    const nutrition = (bmi < 18.5) ? 4 : (bmi < 25 ? 2 : 3);
+                    const vals = { pain, nutrition, phys_func: phys, emo_func: emo, soc_func: soc, role_func: role };
+
+                    let best = null, minDist = Infinity;
+                    const profiles = {
+                        "Болевой": { center: { боль: 7.3, нутр: 2.3, физ: 26.1, эмо: 14.0, соц: 24.5, рол: 17.2 }, desc: "Ведущий драйвер – боль.", recs: "Обезболивание по ВОЗ, КПТ." },
+                        "Нутритивный": { center: { боль: 3.1, нутр: 4.6, физ: 18.2, эмо: 21.4, соц: 26.8, рол: 19.5 }, desc: "Высокий нутритивный риск.", recs: "Диетолог, зондовое питание." },
+                        "Двигательный": { center: { боль: 5.6, нутр: 3.4, физ: 11.5, эмо: 19.0, соц: 16.2, рол: 11.0 }, desc: "Тяжёлые двигательные ограничения.", recs: "ЛФК, ТСР." },
+                        "Относительно компенсированный": { center: { боль: 2.9, нутр: 2.0, физ: 43.8, эмо: 31.2, соц: 48.5, рол: 42.3 }, desc: "Относительно сохранное КЖ.", recs: "Наблюдение." },
+                        "Социально-депривированный": { center: { боль: 3.0, нутр: 2.2, физ: 41.2, эмо: 30.8, соц: 18.1, рол: 15.2 }, desc: "Изоляция.", recs: "Психосоциальная реабилитация." }
+                    };
+                    for (const [name, cfg] of Object.entries(profiles)) {
+                        const c = cfg.center;
+                        const dist = Math.hypot(vals.pain - c.боль, vals.nutrition - c.нутр,
+                            vals.phys_func - c.физ, vals.emo_func - c.эмо,
+                            vals.soc_func - c.соц, vals.role_func - c.рол);
+                        if (dist < minDist) { minDist = dist; best = name; }
+                    }
+                    const p = profiles[best];
+                    const deltaQoL = 4.87 - 0.41 * vals.nutrition - 0.52 * vals.pain - 0.09 * vals.phys_func;
+                    const orMapping = { "Болевой": 6.1, "Нутритивный": 3.5, "Двигательный": 1.4, "Относительно компенсированный": 1.0, "Социально-депривированный": 2.8 };
+                    const orVal = orMapping[best] || 1.0;
+
+                    // Сохраняем историю
+                    saveClusterHistory({ cluster: best, bmi, pain, qol });
+
+                    container.innerHTML = `
+                        <div class="alert alert-primary">
+                            <h5>Профиль: «${best}»</h5>
+                            <p>${p.desc}</p>
+                            <p><strong>Рекомендации:</strong> ${p.recs}</p>
+                            <p><strong>Прогнозируемый прирост КЖ (Δ):</strong> ${deltaQoL.toFixed(2)} балла</p>
+                            <p><strong>OR выраженного улучшения:</strong> ${orVal} (p<0.05)</p>
+                            <button class="btn btn-info mt-2" onclick="showClusterTrajectory()">📈 Показать траекторию</button>
+                        </div>
+                    `;
+                    window._pallData = window._pallData || {};
+                    window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs };
+                };
+
+                // Прогноз риска на 7 дней (линейная регрессия)
+                window.PalliativeCalc.predictRisk = function() {
+                    const diary = DB.getData('diary').slice(-7);
+                    if (diary.length < 5) { notify('Недостаточно данных для прогноза (нужно ≥5 дней)', 'error'); return; }
+                    const temps = diary.map((e, i) => ({ x: i, y: parseFloat(e.temperature) || 36.6 }));
+                    const n = temps.length;
+                    const sumX = temps.reduce((s, p) => s + p.x, 0);
+                    const sumY = temps.reduce((s, p) => s + p.y, 0);
+                    const sumXY = temps.reduce((s, p) => s + p.x * p.y, 0);
+                    const sumX2 = temps.reduce((s, p) => s + p.x * p.x, 0);
+                    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+                    const intercept = (sumY - slope * sumX) / n;
+                    const nextDay = n;
+                    const predictedTemp = slope * nextDay + intercept;
+                    const risk = predictedTemp > 37.5 ? 'Повышенный риск лихорадки' : 'Стабильно';
+                    const container = document.getElementById('vitals-result-container');
+                    container.innerHTML += `<div class="alert alert-warning mt-2"><strong>Прогноз на завтра:</strong> ${predictedTemp.toFixed(1)}°C – ${risk}</div>`;
+                };
+
+                // Адаптивный индекс
+                window.PalliativeCalc.calculateAdaptiveIndex = function() {
+                    const diagnosis = document.getElementById('calcDiagnosis')?.value || '';
+                    if (!diagnosis) { notify('Выберите диагноз', 'error'); return; }
+                    const diary = DB.getData('diary');
+                    if (!diary.length) { notify('Нет записей дневника', 'error'); return; }
+                    const last = diary[diary.length-1];
+                    const weights = {
+                        'Муковисцидоз': { temperature: 0.3, weight: 0.2, wellbeing: 0.2, symptoms: 0.3 },
+                        'Фенилкетонурия': { temperature: 0.2, weight: 0.3, wellbeing: 0.2, symptoms: 0.3 },
+                        'default': { temperature: 0.25, weight: 0.25, wellbeing: 0.25, symptoms: 0.25 }
+                    };
+                    const w = weights[diagnosis] || weights.default;
+                    const normTemp = (parseFloat(last.temperature) || 36.6) / 40;
+                    const normWeight = (parseFloat(last.weight) || 50) / 100;
+                    const normWellbeing = (parseInt(last.wellbeing) || 5) / 10;
+                    const symptomsPresent = (last.symptoms && last.symptoms.length > 0) ? 1 : 0;
+                    const index = w.temperature * normTemp + w.weight * normWeight + w.wellbeing * normWellbeing + w.symptoms * symptomsPresent;
+                    const container = document.getElementById('bmi-result-container');
+                    container.innerHTML += `<div class="alert alert-success mt-2"><strong>Адаптивный индекс состояния:</strong> ${(index * 100).toFixed(1)}%</div>`;
+                };
+
+                // Семантический анализ симптомов
+                window.PalliativeCalc.analyzeSymptoms = function() {
+                    const diary = DB.getData('diary');
+                    if (!diary.length) { notify('Нет записей', 'error'); return; }
+                    const last = diary[diary.length-1];
+                    const text = last.symptoms || '';
+                    const keywords = ['кашель', 'одышка', 'кровь', 'рвота', 'судороги', 'головная боль'];
+                    const found = keywords.filter(k => text.toLowerCase().includes(k));
+                    let alertMsg = '';
+                    if (found.length) {
+                        alertMsg = `Обнаружены тревожные симптомы: ${found.join(', ')}. Обратитесь к врачу.`;
+                        notify(alertMsg, 'error');
+                    } else {
+                        alertMsg = 'Критических симптомов не обнаружено.';
+                        notify(alertMsg, 'info');
+                    }
+                    const container = document.getElementById('vitals-result-container');
+                    container.innerHTML += `<div class="alert alert-secondary mt-2">${alertMsg}</div>`;
+                };
+
+                // Переключение вкладок
+                window.switchPallcalcTab = function(tab) {
+                    document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    const el = document.getElementById(`tab-${tab}`);
+                    if (el) el.classList.add('active');
+                    const btn = document.querySelector(`[onclick="switchPallcalcTab('${tab}')"]`);
+                    if (btn) btn.classList.add('active');
+                };
+            }
 
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
