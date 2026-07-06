@@ -1874,72 +1874,100 @@ function setupPallcalc() {
             }
         },
 
-        loadFromSurveys: function(target) {
-			if (SURVEY_SCRIPT_URL.includes('1PqATIX6UyllyT6-06QEAOFztkZ487x6eonh-fhQwypE')) {
-        notify('Настройте URL Google Apps Script в конфигурации', 'error');
+       // ======= НОВЫЙ МЕТОД ЗАГРУЗКИ ИЗ АНКЕТ (С ОБЛАКОМ) =======
+loadFromSurveys: function(target) {
+    // 1. Сначала пробуем загрузить из локального хранилища
+    const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
+    if (local.pedsql || local.papascale) {
+        this.applySurveyData(target, local.pedsql, local.papascale);
         return;
     }
-            const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
-            if (local.pedsql || local.papascale) {
-                this.applySurveyData(target, local.pedsql, local.papascale);
-                return;
-            }
-            const patientId = prompt('Введите ID пациента, чьи анкеты загрузить:');
-            if (!patientId) return;
-            notify('Загрузка анкет из облака...', 'info');
-            fetch(SURVEY_SCRIPT_URL + '?action=getSurvey&patientId=' + encodeURIComponent(patientId))
-                .then(function(response) { return response.json(); })
-                .then(function(result) {
-                    if (result.success && result.data) {
-                        localStorage.setItem('surveyData', JSON.stringify(result.data));
-                        this.applySurveyData(target, result.data.pedsql, result.data.papascale);
-                    } else {
-                        notify('Анкеты для этого пациента не найдены в облаке.', 'error');
-                    }
-                }.bind(this))
-                .catch(function(e) {
-                    console.error(e);
-                    notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
-                });
-        },
 
-        applySurveyData: function(target, pedsql, papascale) {
-            if (target === 'efficiency') {
-                if (pedsql && pedsql.total !== undefined) {
-                    document.getElementById('effPatQuality').value = Math.round(1 + (pedsql.total / 100) * 4);
-                    document.getElementById('effPatPsycho').value = Math.round(1 + ((pedsql.emotional || 0) / 100) * 4);
-                    const clinical = ((pedsql.physical || 0) + (pedsql.emotional || 0) + (pedsql.social || 0) + (pedsql.school || 0)) / 4;
-                    document.getElementById('effPatClinical').value = Math.round(1 + (clinical / 100) * 4);
-                    notify('Данные PedsQL загружены в поля эффективности.', 'info');
-                } else {
-                    notify('Нет данных PedsQL. Заполните анкету или проверьте ID.', 'error');
-                }
-            } else if (target === 'clustering') {
-                if (pedsql) {
-                    document.getElementById('clustPhysFunc').value = Math.round(pedsql.physical || 0);
-                    document.getElementById('clustEmoFunc').value = Math.round(pedsql.emotional || 0);
-                    document.getElementById('clustSocFunc').value = Math.round(pedsql.social || 0);
-                    document.getElementById('clustRoleFunc').value = Math.round(pedsql.school || 0);
-                }
-                if (papascale && papascale.total !== undefined) {
-                    const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
-                    document.getElementById('clustPain').value = pain;
-                } else {
-                    document.getElementById('clustPain').value = 3;
-                    notify('Данные анкет загружены в поля кластеризации.', 'info');
-                }
+    // 2. Если локально пусто – запрашиваем из облака
+    const patientId = prompt('Введите ID пациента, чьи анкеты загрузить:');
+    if (!patientId) return;
+
+    // Показываем индикатор загрузки
+    notify('Загрузка анкет из облака...', 'info');
+
+    fetch(SURVEY_SCRIPT_URL + '?action=getSurvey&patientId=' + encodeURIComponent(patientId))
+        .then(function(response) { 
+            return response.json(); 
+        })
+        .then(function(result) {
+            if (result.success && result.data) {
+                localStorage.setItem('surveyData', JSON.stringify(result.data));
+                this.applySurveyData(target, result.data.pedsql, result.data.papascale);
+            } else {
+                notify('Анкеты для этого пациента не найдены в облаке.', 'error');
             }
+        }.bind(this))
+        .catch(function(e) {
+            console.error(e);
+            notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
+        });
+},
+
+        // Вспомогательная функция: подстановка значений анкет в поля калькулятора
+applySurveyData: function(target, pedsql, papascale) {
+    if (target === 'efficiency') {
+        if (pedsql && pedsql.total !== undefined) {
+            var qualityEl = document.getElementById('effPatQuality');
+            var psychoEl = document.getElementById('effPatPsycho');
+            var clinicalEl = document.getElementById('effPatClinical');
+            
+            if (qualityEl) qualityEl.value = Math.round(1 + (pedsql.total / 100) * 4);
+            if (psychoEl) psychoEl.value = Math.round(1 + ((pedsql.emotional || 0) / 100) * 4);
+            
+            var clinical = ((pedsql.physical || 0) + (pedsql.emotional || 0) + (pedsql.social || 0) + (pedsql.school || 0)) / 4;
+            if (clinicalEl) clinicalEl.value = Math.round(1 + (clinical / 100) * 4);
+            
+            notify('Данные PedsQL загружены в поля эффективности.', 'info');
+        } else {
+            notify('Нет данных PedsQL. Заполните анкету или проверьте ID.', 'error');
         }
+    } else if (target === 'clustering') {
+        if (pedsql) {
+            var physEl = document.getElementById('clustPhysFunc');
+            var emoEl = document.getElementById('clustEmoFunc');
+            var socEl = document.getElementById('clustSocFunc');
+            var roleEl = document.getElementById('clustRoleFunc');
+            
+            if (physEl) physEl.value = Math.round(pedsql.physical || 0);
+            if (emoEl) emoEl.value = Math.round(pedsql.emotional || 0);
+            if (socEl) socEl.value = Math.round(pedsql.social || 0);
+            if (roleEl) roleEl.value = Math.round(pedsql.school || 0);
+        }
+        if (papascale && papascale.total !== undefined) {
+            var pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
+            var painEl = document.getElementById('clustPain');
+            if (painEl) painEl.value = pain;
+        } else {
+            var painEl = document.getElementById('clustPain');
+            if (painEl) painEl.value = 3;
+            notify('Данные анкет загружены в поля кластеризации.', 'info');
+        }
+    }
+}
     };
 
     window.switchPallcalcTab = function(tab) {
-        document.querySelectorAll('.pallcalc-tab').forEach(function(t) { t.classList.remove('active'); });
-        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        var el = document.getElementById('tab-' + tab);
-        if (el) el.classList.add('active');
-        var btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
-        if (btn) btn.classList.add('active');
-    };
+    // Убираем активный класс у всех вкладок и кнопок
+    document.querySelectorAll('.pallcalc-tab').forEach(function(t) { 
+        t.classList.remove('active'); 
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { 
+        b.classList.remove('active'); 
+    });
+
+    // Находим нужную вкладку и активируем
+    var el = document.getElementById('tab-' + tab);
+    if (el) el.classList.add('active');
+
+    // Находим и активируем соответствующую кнопку
+    var btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
+    if (btn) btn.classList.add('active');
+};
 }
 
 // ===== ГЛОБАЛЬНАЯ ФУНКЦИЯ ЭКСПОРТА СТАТИСТИЧЕСКИХ ДАННЫХ =====
