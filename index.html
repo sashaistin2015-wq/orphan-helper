@@ -280,7 +280,7 @@ const DISEASE_DATABASE = [
     { id:'klinefelter', name:'Синдром Клайнфельтера', icd:'Q98.4', icon:'👦', cat:'Хромосомные', desc:'Кариотип 47,XXY.', diag:'Кариотип.', treat:'Тестостерон.', gene:'—', mutations:'47,XXY', symptoms:['высокий рост','гипогонадизм','гинекомастия','бесплодие','трудности в обучении'] }
 ];
 
-			// Глобальная валидация для всех числовых полей
+            // Глобальная валидация для всех числовых полей
 window.validateNumericInput = function(inputId, min, max) {
     const el = document.getElementById(inputId);
     if (!el) return true;
@@ -1069,7 +1069,7 @@ if (hasSymptoms) {
 }
                 const history = DB.getData('diary').slice(-10).reverse();
                 let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | ${e.temperature||'—'}°C | ${e.pressure||'—'} | ${e.weight||'—'} кг | Самочувствие: ${e.wellbeing}/10</div>`).join('');
-                return `<h2>📋 Дневник — ${fmtDate(today)}</h2><div class="card"><form id="diaryForm">${formHtml}<button type="button" class="btn btn-primary w-100 mt-2" onclick="saveDiaryLocally()">💾 Сохранить локально</button><button type="button" class="btn btn-success w-100 mt-2" onclick="sendDiary()">📤 Отправить врачу</button></form></div><div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
+                return `<h2>📋 Дневник — ${fmtDate(today)}</h2><div class="card"><form id="diaryForm">${formHtml}${voiceButton}<button type="button" class="btn btn-primary w-100 mt-2" onclick="saveDiaryLocally()">💾 Сохранить локально</button><button type="button" class="btn btn-success w-100 mt-2" onclick="sendDiary()">📤 Отправить врачу</button></form></div><div class="card mt-3"><h5>📊 История записей (последние 10)</h5>${histHtml || '<p class="text-muted">Нет записей</p>'}</div>`;
             }
             window.saveDiaryLocally = function() {
                 const f = document.getElementById('diaryForm'); if(!f) return;
@@ -1404,9 +1404,9 @@ function renderPallcalc() {
                 '<button class="btn btn-outline-secondary" onclick="PalliativeCalc.resetTab(\'clustering\')">Сброс</button>' +
             '</div>' +
             '<div id="clustering-result" class="mt-4"></div>' +
-            '<div class="chart-box mt-4">' +
+            '<div class="chart-box mt-4" id="radar-container">' +
                 '<div class="chart-wrapper"><h6>🕸️ Радарная диаграмма</h6><canvas id="radarChart"></canvas></div>' +
-                '<div class="chart-wrapper"><h6>📈 Прогноз улучшения</h6><canvas id="gainChart"></canvas></div>' +
+                '<div class="chart-wrapper" id="gain-chart-container"><h6>📈 Прогноз улучшения</h6><canvas id="gainChart"></canvas></div>' +
             '</div>' +
         '</div>' +
     '</div>' +
@@ -1532,7 +1532,6 @@ function setupPallcalc() {
 	
 	window.PalliativeCalc = {
         calculateBMI: function() {
-			calculateBMI: function() {
     const fields = [
         { id: 'calcAgeYears', min: 2, max: 18, msg: 'Возраст должен быть от 2 до 18 лет' },
         { id: 'calcHeightCm', min: 40, max: 200, msg: 'Рост должен быть от 40 до 200 см' },
