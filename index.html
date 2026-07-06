@@ -10,243 +10,106 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
+   <style>
         :root { --primary: #0d7377; --primary-light: #14a3a8; --accent: #00b4d8; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --bg: #f0f4f8; --card: #ffffff; --radius: 24px; --radius-sm: 16px; --shadow: 0 10px 30px rgba(0,0,0,0.06); }
         .dark-theme { --primary: #14a3a8; --text: #f1f5f9; --text-light: #94a3b8; --bg: #0f172a; --card: #1e293b; --shadow: 0 10px 30px rgba(0,0,0,0.3); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; transition: all 0.3s; }
-        .navbar { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); padding: 10px 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; font-size: 0.85rem; transition: all 0.3s; }
+        .navbar { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); padding: 6px 0; }
         .dark-theme .navbar { background: rgba(30,41,59,0.8); }
-        .navbar-brand { font-weight: 800; font-size: 1.35rem; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .brand-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: white; -webkit-text-fill-color: white; }
-        .btn { border-radius: 30px; padding: 8px 20px; font-weight: 600; border: none; transition: all 0.25s; cursor: pointer; font-size: 0.9rem; position: relative; }
+        .navbar-brand { font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; -webkit-text-fill-color: white; }
+        .btn { border-radius: 20px; padding: 4px 12px; font-weight: 500; border: none; transition: all 0.25s; cursor: pointer; font-size: 0.75rem; position: relative; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(13,115,119,0.35); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(13,115,119,0.3); }
         .btn-success { background: linear-gradient(135deg, #10b981, #34d399); color: white; }
         .btn-danger { background: linear-gradient(135deg, #ef4444, #f87171); color: white; }
         .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
-        .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.5rem; transition: transform 0.2s, box-shadow 0.2s; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.08); }
-        .dashboard-card { cursor: pointer; text-align: center; padding: 1.5rem; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); transition: all 0.3s; }
-        .dashboard-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
-        .dashboard-card .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
-        .form-control, .form-select { border-radius: var(--radius-sm); border: 2px solid #e2e8f0; padding: 11px 16px; background: var(--card); color: var(--text); width: 100%; margin-bottom: 10px; }
+        .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem; margin-bottom: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0,0,0,0.06); }
+        .dashboard-card { cursor: pointer; text-align: center; padding: 1rem; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); transition: all 0.3s; }
+        .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,0.1); }
+        .dashboard-card .icon { font-size: 2rem; margin-bottom: 0.3rem; }
+        .form-control, .form-select { border-radius: var(--radius-sm); border: 2px solid #e2e8f0; padding: 6px 12px; background: var(--card); color: var(--text); width: 100%; margin-bottom: 6px; font-size: 0.8rem; }
         .form-control:focus, .form-select:focus { border-color: var(--primary-light); outline: none; }
-        .form-range { height: 8px; }
-        .form-range::-webkit-slider-thumb { width: 24px; height: 24px; background: var(--primary); cursor: pointer; }
-        .clock-widget { background: linear-gradient(135deg, #1e293b, #334155); color: white; border-radius: var(--radius); padding: 1.5rem; text-align: center; }
-        .clock-widget .time { font-size: 2.5rem; font-weight: 800; }
-        .calendar-widget { background: var(--card); border-radius: var(--radius); padding: 1.25rem; }
+        .form-range { height: 6px; }
+        .form-range::-webkit-slider-thumb { width: 18px; height: 18px; background: var(--primary); cursor: pointer; }
+        .clock-widget { background: linear-gradient(135deg, #1e293b, #334155); color: white; border-radius: var(--radius); padding: 1rem; text-align: center; }
+        .clock-widget .time { font-size: 1.8rem; font-weight: 800; }
+        .calendar-widget { background: var(--card); border-radius: var(--radius); padding: 0.8rem; }
         .calendar-widget table { width: 100%; border-collapse: collapse; }
-        .calendar-widget td { text-align: center; padding: 6px; cursor: pointer; border-radius: 10px; }
+        .calendar-widget td { text-align: center; padding: 4px; cursor: pointer; border-radius: 8px; font-size: 0.75rem; }
         .calendar-widget td.today { background: var(--primary); color: white; }
         .calendar-widget td.has-entry { background: var(--success); color: white; opacity: 0.7; }
-        .faq-item { border-left: 3px solid var(--primary); padding: 1rem; margin-bottom: 1rem; background: var(--card); cursor: pointer; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; transition: all 0.3s; }
-        .faq-item:hover { background: rgba(13,115,119,0.05); transform: translateX(4px); }
+        .faq-item { border-left: 3px solid var(--primary); padding: 0.8rem; margin-bottom: 0.8rem; background: var(--card); cursor: pointer; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; transition: all 0.3s; }
+        .faq-item:hover { background: rgba(13,115,119,0.05); transform: translateX(3px); }
         .faq-item.active { border-left-color: var(--accent); background: rgba(0,180,216,0.08); }
-        .faq-question { display: flex; align-items: center; gap: 10px; }
-        .faq-icon { font-size: 14px; color: var(--primary); min-width: 20px; transition: transform 0.3s; }
+        .faq-question { display: flex; align-items: center; gap: 8px; }
+        .faq-icon { font-size: 12px; color: var(--primary); min-width: 16px; transition: transform 0.3s; }
         .faq-item.active .faq-icon { transform: rotate(90deg); }
-        .faq-answer { margin-top: 10px; padding-top: 10px; border-top: 2px dashed rgba(128,128,128,0.2); display: none; }
-        .faq-search { margin-bottom: 15px; }
-        .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 15px 20px; border-radius: 12px; color: white; animation: fadeInUp 0.5s ease; }
+        .faq-answer { margin-top: 8px; padding-top: 8px; border-top: 2px dashed rgba(128,128,128,0.2); display: none; font-size: 0.8rem; }
+        .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 12px 18px; border-radius: 10px; color: white; animation: fadeInUp 0.5s ease; font-size: 0.8rem; }
         @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        .hero-section { text-align: center; padding: 6rem 2rem; }
-        .hero-title { font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
-        .hero-subtitle { font-size: 1.25rem; color: var(--text-light); max-width: 600px; margin: 0 auto 2rem; }
-        .hero-btn { padding: 14px 40px; font-size: 1.1rem; }
-        .reminder-badge { background: #c7d2fe; color: #3730a3; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; }
-        .history-item { font-size: 0.85rem; padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        footer { background: var(--card); border-top: 1px solid rgba(128,128,128,0.1); padding: 1.5rem 0; text-align: center; }
+        .hero-section { text-align: center; padding: 3rem 1rem; }
+        .hero-title { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+        .hero-subtitle { font-size: 1rem; color: var(--text-light); max-width: 500px; margin: 0 auto 1.5rem; }
+        .hero-btn { padding: 10px 28px; font-size: 0.9rem; }
+        .reminder-badge { background: #c7d2fe; color: #3730a3; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; }
+        .history-item { font-size: 0.75rem; padding: 6px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        footer { background: var(--card); border-top: 1px solid rgba(128,128,128,0.1); padding: 1rem 0; text-align: center; font-size: 0.75rem; }
         .offcanvas { background: var(--card); color: var(--text); }
-        .disease-details { display: none; padding-top: 10px; margin-top: 10px; border-top: 1px solid rgba(128,128,128,0.2); }
+        .disease-details { display: none; padding-top: 8px; margin-top: 8px; border-top: 1px solid rgba(128,128,128,0.2); font-size: 0.8rem; }
         .disease-card.active .disease-details { display: block; }
         .password-wrapper { position: relative; }
-        .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-light); z-index: 10; background: none; border: none; font-size: 1.1rem; }
-        .risk-indicator { padding: 6px 12px; border-radius: 20px; font-weight: 600; }
+        .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-light); z-index: 10; background: none; border: none; font-size: 1rem; }
+        .risk-indicator { padding: 4px 10px; border-radius: 16px; font-weight: 600; font-size: 0.8rem; }
         .risk-low { background: #d1fae5; color: #065f46; }
         .risk-medium { background: #fef3c7; color: #92400e; }
         .risk-high { background: #fee2e2; color: #991b1b; }
-        .sync-badge { position: relative; display: inline-flex; align-items: center; gap: 4px; }
-        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
-        .sync-dot.error { background: #ef4444; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        @media (max-width: 768px) { .hero-title { font-size: 2.5rem; } .hero-section { padding: 3rem 1rem; } .btn { padding: 6px 14px; font-size: 0.8rem; } .navbar-brand { font-size: 1.1rem; } .card { padding: 1rem; } }
+        @media (max-width: 768px) { .hero-title { font-size: 1.8rem; } .btn { padding: 4px 10px; font-size: 0.7rem; } .navbar-brand { font-size: 0.9rem; } .card { padding: 0.8rem; } }
         .pallcalc-tab, .survey-tab { display: none; }
-.pallcalc-tab.active, .survey-tab.active { display: block; }
-.tab-btn { border-radius: 20px 20px 0 0; }
-.tab-btn.active { background: var(--primary); color: white; }
-        /* Калькулятор – единый стиль */
-        /* Общие карточки для всех разделов */
-.card, .dashboard-card {
-  border-radius: 14px;
-  border: 1px solid #e9ecef;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: 0.2s;
-}
-.card:hover, .dashboard-card:hover {
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-}
-
-/* Кнопки */
-.btn {
-  border-radius: 10px;
-  font-weight: 500;
-  padding: 0.5rem 1.4rem;
-  transition: 0.2s;
-}
-.btn-primary { background: #2563eb; border-color: #2563eb; }
-.btn-primary:hover { background: #1d4ed8; }
-.btn-success { background: #059669; border-color: #059669; }
-.btn-outline { border: 1px solid #d1d5db; color: #374151; }
-.btn-outline:hover { background: #f3f4f6; }
-
-/* Шрифты и отступы */
-body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #f8fafc; }
-h2, h3, h4, h5 { color: #1e293b; font-weight: 600; }
-.form-control, .form-select {
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-}
-.form-control:focus, .form-select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-}
-
-/* История записей */
-.history-item {
-  background: #fff; border-radius: 8px; padding: 0.6rem 1rem;
-  margin-bottom: 0.4rem; border: 1px solid #e2e8f0;
-}
-.pallcalc-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  margin-bottom: 1.5rem;
-}
-.pallcalc-card .section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e9ecef;
-}
-.pallcalc-field {
-  margin-bottom: 1rem;
-}
-.pallcalc-field label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #495057;
-  margin-bottom: 0.25rem;
-}
-.pallcalc-field .form-control,
-.pallcalc-field .form-select {
-  height: 42px;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  border: 1px solid #ced4da;
-  box-shadow: none;
-}
-.pallcalc-field .form-control:focus,
-.pallcalc-field .form-select:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.15);
-}
-.pallcalc-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-.pallcalc-row .pallcalc-field {
-  flex: 1 1 0;
-  min-width: 140px;
-}
-.tab-btn {
-  border-radius: 20px;
-  padding: 0.4rem 1.2rem;
-  font-weight: 500;
-  transition: 0.2s;
-}
-.tab-btn.active {
-  background: #0d6efd;
-  color: #fff;
-  border-color: #0d6efd;
-}
-/* кнопки */
-.btn-accent {
-  background: #6f42c1;
-  color: #fff;
-  border: none;
-}
-.btn-accent:hover {
-  background: #5a32a3;
-}
-.alert-soft {
-  background: #f0f4ff;
-  border-left: 4px solid #0d6efd;
-  border-radius: 0 8px 8px 0;
-  padding: 1rem;
-}
-        /* Плавное появление вкладок */
-.pallcalc-tab { animation: fadeIn 0.2s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Общие карточки */
-.pallcalc-card {
-  background: #fff; border-radius: 16px; padding: 1.75rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.04); margin-bottom: 1.5rem;
-  border: 1px solid #f0f2f5;
-}
-
-/* Заголовки секций */
-.section-title {
-  font-size: 1.15rem; font-weight: 600; color: #1e293b;
-  margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;
-}
-.section-title i { font-size: 1.3rem; color: #3b82f6; }
-
-/* Сетка параметров – 2 колонки на десктопе, 1 на мобильных */
-.params-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem;
-}
-@media (max-width: 768px) { .params-grid { grid-template-columns: 1fr; } }
-
-/* Поле ввода */
-.param-field { display: flex; flex-direction: column; gap: 0.4rem; }
-.param-field label {
-  font-size: 0.9rem; font-weight: 500; color: #475569;
-  display: flex; align-items: center; gap: 0.3rem;
-}
-.param-field label .badge {
-  font-size: 0.7rem; padding: 0.2em 0.5em; border-radius: 6px;
-}
-.param-field .form-control {
-  height: 44px; font-size: 0.95rem; border-radius: 10px;
-  border: 1px solid #e2e8f0; background: #f8fafc; padding: 0 1rem;
-  transition: 0.15s;
-}
-.param-field .form-control:focus {
-  border-color: #3b82f6; background: #fff;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none;
-}
-
-/* Кнопки */
-.btn-clust {
-  border-radius: 10px; padding: 0.5rem 1.5rem; font-weight: 500;
-}
-
-/* Графики */
-.chart-box { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.5rem; }
-.chart-wrapper {
-  flex: 1 1 280px; min-height: 300px;
-  background: #fafbfc; border-radius: 12px; padding: 1rem;
-}
-    </style>
+        .pallcalc-tab.active, .survey-tab.active { display: block; }
+        .tab-btn { border-radius: 16px 16px 0 0; font-size: 0.75rem; padding: 4px 12px; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .card, .dashboard-card { border-radius: 12px; border: 1px solid #e9ecef; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .card:hover, .dashboard-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .btn { border-radius: 8px; font-weight: 500; padding: 4px 12px; font-size: 0.75rem; }
+        .btn-primary { background: #2563eb; border-color: #2563eb; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #059669; border-color: #059669; }
+        .btn-outline { border: 1px solid #d1d5db; color: #374151; }
+        .btn-outline:hover { background: #f3f4f6; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #f8fafc; font-size: 0.8rem; }
+        h2, h3, h4, h5 { color: #1e293b; font-weight: 600; font-size: 1.1rem; }
+        .history-item { background: #fff; border-radius: 6px; padding: 4px 10px; margin-bottom: 4px; border: 1px solid #e2e8f0; }
+        .pallcalc-card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        .pallcalc-card .section-title { font-size: 0.95rem; font-weight: 600; color: #2c3e50; margin-bottom: 0.8rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e9ecef; }
+        .pallcalc-field { margin-bottom: 0.6rem; }
+        .pallcalc-field label { display: block; font-size: 0.75rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+        .pallcalc-field .form-control, .pallcalc-field .form-select { height: 34px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #ced4da; }
+        .pallcalc-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .pallcalc-row .pallcalc-field { flex: 1 1 0; min-width: 120px; }
+        .tab-btn { border-radius: 16px; padding: 4px 12px; font-weight: 500; transition: 0.2s; font-size: 0.75rem; }
+        .tab-btn.active { background: #0d6efd; color: #fff; border-color: #0d6efd; }
+        .btn-accent { background: #6f42c1; color: #fff; border: none; }
+        .btn-accent:hover { background: #5a32a3; }
+        .alert-soft { background: #f0f4ff; border-left: 4px solid #0d6efd; border-radius: 0 8px 8px 0; padding: 0.6rem; font-size: 0.8rem; }
+        .pallcalc-tab { animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .pallcalc-card { background: #fff; border-radius: 12px; padding: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 1rem; border: 1px solid #f0f2f5; }
+        .section-title { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem; }
+        .section-title i { font-size: 1.1rem; color: #3b82f6; }
+        .params-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
+        @media (max-width: 768px) { .params-grid { grid-template-columns: 1fr; } }
+        .param-field { display: flex; flex-direction: column; gap: 0.2rem; }
+        .param-field label { font-size: 0.75rem; font-weight: 500; color: #475569; display: flex; align-items: center; gap: 0.2rem; }
+        .param-field label .badge { font-size: 0.6rem; padding: 0.1em 0.4em; border-radius: 4px; }
+        .param-field .form-control { height: 34px; font-size: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; padding: 0 0.8rem; }
+        .param-field .form-control:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
+        .btn-clust { border-radius: 8px; padding: 4px 12px; font-weight: 500; font-size: 0.75rem; }
+        .chart-box { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+        .chart-wrapper { flex: 1 1 240px; min-height: 200px; background: #fafbfc; border-radius: 10px; padding: 0.6rem; }
+	    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg sticky-top">
@@ -846,63 +709,60 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
             window.toggleTheme = toggleTheme;
 
            // ==================== НАВИГАЦИЯ (исправлена) ====================
-       async function updateNav() {
-    const nav = document.getElementById('navMenu');
-    const mob = document.getElementById('mobileNav');
-    if (!nav) return;
-    const items = (role) => {
-        let html = `
-            <button class="btn btn-sm btn-outline" onclick="App.navigate('/dashboard')" title="Главная"><i class="bi bi-house"></i></button>
-            <button class="btn btn-sm btn-outline" onclick="toggleTheme()" title="Сменить тему"><i class="bi bi-moon-stars"></i></button>
-        `;
-        if (role === 'parent') {
-            // Для пациента
-            html += `
-             <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')" title="Анкеты"><i class="bi bi-clipboard-check"></i></button>
-                <div class="dropdown d-inline">
-                    <button class="btn btn-sm btn-outline dropdown-toggle" data-bs-toggle="dropdown" title="Модули">
-                        <i class="bi bi-journal-medical"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/diary');this.blur();"><i class="bi bi-journal"></i> Дневник</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/palliative');this.blur();"><i class="bi bi-heart-pulse"></i> Паллиатив</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/medications');this.blur();"><i class="bi bi-capsule"></i> Лекарства</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/nutrition');this.blur();"><i class="bi bi-egg-fried"></i> Питание</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/lab');this.blur();"><i class="bi bi-virus"></i> Анализы</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="App.navigate('/timeline');this.blur();"><i class="bi bi-calendar-event"></i> Таймлайн</a></li>
-                    </ul>
-                </div>
-            `;
-        } else {
-            // Для врача
-            html += `
-                <button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')" title="Пациенты"><i class="bi bi-people"></i></button>
-                <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')" title="Аналитика"><i class="bi bi-graph-up"></i></button>
-                <button class="btn btn-sm btn-outline" onclick="App.navigate('/symptom_search')" title="Поиск симптомов"><i class="bi bi-search"></i></button>
-<button class="btn btn-sm btn-outline" onclick="App.navigate('/decision_tree')" title="Дерево решений"><i class="bi bi-diagram-3"></i></button>
-<button class="btn btn-sm btn-outline" onclick="App.navigate('/prognosis')" title="Прогноз исходов"><i class="bi bi-graph-up-arrow"></i></button>
-                <button class="btn btn-sm btn-outline" onclick="exportStatisticalSyntax()" title="Экспорт для SPSS/R"><i class="bi bi-file-earmark-spreadsheet"></i></button>
-                <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')" title="Калькулятор"><i class="bi bi-calculator"></i></button>
-                <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')" title="Анкеты"><i class="bi bi-clipboard-check"></i></button>
-            `;
-        }
-        html += `
-            <button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')" title="Справочник"><i class="bi bi-book"></i></button>
-            <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')" title="Генетика"><i class="bi bi-diagram-3"></i></button>
-            <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')" title="FAQ"><i class="bi bi-question-circle"></i></button>
-            <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')" title="Поддержка"><i class="bi bi-heart"></i></button>
-            <span class="sync-badge ms-2" id="syncBadge"><span class="sync-dot"></span> Синхронизировано</span>
-            <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
-        `;
-        return html;
-    };
-    if (profile) {
-        nav.innerHTML = items(profile.role);
-        if (mob) mob.innerHTML = items(profile.role);
-    } else {
-        nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
-        if (mob) mob.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
-    }
+    async function updateNav() {
+                const nav = document.getElementById('navMenu');
+                const mob = document.getElementById('mobileNav');
+                if (!nav) return;
+                const items = (role) => {
+                    let html = `
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/dashboard')" title="Главная"><i class="bi bi-house"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="toggleTheme()" title="Сменить тему"><i class="bi bi-moon-stars"></i></button>
+                    `;
+                    if (role === 'parent') {
+                        html += `
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')" title="Анкеты"><i class="bi bi-clipboard-check"></i></button>
+                            <div class="dropdown d-inline">
+                                <button class="btn btn-sm btn-outline dropdown-toggle" data-bs-toggle="dropdown" title="Модули">
+                                    <i class="bi bi-journal-medical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="App.navigate('/diary');this.blur();"><i class="bi bi-journal"></i> Дневник</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="App.navigate('/palliative');this.blur();"><i class="bi bi-heart-pulse"></i> Паллиатив</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="App.navigate('/medications');this.blur();"><i class="bi bi-capsule"></i> Лекарства</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="App.navigate('/nutrition');this.blur();"><i class="bi bi-egg-fried"></i> Питание</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="App.navigate('/lab');this.blur();"><i class="bi bi-virus"></i> Анализы</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="App.navigate('/timeline');this.blur();"><i class="bi bi-calendar-event"></i> Таймлайн</a></li>
+                                </ul>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/patients')" title="Пациенты"><i class="bi bi-people"></i></button>
+                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/analytics')" title="Аналитика"><i class="bi bi-graph-up"></i></button>
+                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/symptom_search')" title="Поиск симптомов"><i class="bi bi-search"></i></button>
+                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/decision_tree')" title="Дерево решений"><i class="bi bi-diagram-3"></i></button>
+                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/prognosis')" title="Прогноз исходов"><i class="bi bi-graph-up-arrow"></i></button>
+                            <button class="btn btn-sm btn-outline" onclick="exportStatisticalSyntax()" title="Экспорт для SPSS/R"><i class="bi bi-file-earmark-spreadsheet"></i></button>
+                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/pallcalc')" title="Калькулятор"><i class="bi bi-calculator"></i></button>
+                            <button class="btn btn-sm btn-outline" onclick="App.navigate('/surveys')" title="Анкеты"><i class="bi bi-clipboard-check"></i></button>
+                        `;
+                    }
+                    html += `
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')" title="Справочник"><i class="bi bi-book"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')" title="Генетика"><i class="bi bi-diagram-3"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')" title="FAQ"><i class="bi bi-question-circle"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')" title="Поддержка"><i class="bi bi-heart"></i></button>
+                        <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
+                    `;
+                    return html;
+                };
+                if (profile) {
+                    nav.innerHTML = items(profile.role);
+                    if (mob) mob.innerHTML = items(profile.role);
+                } else {
+                    nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
+                    if (mob) mob.innerHTML = '<button class="btn btn-outline btn-sm" onclick="App.navigate(\'/login\')"><i class="bi bi-box-arrow-in-right"></i></button>';
+                }
     SyncManager.updateSyncIndicator();
 }
             setInterval(() => SyncManager.processQueue(), 30000);
@@ -2006,6 +1866,166 @@ document.getElementById('btnReportMain')?.addEventListener('click', function() {
 });
 
 // ===== ГЛОБАЛЬНАЯ ФУНКЦИЯ ЭКСПОРТА СТАТИСТИЧЕСКИХ ДАННЫХ =====
+	        // ========== ПРОГНОЗИРОВАНИЕ ИСХОДОВ ==========
+function renderPrognosis() {
+    return `
+    <h2>📈 Прогнозирование паллиативных исходов</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5>Введите данные пациента</h5>
+            <div class="row g-3">
+                <div class="col-md-4"><label>Возраст (лет)</label><input type="number" id="progAge" class="form-control" value="10"></div>
+                <div class="col-md-4"><label>ИМТ (кг/м²)</label><input type="number" id="progBMI" class="form-control" step="0.1" value="18.5"></div>
+                <div class="col-md-4"><label>ЧСС (уд/мин)</label><input type="number" id="progHR" class="form-control" value="90"></div>
+                <div class="col-md-4"><label>ЧДД (в мин)</label><input type="number" id="progRR" class="form-control" value="22"></div>
+                <div class="col-md-4"><label>SpO₂ (%)</label><input type="number" id="progSpO2" class="form-control" value="95"></div>
+                <div class="col-md-4"><label>Систолическое АД</label><input type="number" id="progSBP" class="form-control" value="110"></div>
+                <div class="col-md-4"><label>Диастолическое АД</label><input type="number" id="progDBP" class="form-control" value="70"></div>
+                <div class="col-md-4"><label>Уровень боли (0–10)</label><input type="number" id="progPain" class="form-control" min="0" max="10" value="5"></div>
+                <div class="col-md-4"><label>Качество жизни (0–10)</label><input type="number" id="progQoL" class="form-control" min="0" max="10" value="4"></div>
+                <div class="col-md-4"><label>Тенденция температуры (за 7 дней)</label>
+                    <select id="progTempTrend" class="form-select">
+                        <option value="stable">Стабильна</option>
+                        <option value="rising">Растёт</option>
+                        <option value="falling">Падает</option>
+                    </select>
+                </div>
+                <div class="col-md-4"><label>Госпитализаций за последний год</label>
+                    <input type="number" id="progHospitalizations" class="form-control" min="0" value="1">
+                </div>
+            </div>
+            <button class="btn btn-primary mt-3" onclick="calculatePrognosis()">Рассчитать риск</button>
+            <div id="prognosisResult" class="mt-4"></div>
+        </div>
+    </div>
+    `;
+}
+
+window.calculatePrognosis = function() {
+    const age = parseFloat(document.getElementById('progAge').value) || 10;
+    const bmi = parseFloat(document.getElementById('progBMI').value) || 18.5;
+    const hr = parseFloat(document.getElementById('progHR').value) || 90;
+    const rr = parseFloat(document.getElementById('progRR').value) || 22;
+    const spo2 = parseFloat(document.getElementById('progSpO2').value) || 95;
+    const sbp = parseFloat(document.getElementById('progSBP').value) || 110;
+    const dbp = parseFloat(document.getElementById('progDBP').value) || 70;
+    const pain = parseFloat(document.getElementById('progPain').value) || 0;
+    const qol = parseFloat(document.getElementById('progQoL').value) || 5;
+    const trend = document.getElementById('progTempTrend').value;
+    const hosp = parseFloat(document.getElementById('progHospitalizations').value) || 0;
+
+    let score = 0;
+    // Возраст
+    if (age < 2) score += 0.8;
+    else if (age > 65) score += 0.6;
+    else if (age > 50) score += 0.2;
+    // ИМТ
+    if (bmi < 16) score += 0.7;
+    else if (bmi < 18.5) score += 0.3;
+    else if (bmi > 30) score += 0.5;
+    else if (bmi > 25) score += 0.2;
+    // ЧСС
+    if (hr > 120) score += 0.7;
+    else if (hr > 100) score += 0.3;
+    else if (hr < 50) score += 0.6;
+    // ЧДД
+    if (rr > 30) score += 0.6;
+    else if (rr > 24) score += 0.3;
+    // SpO₂
+    if (spo2 < 88) score += 1.0;
+    else if (spo2 < 92) score += 0.6;
+    else if (spo2 < 95) score += 0.2;
+    // АД
+    if (sbp < 90 || dbp < 50) score += 0.8;
+    else if (sbp > 180 || dbp > 120) score += 0.6;
+    else if (sbp > 140) score += 0.2;
+    // Боль
+    if (pain > 8) score += 0.8;
+    else if (pain > 6) score += 0.4;
+    else if (pain > 4) score += 0.2;
+    // Качество жизни
+    if (qol < 3) score += 0.9;
+    else if (qol < 5) score += 0.4;
+    else if (qol < 7) score += 0.2;
+    // Температурный тренд
+    if (trend === 'rising') score += 0.5;
+    else if (trend === 'falling') score += 0.2;
+    // Госпитализации
+    if (hosp >= 3) score += 0.8;
+    else if (hosp >= 2) score += 0.4;
+    else if (hosp >= 1) score += 0.2;
+
+    const logit = -2.0 + score * 2.2;
+    let risk = 100 / (1 + Math.exp(-logit));
+    risk = Math.min(95, Math.max(5, Math.round(risk)));
+
+    let level, color, recommendation;
+    if (risk >= 70) {
+        level = 'Высокий';
+        color = '#d32f2f';
+        recommendation = '🚨 Немедленно связаться с паллиативной бригадой, рассмотреть госпитализацию, усилить обезболивание и симптоматическую терапию.';
+    } else if (risk >= 40) {
+        level = 'Средний';
+        color = '#f57c00';
+        recommendation = '⚠️ Усилить амбулаторное наблюдение, проконсультировать диетолога, скорректировать режим обезболивания, рассмотреть вопрос о психологической поддержке.';
+    } else {
+        level = 'Низкий';
+        color = '#2e7d32';
+        recommendation = '✅ Продолжить текущее наблюдение, поддерживать качество жизни, плановые визиты.';
+    }
+
+    document.getElementById('prognosisResult').innerHTML = `
+    <div class="alert" style="border-left: 6px solid ${color}; background: #f8f9fa;">
+        <h5>Вероятность госпитализации в ближайшие 30 дней: <strong style="color:${color};">${risk}%</strong></h5>
+        <p><strong>Уровень тревоги:</strong> <span style="color:${color};">${level}</span></p>
+        <p><strong>Рекомендации:</strong> ${recommendation}</p>
+        <hr>
+        <small class="text-muted">Расчёт основан на клинических коэффициентах (адаптировано из PaPaScale, PALLIA-10, экспертных данных).</small>
+    </div>
+    `;
+};
+        // ========== СЕМАНТИЧЕСКИЙ ПОИСК СИМПТОМОВ ==========
+function renderSymptomSearch() {
+    return `
+    <h2>🔍 Семантический поиск симптомов</h2>
+    <div class="card">
+        <div class="card-body">
+            <input type="text" id="symptomInput" class="form-control" placeholder="Введите симптом, например: кашель, одышка, желтуха..." oninput="window.filterBySymptom()">
+            <div id="symptomResults" class="mt-3"></div>
+        </div>
+    </div>`;
+}
+
+window.filterBySymptom = function() {
+    const query = document.getElementById('symptomInput').value.trim().toLowerCase();
+    const container = document.getElementById('symptomResults');
+    if (!query) { container.innerHTML = ''; return; }
+    const diseases = getDiseaseList();
+    const matches = diseases.filter(d => {
+        const text = (d.name + ' ' + d.desc + ' ' + d.gene + ' ' + (d.symptoms || []).join(' ')).toLowerCase();
+        return text.includes(query);
+    });
+    if (matches.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning">Ничего не найдено.</div>';
+        return;
+    }
+    let html = `<div class="alert alert-info">Найдено <strong>${matches.length}</strong> заболеваний:</div>`;
+    matches.forEach(d => {
+        html += `
+        <div class="card mb-2 disease-card" style="cursor:pointer;" onclick="this.querySelector('.disease-details').style.display='block'">
+            <div class="card-body">
+                <h6>${d.icon} ${d.name} <span class="badge bg-primary">${d.icd}</span></h6>
+                <p class="small">${d.desc}</p>
+                <p><strong>Ген:</strong> ${d.gene || '—'}</p>
+                <div class="disease-details" style="display:none;">
+                    <p><strong>Диагностика:</strong> ${d.diag}</p>
+                    <p><strong>Лечение:</strong> ${d.treat}</p>
+                </div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+};
 function exportStatisticalSyntax() {
     const diary = DB.getData('diary');
     const palliative = DB.getData('palliative');
@@ -2196,166 +2216,7 @@ notify('Данные PedsQL сохранены локально.', 'info');
        window.onhashchange = () => { if (clockTimer) clearInterval(clockTimer); render(); };
     window.onload = render;
 })();
-        // ========== ПРОГНОЗИРОВАНИЕ ИСХОДОВ ==========
-function renderPrognosis() {
-    return `
-    <h2>📈 Прогнозирование паллиативных исходов</h2>
-    <div class="card">
-        <div class="card-body">
-            <h5>Введите данные пациента</h5>
-            <div class="row g-3">
-                <div class="col-md-4"><label>Возраст (лет)</label><input type="number" id="progAge" class="form-control" value="10"></div>
-                <div class="col-md-4"><label>ИМТ (кг/м²)</label><input type="number" id="progBMI" class="form-control" step="0.1" value="18.5"></div>
-                <div class="col-md-4"><label>ЧСС (уд/мин)</label><input type="number" id="progHR" class="form-control" value="90"></div>
-                <div class="col-md-4"><label>ЧДД (в мин)</label><input type="number" id="progRR" class="form-control" value="22"></div>
-                <div class="col-md-4"><label>SpO₂ (%)</label><input type="number" id="progSpO2" class="form-control" value="95"></div>
-                <div class="col-md-4"><label>Систолическое АД</label><input type="number" id="progSBP" class="form-control" value="110"></div>
-                <div class="col-md-4"><label>Диастолическое АД</label><input type="number" id="progDBP" class="form-control" value="70"></div>
-                <div class="col-md-4"><label>Уровень боли (0–10)</label><input type="number" id="progPain" class="form-control" min="0" max="10" value="5"></div>
-                <div class="col-md-4"><label>Качество жизни (0–10)</label><input type="number" id="progQoL" class="form-control" min="0" max="10" value="4"></div>
-                <div class="col-md-4"><label>Тенденция температуры (за 7 дней)</label>
-                    <select id="progTempTrend" class="form-select">
-                        <option value="stable">Стабильна</option>
-                        <option value="rising">Растёт</option>
-                        <option value="falling">Падает</option>
-                    </select>
-                </div>
-                <div class="col-md-4"><label>Госпитализаций за последний год</label>
-                    <input type="number" id="progHospitalizations" class="form-control" min="0" value="1">
-                </div>
-            </div>
-            <button class="btn btn-primary mt-3" onclick="calculatePrognosis()">Рассчитать риск</button>
-            <div id="prognosisResult" class="mt-4"></div>
-        </div>
-    </div>
-    `;
-}
 
-window.calculatePrognosis = function() {
-    const age = parseFloat(document.getElementById('progAge').value) || 10;
-    const bmi = parseFloat(document.getElementById('progBMI').value) || 18.5;
-    const hr = parseFloat(document.getElementById('progHR').value) || 90;
-    const rr = parseFloat(document.getElementById('progRR').value) || 22;
-    const spo2 = parseFloat(document.getElementById('progSpO2').value) || 95;
-    const sbp = parseFloat(document.getElementById('progSBP').value) || 110;
-    const dbp = parseFloat(document.getElementById('progDBP').value) || 70;
-    const pain = parseFloat(document.getElementById('progPain').value) || 0;
-    const qol = parseFloat(document.getElementById('progQoL').value) || 5;
-    const trend = document.getElementById('progTempTrend').value;
-    const hosp = parseFloat(document.getElementById('progHospitalizations').value) || 0;
-
-    let score = 0;
-    // Возраст
-    if (age < 2) score += 0.8;
-    else if (age > 65) score += 0.6;
-    else if (age > 50) score += 0.2;
-    // ИМТ
-    if (bmi < 16) score += 0.7;
-    else if (bmi < 18.5) score += 0.3;
-    else if (bmi > 30) score += 0.5;
-    else if (bmi > 25) score += 0.2;
-    // ЧСС
-    if (hr > 120) score += 0.7;
-    else if (hr > 100) score += 0.3;
-    else if (hr < 50) score += 0.6;
-    // ЧДД
-    if (rr > 30) score += 0.6;
-    else if (rr > 24) score += 0.3;
-    // SpO₂
-    if (spo2 < 88) score += 1.0;
-    else if (spo2 < 92) score += 0.6;
-    else if (spo2 < 95) score += 0.2;
-    // АД
-    if (sbp < 90 || dbp < 50) score += 0.8;
-    else if (sbp > 180 || dbp > 120) score += 0.6;
-    else if (sbp > 140) score += 0.2;
-    // Боль
-    if (pain > 8) score += 0.8;
-    else if (pain > 6) score += 0.4;
-    else if (pain > 4) score += 0.2;
-    // Качество жизни
-    if (qol < 3) score += 0.9;
-    else if (qol < 5) score += 0.4;
-    else if (qol < 7) score += 0.2;
-    // Температурный тренд
-    if (trend === 'rising') score += 0.5;
-    else if (trend === 'falling') score += 0.2;
-    // Госпитализации
-    if (hosp >= 3) score += 0.8;
-    else if (hosp >= 2) score += 0.4;
-    else if (hosp >= 1) score += 0.2;
-
-    const logit = -2.0 + score * 2.2;
-    let risk = 100 / (1 + Math.exp(-logit));
-    risk = Math.min(95, Math.max(5, Math.round(risk)));
-
-    let level, color, recommendation;
-    if (risk >= 70) {
-        level = 'Высокий';
-        color = '#d32f2f';
-        recommendation = '🚨 Немедленно связаться с паллиативной бригадой, рассмотреть госпитализацию, усилить обезболивание и симптоматическую терапию.';
-    } else if (risk >= 40) {
-        level = 'Средний';
-        color = '#f57c00';
-        recommendation = '⚠️ Усилить амбулаторное наблюдение, проконсультировать диетолога, скорректировать режим обезболивания, рассмотреть вопрос о психологической поддержке.';
-    } else {
-        level = 'Низкий';
-        color = '#2e7d32';
-        recommendation = '✅ Продолжить текущее наблюдение, поддерживать качество жизни, плановые визиты.';
-    }
-
-    document.getElementById('prognosisResult').innerHTML = `
-    <div class="alert" style="border-left: 6px solid ${color}; background: #f8f9fa;">
-        <h5>Вероятность госпитализации в ближайшие 30 дней: <strong style="color:${color};">${risk}%</strong></h5>
-        <p><strong>Уровень тревоги:</strong> <span style="color:${color};">${level}</span></p>
-        <p><strong>Рекомендации:</strong> ${recommendation}</p>
-        <hr>
-        <small class="text-muted">Расчёт основан на клинических коэффициентах (адаптировано из PaPaScale, PALLIA-10, экспертных данных).</small>
-    </div>
-    `;
-};
-        // ========== СЕМАНТИЧЕСКИЙ ПОИСК СИМПТОМОВ ==========
-function renderSymptomSearch() {
-    return `
-    <h2>🔍 Семантический поиск симптомов</h2>
-    <div class="card">
-        <div class="card-body">
-            <input type="text" id="symptomInput" class="form-control" placeholder="Введите симптом, например: кашель, одышка, желтуха..." oninput="window.filterBySymptom()">
-            <div id="symptomResults" class="mt-3"></div>
-        </div>
-    </div>`;
-}
-
-window.filterBySymptom = function() {
-    const query = document.getElementById('symptomInput').value.trim().toLowerCase();
-    const container = document.getElementById('symptomResults');
-    if (!query) { container.innerHTML = ''; return; }
-    const diseases = getDiseaseList();
-    const matches = diseases.filter(d => {
-        const text = (d.name + ' ' + d.desc + ' ' + d.gene + ' ' + (d.symptoms || []).join(' ')).toLowerCase();
-        return text.includes(query);
-    });
-    if (matches.length === 0) {
-        container.innerHTML = '<div class="alert alert-warning">Ничего не найдено.</div>';
-        return;
-    }
-    let html = `<div class="alert alert-info">Найдено <strong>${matches.length}</strong> заболеваний:</div>`;
-    matches.forEach(d => {
-        html += `
-        <div class="card mb-2 disease-card" style="cursor:pointer;" onclick="this.querySelector('.disease-details').style.display='block'">
-            <div class="card-body">
-                <h6>${d.icon} ${d.name} <span class="badge bg-primary">${d.icd}</span></h6>
-                <p class="small">${d.desc}</p>
-                <p><strong>Ген:</strong> ${d.gene || '—'}</p>
-                <div class="disease-details" style="display:none;">
-                    <p><strong>Диагностика:</strong> ${d.diag}</p>
-                    <p><strong>Лечение:</strong> ${d.treat}</p>
-                </div>
-            </div>
-        </div>`;
-    });
-    container.innerHTML = html;
-};
     </script>
 </body>
 </html>
