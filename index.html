@@ -279,6 +279,36 @@ const DISEASE_DATABASE = [
     { id:'turner', name:'Синдром Тернера', icd:'Q96.9', icon:'👧', cat:'Хромосомные', desc:'Моносомия X.', diag:'Кариотип.', treat:'Гормон роста, эстрогены.', gene:'—', mutations:'45,X', symptoms:['низкорослость','дисгенезия гонад','пороки сердца','крыловидные складки на шее','первичная аменорея'] },
     { id:'klinefelter', name:'Синдром Клайнфельтера', icd:'Q98.4', icon:'👦', cat:'Хромосомные', desc:'Кариотип 47,XXY.', diag:'Кариотип.', treat:'Тестостерон.', gene:'—', mutations:'47,XXY', symptoms:['высокий рост','гипогонадизм','гинекомастия','бесплодие','трудности в обучении'] }
 ];
+
+			// Глобальная валидация для всех числовых полей
+window.validateNumericInput = function(inputId, min, max) {
+    const el = document.getElementById(inputId);
+    if (!el) return true;
+    const val = parseFloat(el.value);
+    if (val === '' || isNaN(val)) {
+        el.classList.remove('invalid');
+        return true;
+    }
+    if (val < min || val > max) {
+        el.classList.add('invalid');
+        el.style.borderColor = '#ef4444';
+        return false;
+    }
+    el.classList.remove('invalid');
+    el.style.borderColor = '';
+    return true;
+};
+
+// Добавьте обработчики для реального времени
+document.addEventListener('input', function(e) {
+    if (e.target.matches('.form-control[type="number"]')) {
+        const min = parseFloat(e.target.min);
+        const max = parseFloat(e.target.max);
+        if (!isNaN(min) && !isNaN(max)) {
+            window.validateNumericInput(e.target.id, min, max);
+        }
+    }
+});
             // ========== ДЕРЕВО РЕШЕНИЙ (улучшенное) ==========
 const symptomWeights = {
     'кашель': 2, 'одышка': 3, 'боль': 3, 'лихорадка': 2,
@@ -429,7 +459,7 @@ function computeDecisionResult() {
     resDiv.innerHTML = html;
 }
 // URL вашего опубликованного веб-приложения Google Apps Script (замените на свой)
-const SURVEY_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycb...ВАШ_ДЛИННЫЙ_URL.../exec';
+const SURVEY_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9WEAqY5omobFNn_FEaT2te3brDhfmn8MiutooQsS3QEBCpK3uYYISYwJHG4zPaZrM/exec';
 
 // Утилита для отправки анкеты в облачную Google Таблицу
 function syncSurveyToCloud(surveyType, data) {
@@ -781,7 +811,7 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
                     }
                     html += `
                         <button class="btn btn-sm btn-outline" onclick="App.navigate('/reference')" title="Справочник"><i class="bi bi-book"></i></button>
-                        <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')" title="Генетика"><i class="bi bi-dna"></i></button>
+                       <button class="btn btn-sm btn-outline" onclick="App.navigate('/genetics')" title="Генетика"><i class="bi bi-gene"></i></button>
                         <button class="btn btn-sm btn-outline" onclick="App.navigate('/faq')" title="FAQ"><i class="bi bi-question-circle"></i></button>
                         <button class="btn btn-sm btn-outline" onclick="App.navigate('/support')" title="Поддержка"><i class="bi bi-heart"></i></button>
                         <button class="btn btn-sm btn-danger ms-2" onclick="App.logout()" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
@@ -1485,8 +1515,43 @@ function setupPallcalc() {
     };
 
     // ======= ГЛАВНЫЙ ОБЪЕКТ С ФУНКЦИЯМИ =======
-    window.PalliativeCalc = {
+    window.validatePallcalcField = function(fieldId, min, max, errorMsg) {
+    const el = document.getElementById(fieldId);
+    if (!el) return true;
+    const val = parseFloat(el.value);
+    if (isNaN(val) || val < min || val > max) {
+        el.classList.add('invalid');
+        el.style.borderColor = '#ef4444';
+        if (errorMsg) notify(errorMsg, 'error');
+        return false;
+    }
+    el.classList.remove('invalid');
+    el.style.borderColor = '';
+    return true;
+};
+	
+	window.PalliativeCalc = {
         calculateBMI: function() {
+			calculateBMI: function() {
+    const fields = [
+        { id: 'calcAgeYears', min: 2, max: 18, msg: 'Возраст должен быть от 2 до 18 лет' },
+        { id: 'calcHeightCm', min: 40, max: 200, msg: 'Рост должен быть от 40 до 200 см' },
+        { id: 'calcWeightKg', min: 2, max: 150, msg: 'Вес должен быть от 2 до 150 кг' }
+    ];
+    
+    for (const f of fields) {
+        const el = document.getElementById(f.id);
+        if (!el) continue;
+        const val = parseFloat(el.value);
+        if (isNaN(val) || val < f.min || val > f.max) {
+            el.classList.add('invalid');
+            el.style.borderColor = '#ef4444';
+            notify(f.msg, 'error');
+            return;
+        }
+        el.classList.remove('invalid');
+        el.style.borderColor = '';
+    }
             const diagnosis = document.getElementById('calcDiagnosis')?.value || '';
             const gender = document.getElementById('calcGender')?.value || 'male';
             const age = parseFloat(document.getElementById('calcAgeYears')?.value);
@@ -1810,6 +1875,10 @@ function setupPallcalc() {
         },
 
         loadFromSurveys: function(target) {
+			if (SURVEY_SCRIPT_URL.includes('1PqATIX6UyllyT6-06QEAOFztkZ487x6eonh-fhQwypE')) {
+        notify('Настройте URL Google Apps Script в конфигурации', 'error');
+        return;
+    }
             const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
             if (local.pedsql || local.papascale) {
                 this.applySurveyData(target, local.pedsql, local.papascale);
@@ -2026,7 +2095,7 @@ window.filterBySymptom = function() {
     container.innerHTML = html;
 };
 
-function exportStatisticalSyntax() {
+window.exportStatisticalSyntax = function() {
     const diary = DB.getData('diary');
     const palliative = DB.getData('palliative');
 
@@ -2053,7 +2122,7 @@ function exportStatisticalSyntax() {
         csv += headers.map(h => r[h] || '').join(',') + '\n';
     });
 
-    const rSyntax =
+    const rSyntax = 
         '# Импорт данных\n' +
         'data <- read.csv("data.csv", stringsAsFactors = FALSE)\n' +
         'data$date <- as.Date(data$date)\n' +
@@ -2061,7 +2130,7 @@ function exportStatisticalSyntax() {
         'cor(data[, sapply(data, is.numeric)], use = "complete.obs")\n' +
         'plot(data$date, data$temperature, type="l", xlab="Дата", ylab="Температура")\n';
 
-    const spssSyntax =
+    const spssSyntax = 
         '* Импорт данных.\n' +
         'GET DATA /TYPE=TXT\n' +
         '  /FILE="data.csv"\n' +
@@ -2090,7 +2159,7 @@ function exportStatisticalSyntax() {
     download(spssSyntax, 'analysis.sps', 'text/plain');
 
     notify('Экспорт статистических файлов выполнен', 'info');
-}
+};
 
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
