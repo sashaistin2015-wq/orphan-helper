@@ -1813,12 +1813,13 @@ loadFromSurveys: function(target) {
         } else {
           notify('Анкеты для этого пациента не найдены в облаке.', 'error');
         }
-      }.bind(this)) // <-- ВАЖНО: привязываем this
+      }.bind(this))
       .catch(function(e) {
         console.error(e);
         notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
       });
 },
+
 // Вспомогательная функция: подстановка значений анкет в поля калькулятора
 applySurveyData: function(target, pedsql, papascale) {
     if (target === 'efficiency') {
@@ -1841,13 +1842,13 @@ applySurveyData: function(target, pedsql, papascale) {
         if (papascale && papascale.total !== undefined) {
             const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
             document.getElementById('clustPain').value = pain;
-         } else {
-                document.getElementById('clustPain').value = 3;
-                notify('Данные анкет загружены в поля кластеризации.', 'info');
-            }
+        } else {
+            document.getElementById('clustPain').value = 3;
+            notify('Данные анкет загружены в поля кластеризации.', 'info');
         }
     }
-}; // <-- Закрывающая скобка
+} // <-- УБРАЛ ЛИШНЮЮ ЗАКРЫВАЮЩУЮ СКОБКУ И ТОЧКУ С ЗАПЯТОЙ
+
 // ======= ДОПОЛНИТЕЛЬНЫЕ ГЛОБАЛЬНЫЕ ФУНКЦИИ (ВНЕ ОБЪЕКТА) =======
 window.switchPallcalcTab = function(tab) {
     // Убираем активный класс у всех вкладок и кнопок
