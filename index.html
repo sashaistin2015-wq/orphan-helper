@@ -1035,19 +1035,13 @@ if (hasSymptoms) {
 
           async function renderPalliative() {
     const fields = getFields('palliative', 'default');
-    // Проверяем наличие данных для истории
+    const formHtml = generateFormHtml(fields);
     const history = DB.getData('palliative').slice(-10).reverse();
-    let histHtml = '';
-    if (history.length > 0) {
-        histHtml = history.map(e => 
-            `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain||'—'} | Тошнота: ${e.nausea||'—'} | Аппетит: ${e.appetite||'—'} | Сон: ${e.sleep||'—'} | Настроение: ${e.mood||'—'} | Одышка: ${e.dyspnea||'—'} | Усталость: ${e.fatigue||'—'} | КЖ: ${e.quality||'—'}</div>`
-        ).join('');
-    }
-    
+    let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain} | Тошнота: ${e.nausea} | Аппетит: ${e.appetite} | Сон: ${e.sleep} | Настроение: ${e.mood} | Одышка: ${e.dyspnea} | Усталость: ${e.fatigue} | КЖ: ${e.quality}</div>`).join('');
     return `<h2>❤️ Паллиативный модуль</h2>
             <div class="card">
                 <form id="pallForm">
-                    ${generateFormHtml(fields)}
+                    ${formHtml}
                     <button type="button" class="btn btn-primary w-100 mt-2" onclick="savePalliativeLocally()">💾 Сохранить локально</button>
                     <button type="button" class="btn btn-success w-100 mt-2" onclick="sendPalliative()">📤 Отправить врачу</button>
                 </form>
@@ -1254,6 +1248,7 @@ window.filterDiseases = () => {
                 </div>
                 <div class="card mb-3"><h5>Полезные ресурсы</h5><a href="https://cr.minzdrav.gov.ru/" target="_blank" class="btn btn-outline me-2">Рубрикатор КР</a><a href="https://rcpcf.ru/" target="_blank" class="btn btn-outline">Фонд "Детский паллиатив"</a></div>`;
             }
+
 // ==================== ПАЛЛИАТИВНЫЙ КАЛЬКУЛЯТОР (ВРАЧ) ====================
 function renderPallcalc() {
     const diseaseOptions = getDiseaseOptions();
@@ -1457,419 +1452,397 @@ function setupPallcalc() {
         }
     };
 
-    // ======= ГЛАВНЫЙ ОБЪЕКТ С ФУНКЦИЯМИ (без шаблонных литералов) =======
-window.PalliativeCalc = {
+    // ======= ГЛАВНЫЙ ОБЪЕКТ С ФУНКЦИЯМИ =======
+    window.PalliativeCalc = {
+        calculateBMI: function() {
+            const diagnosis = document.getElementById('calcDiagnosis')?.value || '';
+            const gender = document.getElementById('calcGender')?.value || 'male';
+            const age = parseFloat(document.getElementById('calcAgeYears')?.value);
+            const height = parseFloat(document.getElementById('calcHeightCm')?.value);
+            const weight = parseFloat(document.getElementById('calcWeightKg')?.value);
+            const container = document.getElementById('bmi-result-container');
+            if (!container) return;
 
-    // ======= КЛИНИЧЕСКИЕ ПАРАМЕТРЫ =======
-    calculateBMI: function() {
-        const diagnosis = document.getElementById('calcDiagnosis')?.value || '';
-        const gender = document.getElementById('calcGender')?.value || 'male';
-        const age = parseFloat(document.getElementById('calcAgeYears')?.value);
-        const height = parseFloat(document.getElementById('calcHeightCm')?.value);
-        const weight = parseFloat(document.getElementById('calcWeightKg')?.value);
-        const container = document.getElementById('bmi-result-container');
-        if (!container) return;
+            if (isNaN(age) || isNaN(height) || isNaN(weight) || age < 2 || age > 18 || height < 40 || weight < 2) {
+                container.innerHTML = '<div class="alert alert-warning">Заполните все поля корректно (возраст 2–18 лет, рост >40 см, вес >2 кг).</div>';
+                return;
+            }
+            const heightM = height / 100;
+            const bmi = weight / (heightM * heightM);
+            const ref = getBMIRef(gender, age);
+            const zScore = ref.sd > 0 ? (bmi - ref.median) / ref.sd : 0;
+            const percentile = zScoreToPercentile(zScore);
+            const category = getBMICategory(percentile);
 
-        if (isNaN(age) || isNaN(height) || isNaN(weight) || age < 2 || age > 18 || height < 40 || weight < 2) {
-            container.innerHTML = '<div class="alert alert-warning">Заполните все поля корректно (возраст 2–18 лет, рост >40 см, вес >2 кг).</div>';
-            return;
+            window._pallData = window._pallData || {};
+            window._pallData.bmi = { bmi, percentile, zScore, category, age, gender, height, weight, diagnosis };
+
+            container.innerHTML =
+                '<div class="alert alert-info">' +
+                '<strong>ИМТ:</strong> ' + bmi.toFixed(1) + ' кг/м²<br>' +
+                '<strong>Перцентиль:</strong> ' + percentile.toFixed(1) + '% (Z-score: ' + zScore.toFixed(2) + ')<br>' +
+                '<strong>Категория:</strong> ' + category +
+                '</div>';
+            document.getElementById('vital-signs-section').style.display = 'block';
+        },
+
+        assessVitalSigns: function() {
+            const age = parseFloat(document.getElementById('calcAgeYears')?.value);
+            const hr = parseFloat(document.getElementById('calcHR')?.value);
+            const rr = parseFloat(document.getElementById('calcRR')?.value);
+            const spo2 = parseFloat(document.getElementById('calcSpO2')?.value);
+            const sys = parseFloat(document.getElementById('calcSBP')?.value);
+            const dia = parseFloat(document.getElementById('calcDBP')?.value);
+            const container = document.getElementById('vital-result-container');
+            if (!container) return;
+            if (isNaN(age) || age < 2) {
+                container.innerHTML = '<div class="alert alert-warning">Сначала укажите возраст (≥2 лет).</div>';
+                return;
+            }
+            let html = '<div class="alert alert-secondary"><strong>Оценка жизненных показателей:</strong><br>';
+            if (!isNaN(hr)) {
+                const ref = getHRRef(age);
+                const sds = ref.sd ? ((hr - ref.median) / ref.sd).toFixed(2) : '—';
+                html += '• ЧСС: ' + hr + ' уд/мин (норма ~' + ref.median + '±' + ref.sd.toFixed(0) + ') → SDS = ' + sds + '<br>';
+            }
+            if (!isNaN(rr)) {
+                const refRR = getRRRef(age);
+                html += '• ЧДД: ' + rr + ' в мин (норма ' + refRR.min + '–' + refRR.max + ')<br>';
+            }
+            if (!isNaN(sys) && !isNaN(dia)) {
+                const ref = getBPRef(age);
+                const sdsS = ref.sd_sys ? ((sys - ref.median_sys) / ref.sd_sys).toFixed(2) : '—';
+                const sdsD = ref.sd_dia ? ((dia - ref.median_dia) / ref.sd_dia).toFixed(2) : '—';
+                html += '• АД: ' + sys + '/' + dia + ' мм рт.ст. (норма ~' + ref.median_sys + '/' + ref.median_dia + ') → SDS сист.=' + sdsS + ', диаст.=' + sdsD + '<br>';
+            }
+            if (!isNaN(spo2)) {
+                html += '• SpO₂: ' + spo2 + '% (норма ≥94%; гипоксемия при <90%)<br>';
+            }
+            html += '<small>Референсы: NHLBI 2011, ВОЗ. SDS > |2| – повод для дообследования.</small></div>';
+            container.innerHTML = html;
+            window._pallData = window._pallData || {};
+            window._pallData.vitals = { hr, rr, sys, dia, spo2 };
+        },
+
+        calculateEfficiency: function() {
+            const patFields = ['effPatClinical','effPatPsycho','effPatQuality','effPatOrganizational','effPatAdditional'];
+            const docFields = ['effDocTimeliness','effDocDocumentation','effDocCoordination','effDocInteraction'];
+            let valid = true;
+            const vals = {};
+            [...patFields, ...docFields].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) { valid = false; return; }
+                const v = parseInt(el.value);
+                if (isNaN(v) || v < 1 || v > 5) { el.classList.add('invalid'); valid = false; }
+                else { el.classList.remove('invalid'); vals[id] = v; }
+            });
+            if (!valid) {
+                notify('Все поля должны быть целыми числами от 1 до 5.', 'error');
+                return;
+            }
+
+            const pat = (vals.effPatClinical + vals.effPatPsycho + vals.effPatQuality + vals.effPatOrganizational + vals.effPatAdditional) / 5;
+            const doc = (vals.effDocTimeliness + vals.effDocDocumentation + vals.effDocCoordination + vals.effDocInteraction) / 4;
+            const total = ((pat + doc) / 2) * 20;
+
+            let level, color, interp;
+            if (total >= 85) { level = 'Высокая'; color = '#28a745'; interp = 'Отличная работа. Поддерживайте стандарты.'; }
+            else if (total >= 70) { level = 'Хорошая'; color = '#ffc107'; interp = 'Есть потенциал улучшения.'; }
+            else if (total >= 55) { level = 'Удовлетворительная'; color = '#fd7e14'; interp = 'Требуется корректировка процессов.'; }
+            else { level = 'Требует улучшения'; color = '#dc3545'; interp = 'Критично – аудит и обучение персонала.'; }
+
+            window._pallData = window._pallData || {};
+            window._pallData.efficiency = { total, level, pat, doc, vals, color, interp };
+
+            const container = document.getElementById('efficiency-result');
+            if (!container) return;
+            container.innerHTML =
+                '<div style="border-left:5px solid ' + color + '; padding-left:1rem;">' +
+                '<h5 style="color:' + color + '">Интегральная эффективность: ' + total.toFixed(1) + '% (' + level + ')</h5>' +
+                '<p>' + interp + '</p>' +
+                '<div class="row">' +
+                '<div class="col-md-4"><strong>Пациенты:</strong> ' + pat.toFixed(1) + '/5</div>' +
+                '<div class="col-md-4"><strong>Врачи:</strong> ' + doc.toFixed(1) + '/5</div>' +
+                '<div class="col-md-4"><strong>Общая:</strong> ' + total.toFixed(1) + '%</div>' +
+                '</div></div>';
+            this.drawEfficiencyCharts(pat, doc, vals, color);
+        },
+
+        drawEfficiencyCharts: function(pat, doc, vals, color) {
+            const container = document.getElementById('efficiency-chart');
+            if (!container) return;
+            if (typeof Chart === 'undefined') {
+                container.innerHTML = '<p class="text-danger">⚠️ Библиотека Chart.js не загружена.</p>';
+                return;
+            }
+            container.innerHTML =
+                '<div class="chart-wrapper"><h6>Профиль компонентов (1–5)</h6><canvas id="effBar"></canvas></div>' +
+                '<div class="chart-wrapper"><h6>Вклад пациентов и врачей</h6><canvas id="effPie"></canvas></div>';
+            const barCtx = document.getElementById('effBar').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Клин.','Психо','КЖ','Орг.','Доп.','Своевр.','Докум.','Согл.','Взаим.'],
+                    datasets: [{
+                        data: [
+                            vals.effPatClinical, vals.effPatPsycho, vals.effPatQuality,
+                            vals.effPatOrganizational, vals.effPatAdditional,
+                            vals.effDocTimeliness, vals.effDocDocumentation,
+                            vals.effDocCoordination, vals.effDocInteraction
+                        ],
+                        backgroundColor: ['#007bff','#6f42c1','#17a2b8','#ffc107','#fd7e14','#28a745','#20c997','#e83e8c','#6c757d']
+                    }]
+                },
+                options: { responsive: true, scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+            });
+            const pieCtx = document.getElementById('effPie').getContext('2d');
+            new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Пациенты', 'Врачи'],
+                    datasets: [{ data: [pat*20, doc*20], backgroundColor: ['#007bff','#28a745'] }]
+                },
+                options: { responsive: true }
+            });
+        },
+
+        clusterPatient: function() {
+            const fields = {
+                pain: 'clustPain',
+                nutrition: 'clustNutrition',
+                phys_func: 'clustPhysFunc',
+                emo_func: 'clustEmoFunc',
+                soc_func: 'clustSocFunc',
+                role_func: 'clustRoleFunc'
+            };
+            const limits = { pain:[0,10], nutrition:[0,5], phys_func:[0,100], emo_func:[0,100], soc_func:[0,100], role_func:[0,100] };
+            let valid = true;
+            const vals = {};
+            for (const [key, id] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                if (!el) { valid = false; continue; }
+                const v = parseFloat(el.value);
+                if (isNaN(v) || v < limits[key][0] || v > limits[key][1]) { el.classList.add('invalid'); valid = false; }
+                else { el.classList.remove('invalid'); vals[key] = v; }
+            }
+            if (!valid) {
+                notify('Введите корректные значения для всех полей.', 'error');
+                return;
+            }
+
+            let best = null, minDist = Infinity;
+            for (const [name, cfg] of Object.entries(profiles)) {
+                const c = cfg.center;
+                const dist = Math.hypot(vals.pain - c.боль, vals.nutrition - c.нутр,
+                    vals.phys_func - c.физ, vals.emo_func - c.эмо,
+                    vals.soc_func - c.соц, vals.role_func - c.рол);
+                if (dist < minDist) { minDist = dist; best = name; }
+            }
+            const p = profiles[best];
+            const deltaQoL = 4.87 - 0.41*vals.nutrition - 0.52*vals.pain - 0.09*vals.phys_func;
+            const orMapping = { "Болевой":6.1, "Нутритивный":3.5, "Двигательный":1.4, "Относительно компенсированный":1.0, "Социально-депривированный":2.8 };
+            const orVal = orMapping[best] || 1.0;
+
+            window._pallData = window._pallData || {};
+            window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs, desc: p.desc, center: p.center };
+
+            const container = document.getElementById('clustering-result');
+            if (!container) return;
+            container.innerHTML =
+                '<div class="alert alert-primary">' +
+                '<h5>Профиль: «' + best + '»</h5>' +
+                '<p>' + p.desc + '</p>' +
+                '<p><strong>Рекомендации:</strong> ' + p.recs + '</p>' +
+                '<p><strong>Прогнозируемый прирост КЖ (Δ):</strong> ' + deltaQoL.toFixed(2) + ' балла</p>' +
+                '<p><strong>OR выраженного улучшения:</strong> ' + orVal + ' (p<0.05)</p>' +
+                '</div>';
+            this.drawClusterCharts(vals, p.center, best, deltaQoL, orVal);
+        },
+
+        drawClusterCharts: function(patient, center, profileName, deltaQoL, orVal) {
+            const radarDiv = document.getElementById('radar-container');
+            const gainDiv = document.getElementById('gain-chart-container');
+            if (typeof Chart === 'undefined') {
+                if (radarDiv) radarDiv.innerHTML = '<p class="text-danger">⚠️ Chart.js не загружен.</p>';
+                if (gainDiv) gainDiv.innerHTML = '';
+                return;
+            }
+            if (radarDiv) radarDiv.innerHTML = '<h6>🕸️ Радар</h6><canvas id="radarChart"></canvas>';
+            if (gainDiv) gainDiv.innerHTML = '<h6>📈 Прогноз</h6><canvas id="gainChart"></canvas>';
+
+            const rctx = document.getElementById('radarChart')?.getContext('2d');
+            if (rctx) new Chart(rctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Боль','Нутр.риск','Физ.','Эмоц.','Соц.','Рол.'],
+                    datasets: [
+                        { label: 'Пациент', data: [patient.pain, patient.nutrition, patient.phys_func, patient.emo_func, patient.soc_func, patient.role_func], borderColor: '#dc3545' },
+                        { label: 'Центроид «' + profileName + '»', data: [center.боль, center.нутр, center.физ, center.эмо, center.соц, center.рол], borderColor: '#007bff', borderDash: [5,5] }
+                    ]
+                },
+                options: { responsive: true, scales: { r: { min:0, max:100 } } }
+            });
+            const gctx = document.getElementById('gainChart')?.getContext('2d');
+            if (gctx) new Chart(gctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Δ КЖ (баллы)', 'OR улучшения'],
+                    datasets: [{ data: [deltaQoL.toFixed(2), orVal], backgroundColor: ['#17a2b8','#ffc107'] }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        },
+
+        generateFullReport: function() {
+            const data = window._pallData || {};
+            const diagnosis = document.getElementById('calcDiagnosis')?.value || 'Не указан';
+            let report = '══════════════════════════════════════════\n';
+            report += '   СВОДНЫЙ ОТЧЁТ ПО ПАЛЛИАТИВНОМУ ПАЦИЕНТУ\n';
+            report += '   Диссертация Истин А.А., ВГМУ, 2026\n';
+            report += '══════════════════════════════════════════\n\n';
+            report += 'Дата: ' + new Date().toLocaleString() + '\n';
+            report += 'Диагноз: ' + diagnosis + '\n\n';
+
+            if (data.bmi) {
+                report += '▶ АНТРОПОМЕТРИЯ:\n';
+                report += '  ИМТ: ' + data.bmi.bmi.toFixed(1) + ' кг/м² (' + data.bmi.percentile.toFixed(1) + '%, Z=' + data.bmi.zScore.toFixed(2) + ')\n';
+                report += '  Категория: ' + data.bmi.category + '\n\n';
+            }
+            if (data.vitals) {
+                report += '▶ ВИТАЛЬНЫЕ ПОКАЗАТЕЛИ:\n';
+                if (data.vitals.hr) report += '  ЧСС: ' + data.vitals.hr + ' уд/мин\n';
+                if (data.vitals.rr) report += '  ЧДД: ' + data.vitals.rr + ' в мин\n';
+                if (data.vitals.sys) report += '  АД: ' + data.vitals.sys + '/' + data.vitals.dia + ' мм рт.ст.\n';
+                if (data.vitals.spo2) report += '  SpO₂: ' + data.vitals.spo2 + '%\n';
+                report += '\n';
+            }
+            if (data.efficiency) {
+                report += '▶ ЭФФЕКТИВНОСТЬ:\n';
+                report += '  Общая: ' + data.efficiency.total.toFixed(1) + '% (' + data.efficiency.level + ')\n';
+                report += '  Пациенты: ' + data.efficiency.pat.toFixed(1) + '/5, Врачи: ' + data.efficiency.doc.toFixed(1) + '/5\n\n';
+            }
+            if (data.clustering) {
+                report += '▶ КЛАСТЕРИЗАЦИЯ:\n';
+                report += '  Профиль: ' + data.clustering.best + '\n';
+                report += '  Δ КЖ: ' + data.clustering.deltaQoL.toFixed(2) + '\n';
+                report += '  OR: ' + data.clustering.orVal + '\n';
+                report += '  Рекомендации: ' + data.clustering.recs + '\n\n';
+            }
+            report += '══════════════════════════════════════════\n';
+            const reportEl = document.getElementById('report-content');
+            if (reportEl) reportEl.textContent = report;
+            switchPallcalcTab('report');
+        },
+
+        copyReport: function() {
+            const text = document.getElementById('report-content')?.textContent;
+            if (text) navigator.clipboard.writeText(text).then(() => notify('Отчёт скопирован в буфер обмена!', 'info'));
+        },
+
+        resetTab: function(tab) {
+            const mapping = {
+                clinical: ['calcDiagnosis', 'calcGender', 'calcAgeYears', 'calcHeightCm', 'calcWeightKg', 'calcHR', 'calcRR', 'calcSBP', 'calcDBP', 'calcSpO2'],
+                efficiency: ['effPatClinical','effPatPsycho','effPatQuality','effPatOrganizational','effPatAdditional','effDocTimeliness','effDocDocumentation','effDocCoordination','effDocInteraction'],
+                clustering: ['clustPain','clustNutrition','clustPhysFunc','clustEmoFunc','clustSocFunc','clustRoleFunc']
+            };
+            (mapping[tab] || []).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.value = ''; el.classList.remove('invalid'); }
+            });
+            if (tab === 'clinical') {
+                const bmi = document.getElementById('bmi-result-container');
+                const vit = document.getElementById('vital-result-container');
+                const sec = document.getElementById('vital-signs-section');
+                if (bmi) bmi.innerHTML = '';
+                if (vit) vit.innerHTML = '';
+                if (sec) sec.style.display = 'none';
+                if (window._pallData) delete window._pallData.bmi;
+                if (window._pallData) delete window._pallData.vitals;
+            }
+            if (tab === 'efficiency') {
+                const effRes = document.getElementById('efficiency-result');
+                const effChart = document.getElementById('efficiency-chart');
+                if (effRes) effRes.innerHTML = '';
+                if (effChart) effChart.innerHTML = '';
+                if (window._pallData) delete window._pallData.efficiency;
+            }
+            if (tab === 'clustering') {
+                const clustRes = document.getElementById('clustering-result');
+                const radar = document.getElementById('radar-container');
+                const gain = document.getElementById('gain-chart-container');
+                if (clustRes) clustRes.innerHTML = '';
+                if (radar) radar.innerHTML = '';
+                if (gain) gain.innerHTML = '';
+                if (window._pallData) delete window._pallData.clustering;
+            }
+        },
+
+        loadFromSurveys: function(target) {
+            const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
+            if (local.pedsql || local.papascale) {
+                this.applySurveyData(target, local.pedsql, local.papascale);
+                return;
+            }
+            const patientId = prompt('Введите ID пациента, чьи анкеты загрузить:');
+            if (!patientId) return;
+            notify('Загрузка анкет из облака...', 'info');
+            fetch(SURVEY_SCRIPT_URL + '?action=getSurvey&patientId=' + encodeURIComponent(patientId))
+                .then(function(response) { return response.json(); })
+                .then(function(result) {
+                    if (result.success && result.data) {
+                        localStorage.setItem('surveyData', JSON.stringify(result.data));
+                        this.applySurveyData(target, result.data.pedsql, result.data.papascale);
+                    } else {
+                        notify('Анкеты для этого пациента не найдены в облаке.', 'error');
+                    }
+                }.bind(this))
+                .catch(function(e) {
+                    console.error(e);
+                    notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
+                });
+        },
+
+        applySurveyData: function(target, pedsql, papascale) {
+            if (target === 'efficiency') {
+                if (pedsql && pedsql.total !== undefined) {
+                    document.getElementById('effPatQuality').value = Math.round(1 + (pedsql.total / 100) * 4);
+                    document.getElementById('effPatPsycho').value = Math.round(1 + ((pedsql.emotional || 0) / 100) * 4);
+                    const clinical = ((pedsql.physical || 0) + (pedsql.emotional || 0) + (pedsql.social || 0) + (pedsql.school || 0)) / 4;
+                    document.getElementById('effPatClinical').value = Math.round(1 + (clinical / 100) * 4);
+                    notify('Данные PedsQL загружены в поля эффективности.', 'info');
+                } else {
+                    notify('Нет данных PedsQL. Заполните анкету или проверьте ID.', 'error');
+                }
+            } else if (target === 'clustering') {
+                if (pedsql) {
+                    document.getElementById('clustPhysFunc').value = Math.round(pedsql.physical || 0);
+                    document.getElementById('clustEmoFunc').value = Math.round(pedsql.emotional || 0);
+                    document.getElementById('clustSocFunc').value = Math.round(pedsql.social || 0);
+                    document.getElementById('clustRoleFunc').value = Math.round(pedsql.school || 0);
+                }
+                if (papascale && papascale.total !== undefined) {
+                    const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
+                    document.getElementById('clustPain').value = pain;
+                } else {
+                    document.getElementById('clustPain').value = 3;
+                    notify('Данные анкет загружены в поля кластеризации.', 'info');
+                }
+            }
         }
-        const heightM = height / 100;
-        const bmi = weight / (heightM * heightM);
-        const ref = getBMIRef(gender, age);
-        const zScore = ref.sd > 0 ? (bmi - ref.median) / ref.sd : 0;
-        const percentile = zScoreToPercentile(zScore);
-        const category = getBMICategory(percentile);
+    };
 
-        window._pallData = window._pallData || {};
-        window._pallData.bmi = { bmi, percentile, zScore, category, age, gender, height, weight, diagnosis };
-
-        container.innerHTML =
-            '<div class="alert alert-info">' +
-            '<strong>ИМТ:</strong> ' + bmi.toFixed(1) + ' кг/м²<br>' +
-            '<strong>Перцентиль:</strong> ' + percentile.toFixed(1) + '% (Z-score: ' + zScore.toFixed(2) + ')<br>' +
-            '<strong>Категория:</strong> ' + category +
-            '</div>';
-        document.getElementById('vital-signs-section').style.display = 'block';
-    },
-
-    assessVitalSigns: function() {
-        const age = parseFloat(document.getElementById('calcAgeYears')?.value);
-        const hr = parseFloat(document.getElementById('calcHR')?.value);
-        const rr = parseFloat(document.getElementById('calcRR')?.value);
-        const spo2 = parseFloat(document.getElementById('calcSpO2')?.value);
-        const sys = parseFloat(document.getElementById('calcSBP')?.value);
-        const dia = parseFloat(document.getElementById('calcDBP')?.value);
-        const container = document.getElementById('vital-result-container');
-        if (!container) return;
-        if (isNaN(age) || age < 2) {
-            container.innerHTML = '<div class="alert alert-warning">Сначала укажите возраст (≥2 лет).</div>';
-            return;
-        }
-        let html = '<div class="alert alert-secondary"><strong>Оценка жизненных показателей:</strong><br>';
-        if (!isNaN(hr)) {
-            const ref = getHRRef(age);
-            const sds = ref.sd ? ((hr - ref.median) / ref.sd).toFixed(2) : '—';
-            html += '• ЧСС: ' + hr + ' уд/мин (норма ~' + ref.median + '±' + ref.sd.toFixed(0) + ') → SDS = ' + sds + '<br>';
-        }
-        if (!isNaN(rr)) {
-            const refRR = getRRRef(age);
-            html += '• ЧДД: ' + rr + ' в мин (норма ' + refRR.min + '–' + refRR.max + ')<br>';
-        }
-        if (!isNaN(sys) && !isNaN(dia)) {
-            const ref = getBPRef(age);
-            const sdsS = ref.sd_sys ? ((sys - ref.median_sys) / ref.sd_sys).toFixed(2) : '—';
-            const sdsD = ref.sd_dia ? ((dia - ref.median_dia) / ref.sd_dia).toFixed(2) : '—';
-            html += '• АД: ' + sys + '/' + dia + ' мм рт.ст. (норма ~' + ref.median_sys + '/' + ref.median_dia + ') → SDS сист.=' + sdsS + ', диаст.=' + sdsD + '<br>';
-        }
-        if (!isNaN(spo2)) {
-            html += '• SpO₂: ' + spo2 + '% (норма ≥94%; гипоксемия при <90%)<br>';
-        }
-        html += '<small>Референсы: NHLBI 2011, ВОЗ. SDS > |2| – повод для дообследования.</small></div>';
-        container.innerHTML = html;
-        window._pallData = window._pallData || {};
-        window._pallData.vitals = { hr, rr, sys, dia, spo2 };
-    },
-
-    // ======= ЭФФЕКТИВНОСТЬ =======
-    calculateEfficiency: function() {
-        const patFields = ['effPatClinical','effPatPsycho','effPatQuality','effPatOrganizational','effPatAdditional'];
-        const docFields = ['effDocTimeliness','effDocDocumentation','effDocCoordination','effDocInteraction'];
-        let valid = true;
-        const vals = {};
-        [...patFields, ...docFields].forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) { valid = false; return; }
-            const v = parseInt(el.value);
-            if (isNaN(v) || v < 1 || v > 5) { el.classList.add('invalid'); valid = false; }
-            else { el.classList.remove('invalid'); vals[id] = v; }
-        });
-        if (!valid) {
-            notify('Все поля должны быть целыми числами от 1 до 5.', 'error');
-            return;
-        }
-
-        const pat = (vals.effPatClinical + vals.effPatPsycho + vals.effPatQuality + vals.effPatOrganizational + vals.effPatAdditional) / 5;
-        const doc = (vals.effDocTimeliness + vals.effDocDocumentation + vals.effDocCoordination + vals.effDocInteraction) / 4;
-        const total = ((pat + doc) / 2) * 20;
-
-        let level, color, interp;
-        if (total >= 85) { level = 'Высокая'; color = '#28a745'; interp = 'Отличная работа. Поддерживайте стандарты.'; }
-        else if (total >= 70) { level = 'Хорошая'; color = '#ffc107'; interp = 'Есть потенциал улучшения.'; }
-        else if (total >= 55) { level = 'Удовлетворительная'; color = '#fd7e14'; interp = 'Требуется корректировка процессов.'; }
-        else { level = 'Требует улучшения'; color = '#dc3545'; interp = 'Критично – аудит и обучение персонала.'; }
-
-        window._pallData = window._pallData || {};
-        window._pallData.efficiency = { total, level, pat, doc, vals, color, interp };
-
-        const container = document.getElementById('efficiency-result');
-        if (!container) return;
-        container.innerHTML =
-            '<div style="border-left:5px solid ' + color + '; padding-left:1rem;">' +
-            '<h5 style="color:' + color + '">Интегральная эффективность: ' + total.toFixed(1) + '% (' + level + ')</h5>' +
-            '<p>' + interp + '</p>' +
-            '<div class="row">' +
-            '<div class="col-md-4"><strong>Пациенты:</strong> ' + pat.toFixed(1) + '/5</div>' +
-            '<div class="col-md-4"><strong>Врачи:</strong> ' + doc.toFixed(1) + '/5</div>' +
-            '<div class="col-md-4"><strong>Общая:</strong> ' + total.toFixed(1) + '%</div>' +
-            '</div></div>';
-        this.drawEfficiencyCharts(pat, doc, vals, color);
-    },
-
-    drawEfficiencyCharts: function(pat, doc, vals, color) {
-        const container = document.getElementById('efficiency-chart');
-        if (!container) return;
-        if (typeof Chart === 'undefined') {
-            container.innerHTML = '<p class="text-danger">⚠️ Библиотека Chart.js не загружена.</p>';
-            return;
-        }
-        container.innerHTML =
-            '<div class="chart-wrapper"><h6>Профиль компонентов (1–5)</h6><canvas id="effBar"></canvas></div>' +
-            '<div class="chart-wrapper"><h6>Вклад пациентов и врачей</h6><canvas id="effPie"></canvas></div>';
-        const barCtx = document.getElementById('effBar').getContext('2d');
-        new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Клин.','Психо','КЖ','Орг.','Доп.','Своевр.','Докум.','Согл.','Взаим.'],
-                datasets: [{
-                    data: [
-                        vals.effPatClinical, vals.effPatPsycho, vals.effPatQuality,
-                        vals.effPatOrganizational, vals.effPatAdditional,
-                        vals.effDocTimeliness, vals.effDocDocumentation,
-                        vals.effDocCoordination, vals.effDocInteraction
-                    ],
-                    backgroundColor: ['#007bff','#6f42c1','#17a2b8','#ffc107','#fd7e14','#28a745','#20c997','#e83e8c','#6c757d']
-                }]
-            },
-            options: { responsive: true, scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
-        });
-        const pieCtx = document.getElementById('effPie').getContext('2d');
-        new Chart(pieCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Пациенты', 'Врачи'],
-                datasets: [{ data: [pat*20, doc*20], backgroundColor: ['#007bff','#28a745'] }]
-            },
-            options: { responsive: true }
-        });
-    },
-
-    // ======= КЛАСТЕРИЗАЦИЯ =======
-    clusterPatient: function() {
-        const fields = {
-            pain: 'clustPain',
-            nutrition: 'clustNutrition',
-            phys_func: 'clustPhysFunc',
-            emo_func: 'clustEmoFunc',
-            soc_func: 'clustSocFunc',
-            role_func: 'clustRoleFunc'
-        };
-        const limits = { pain:[0,10], nutrition:[0,5], phys_func:[0,100], emo_func:[0,100], soc_func:[0,100], role_func:[0,100] };
-        let valid = true;
-        const vals = {};
-        for (const [key, id] of Object.entries(fields)) {
-            const el = document.getElementById(id);
-            if (!el) { valid = false; continue; }
-            const v = parseFloat(el.value);
-            if (isNaN(v) || v < limits[key][0] || v > limits[key][1]) { el.classList.add('invalid'); valid = false; }
-            else { el.classList.remove('invalid'); vals[key] = v; }
-        }
-        if (!valid) {
-            notify('Введите корректные значения для всех полей.', 'error');
-            return;
-        }
-
-        let best = null, minDist = Infinity;
-        for (const [name, cfg] of Object.entries(profiles)) {
-            const c = cfg.center;
-            const dist = Math.hypot(vals.pain - c.боль, vals.nutrition - c.нутр,
-                vals.phys_func - c.физ, vals.emo_func - c.эмо,
-                vals.soc_func - c.соц, vals.role_func - c.рол);
-            if (dist < minDist) { minDist = dist; best = name; }
-        }
-        const p = profiles[best];
-        const deltaQoL = 4.87 - 0.41*vals.nutrition - 0.52*vals.pain - 0.09*vals.phys_func;
-        const orMapping = { "Болевой":6.1, "Нутритивный":3.5, "Двигательный":1.4, "Относительно компенсированный":1.0, "Социально-депривированный":2.8 };
-        const orVal = orMapping[best] || 1.0;
-
-        window._pallData = window._pallData || {};
-        window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs, desc: p.desc, center: p.center };
-
-        const container = document.getElementById('clustering-result');
-        if (!container) return;
-        container.innerHTML =
-            '<div class="alert alert-primary">' +
-            '<h5>Профиль: «' + best + '»</h5>' +
-            '<p>' + p.desc + '</p>' +
-            '<p><strong>Рекомендации:</strong> ' + p.recs + '</p>' +
-            '<p><strong>Прогнозируемый прирост КЖ (Δ):</strong> ' + deltaQoL.toFixed(2) + ' балла</p>' +
-            '<p><strong>OR выраженного улучшения:</strong> ' + orVal + ' (p<0.05)</p>' +
-            '</div>';
-        this.drawClusterCharts(vals, p.center, best, deltaQoL, orVal);
-    },
-
-    drawClusterCharts: function(patient, center, profileName, deltaQoL, orVal) {
-        const radarDiv = document.getElementById('radar-container');
-        const gainDiv = document.getElementById('gain-chart-container');
-        if (typeof Chart === 'undefined') {
-            if (radarDiv) radarDiv.innerHTML = '<p class="text-danger">⚠️ Chart.js не загружен.</p>';
-            if (gainDiv) gainDiv.innerHTML = '';
-            return;
-        }
-        if (radarDiv) radarDiv.innerHTML = '<h6>🕸️ Радар</h6><canvas id="radarChart"></canvas>';
-        if (gainDiv) gainDiv.innerHTML = '<h6>📈 Прогноз</h6><canvas id="gainChart"></canvas>';
-
-        const rctx = document.getElementById('radarChart')?.getContext('2d');
-        if (rctx) new Chart(rctx, {
-            type: 'radar',
-            data: {
-                labels: ['Боль','Нутр.риск','Физ.','Эмоц.','Соц.','Рол.'],
-                datasets: [
-                    { label: 'Пациент', data: [patient.pain, patient.nutrition, patient.phys_func, patient.emo_func, patient.soc_func, patient.role_func], borderColor: '#dc3545' },
-                    { label: 'Центроид «' + profileName + '»', data: [center.боль, center.нутр, center.физ, center.эмо, center.соц, center.рол], borderColor: '#007bff', borderDash: [5,5] }
-                ]
-            },
-            options: { responsive: true, scales: { r: { min:0, max:100 } } }
-        });
-        const gctx = document.getElementById('gainChart')?.getContext('2d');
-        if (gctx) new Chart(gctx, {
-            type: 'bar',
-            data: {
-                labels: ['Δ КЖ (баллы)', 'OR улучшения'],
-                datasets: [{ data: [deltaQoL.toFixed(2), orVal], backgroundColor: ['#17a2b8','#ffc107'] }]
-            },
-            options: { responsive: true, scales: { y: { beginAtZero: true } } }
-        });
-    },
-
-    // ======= ОТЧЁТ =======
-    generateFullReport: function() {
-        const data = window._pallData || {};
-        const diagnosis = document.getElementById('calcDiagnosis')?.value || 'Не указан';
-        let report = '══════════════════════════════════════════\n';
-        report += '   СВОДНЫЙ ОТЧЁТ ПО ПАЛЛИАТИВНОМУ ПАЦИЕНТУ\n';
-        report += '   Диссертация Истин А.А., ВГМУ, 2026\n';
-        report += '══════════════════════════════════════════\n\n';
-        report += 'Дата: ' + new Date().toLocaleString() + '\n';
-        report += 'Диагноз: ' + diagnosis + '\n\n';
-
-        if (data.bmi) {
-            report += '▶ АНТРОПОМЕТРИЯ:\n';
-            report += '  ИМТ: ' + data.bmi.bmi.toFixed(1) + ' кг/м² (' + data.bmi.percentile.toFixed(1) + '%, Z=' + data.bmi.zScore.toFixed(2) + ')\n';
-            report += '  Категория: ' + data.bmi.category + '\n\n';
-        }
-        if (data.vitals) {
-            report += '▶ ВИТАЛЬНЫЕ ПОКАЗАТЕЛИ:\n';
-            if (data.vitals.hr) report += '  ЧСС: ' + data.vitals.hr + ' уд/мин\n';
-            if (data.vitals.rr) report += '  ЧДД: ' + data.vitals.rr + ' в мин\n';
-            if (data.vitals.sys) report += '  АД: ' + data.vitals.sys + '/' + data.vitals.dia + ' мм рт.ст.\n';
-            if (data.vitals.spo2) report += '  SpO₂: ' + data.vitals.spo2 + '%\n';
-            report += '\n';
-        }
-        if (data.efficiency) {
-            report += '▶ ЭФФЕКТИВНОСТЬ:\n';
-            report += '  Общая: ' + data.efficiency.total.toFixed(1) + '% (' + data.efficiency.level + ')\n';
-            report += '  Пациенты: ' + data.efficiency.pat.toFixed(1) + '/5, Врачи: ' + data.efficiency.doc.toFixed(1) + '/5\n\n';
-        }
-        if (data.clustering) {
-            report += '▶ КЛАСТЕРИЗАЦИЯ:\n';
-            report += '  Профиль: ' + data.clustering.best + '\n';
-            report += '  Δ КЖ: ' + data.clustering.deltaQoL.toFixed(2) + '\n';
-            report += '  OR: ' + data.clustering.orVal + '\n';
-            report += '  Рекомендации: ' + data.clustering.recs + '\n\n';
-        }
-        report += '══════════════════════════════════════════\n';
-        const reportEl = document.getElementById('report-content');
-        if (reportEl) reportEl.textContent = report;
-        switchPallcalcTab('report');
-    },
-
-    copyReport: function() {
-        const text = document.getElementById('report-content')?.textContent;
-        if (text) navigator.clipboard.writeText(text).then(() => notify('Отчёт скопирован в буфер обмена!', 'info'));
-    },
-
-    resetTab: function(tab) {
-        const mapping = {
-            clinical: ['calcDiagnosis', 'calcGender', 'calcAgeYears', 'calcHeightCm', 'calcWeightKg', 'calcHR', 'calcRR', 'calcSBP', 'calcDBP', 'calcSpO2'],
-            efficiency: ['effPatClinical','effPatPsycho','effPatQuality','effPatOrganizational','effPatAdditional','effDocTimeliness','effDocDocumentation','effDocCoordination','effDocInteraction'],
-            clustering: ['clustPain','clustNutrition','clustPhysFunc','clustEmoFunc','clustSocFunc','clustRoleFunc']
-        };
-        (mapping[tab] || []).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) { el.value = ''; el.classList.remove('invalid'); }
-        });
-        if (tab === 'clinical') {
-            const bmi = document.getElementById('bmi-result-container');
-            const vit = document.getElementById('vital-result-container');
-            const sec = document.getElementById('vital-signs-section');
-            if (bmi) bmi.innerHTML = '';
-            if (vit) vit.innerHTML = '';
-            if (sec) sec.style.display = 'none';
-            if (window._pallData) delete window._pallData.bmi;
-            if (window._pallData) delete window._pallData.vitals;
-        }
-        if (tab === 'efficiency') {
-            const effRes = document.getElementById('efficiency-result');
-            const effChart = document.getElementById('efficiency-chart');
-            if (effRes) effRes.innerHTML = '';
-            if (effChart) effChart.innerHTML = '';
-            if (window._pallData) delete window._pallData.efficiency;
-        }
-        if (tab === 'clustering') {
-            const clustRes = document.getElementById('clustering-result');
-            const radar = document.getElementById('radar-container');
-            const gain = document.getElementById('gain-chart-container');
-            if (clustRes) clustRes.innerHTML = '';
-            if (radar) radar.innerHTML = '';
-            if (gain) gain.innerHTML = '';
-            if (window._pallData) delete window._pallData.clustering;
-        }
-    },
-
-// ======= НОВЫЙ МЕТОД ЗАГРУЗКИ ИЗ АНКЕТ (С ОБЛАКОМ) =======
-loadFromSurveys: function(target) {
-    // 1. Сначала пробуем загрузить из локального хранилища
-    const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
-    if (local.pedsql || local.papascale) {
-        this.applySurveyData(target, local.pedsql, local.papascale);
-        return;
-    }
-
-    // 2. Если локально пусто – запрашиваем из облака
-    const patientId = prompt('Введите ID пациента, чьи анкеты загрузить:');
-    if (!patientId) return;
-
-    // Показываем индикатор загрузки
-    notify('Загрузка анкет из облака...', 'info');
-
-    fetch(SURVEY_SCRIPT_URL + '?action=getSurvey&patientId=' + encodeURIComponent(patientId))
-      .then(function(response) { return response.json(); })
-      .then(function(result) {
-        if (result.success && result.data) {
-          // Кешируем полученные данные локально, чтобы не ходить в облако каждый раз
-          localStorage.setItem('surveyData', JSON.stringify(result.data));
-          this.applySurveyData(target, result.data.pedsql, result.data.papascale);
-        } else {
-          notify('Анкеты для этого пациента не найдены в облаке.', 'error');
-        }
-      }.bind(this))
-      .catch(function(e) {
-        console.error(e);
-        notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
-      });
-},
-
-// Вспомогательная функция: подстановка значений анкет в поля калькулятора
-applySurveyData: function(target, pedsql, papascale) {
-    if (target === 'efficiency') {
-        if (pedsql && pedsql.total !== undefined) {
-            document.getElementById('effPatQuality').value = Math.round(1 + (pedsql.total / 100) * 4);
-            document.getElementById('effPatPsycho').value = Math.round(1 + ((pedsql.emotional || 0) / 100) * 4);
-            const clinical = ((pedsql.physical || 0) + (pedsql.emotional || 0) + (pedsql.social || 0) + (pedsql.school || 0)) / 4;
-            document.getElementById('effPatClinical').value = Math.round(1 + (clinical / 100) * 4);
-            notify('Данные PedsQL загружены в поля эффективности.', 'info');
-        } else {
-            notify('Нет данных PedsQL. Заполните анкету или проверьте ID.', 'error');
-        }
-    } else if (target === 'clustering') {
-        if (pedsql) {
-            document.getElementById('clustPhysFunc').value = Math.round(pedsql.physical || 0);
-            document.getElementById('clustEmoFunc').value = Math.round(pedsql.emotional || 0);
-            document.getElementById('clustSocFunc').value = Math.round(pedsql.social || 0);
-            document.getElementById('clustRoleFunc').value = Math.round(pedsql.school || 0);
-        }
-        if (papascale && papascale.total !== undefined) {
-            const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
-            document.getElementById('clustPain').value = pain;
-        } else {
-            document.getElementById('clustPain').value = 3;
-            notify('Данные анкет загружены в поля кластеризации.', 'info');
-        }
-} // <-- УБРАЛ ЛИШНЮЮ ЗАКРЫВАЮЩУЮ СКОБКУ И ТОЧКУ С ЗАПЯТОЙ
-
-// ======= ДОПОЛНИТЕЛЬНЫЕ ГЛОБАЛЬНЫЕ ФУНКЦИИ (ВНЕ ОБЪЕКТА) =======
-window.switchPallcalcTab = function(tab) {
-    // Убираем активный класс у всех вкладок и кнопок
-    document.querySelectorAll('.pallcalc-tab').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-
-    // Находим нужную вкладку и активируем
-    var el = document.getElementById('tab-' + tab);
-    if (el) el.classList.add('active');
-
-    // Находим и активируем соответствующую кнопку
-    var btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
-    if (btn) btn.classList.add('active');
-};
-
-// Привязываем генерацию отчёта к кнопке в заголовке (если есть)
-document.getElementById('btnReportMain')?.addEventListener('click', function() {
-    window.PalliativeCalc.generateFullReport();
-});
+    window.switchPallcalcTab = function(tab) {
+        document.querySelectorAll('.pallcalc-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        var el = document.getElementById('tab-' + tab);
+        if (el) el.classList.add('active');
+        var btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
+        if (btn) btn.classList.add('active');
+    };
+}
 
 // ===== ГЛОБАЛЬНАЯ ФУНКЦИЯ ЭКСПОРТА СТАТИСТИЧЕСКИХ ДАННЫХ =====
-	        // ========== ПРОГНОЗИРОВАНИЕ ИСХОДОВ ==========
+// ========== ПРОГНОЗИРОВАНИЕ ИСХОДОВ ==========
 function renderPrognosis() {
     return `
     <h2>📈 Прогнозирование паллиативных исходов</h2>
@@ -1918,42 +1891,32 @@ window.calculatePrognosis = function() {
     const hosp = parseFloat(document.getElementById('progHospitalizations').value) || 0;
 
     let score = 0;
-    // Возраст
     if (age < 2) score += 0.8;
     else if (age > 65) score += 0.6;
     else if (age > 50) score += 0.2;
-    // ИМТ
     if (bmi < 16) score += 0.7;
     else if (bmi < 18.5) score += 0.3;
     else if (bmi > 30) score += 0.5;
     else if (bmi > 25) score += 0.2;
-    // ЧСС
     if (hr > 120) score += 0.7;
     else if (hr > 100) score += 0.3;
     else if (hr < 50) score += 0.6;
-    // ЧДД
     if (rr > 30) score += 0.6;
     else if (rr > 24) score += 0.3;
-    // SpO₂
     if (spo2 < 88) score += 1.0;
     else if (spo2 < 92) score += 0.6;
     else if (spo2 < 95) score += 0.2;
-    // АД
     if (sbp < 90 || dbp < 50) score += 0.8;
     else if (sbp > 180 || dbp > 120) score += 0.6;
     else if (sbp > 140) score += 0.2;
-    // Боль
     if (pain > 8) score += 0.8;
     else if (pain > 6) score += 0.4;
     else if (pain > 4) score += 0.2;
-    // Качество жизни
     if (qol < 3) score += 0.9;
     else if (qol < 5) score += 0.4;
     else if (qol < 7) score += 0.2;
-    // Температурный тренд
     if (trend === 'rising') score += 0.5;
     else if (trend === 'falling') score += 0.2;
-    // Госпитализации
     if (hosp >= 3) score += 0.8;
     else if (hosp >= 2) score += 0.4;
     else if (hosp >= 1) score += 0.2;
@@ -1987,7 +1950,8 @@ window.calculatePrognosis = function() {
     </div>
     `;
 };
-        // ========== СЕМАНТИЧЕСКИЙ ПОИСК СИМПТОМОВ ==========
+
+// ========== СЕМАНТИЧЕСКИЙ ПОИСК СИМПТОМОВ ==========
 function renderSymptomSearch() {
     return `
     <h2>🔍 Семантический поиск симптомов</h2>
@@ -2029,6 +1993,7 @@ window.filterBySymptom = function() {
     });
     container.innerHTML = html;
 };
+
 function exportStatisticalSyntax() {
     const diary = DB.getData('diary');
     const palliative = DB.getData('palliative');
@@ -2094,6 +2059,7 @@ function exportStatisticalSyntax() {
 
     notify('Экспорт статистических файлов выполнен', 'info');
 }
+
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
     const generateQuestions = (questions, prefix) => {
