@@ -2071,17 +2071,6 @@ function exportStatisticalSyntax() {
 
     notify('Экспорт статистических файлов выполнен', 'info');
 }
-window.exportStatisticalSyntax = exportStatisticalSyntax;
-
-// ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК КАЛЬКУЛЯТОРА =====
-window.switchPallcalcTab = function(tab) {
-    document.querySelectorAll('.pallcalc-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    const el = document.getElementById('tab-' + tab);
-    if (el) el.classList.add('active');
-    const btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
-    if (btn) btn.classList.add('active');
-};
 }
 // ==================== АНКЕТЫ PEDSQL И PAPASCALE ====================
 function renderSurveys() {
