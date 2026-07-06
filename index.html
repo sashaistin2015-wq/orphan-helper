@@ -1035,13 +1035,19 @@ if (hasSymptoms) {
 
           async function renderPalliative() {
     const fields = getFields('palliative', 'default');
-    const formHtml = generateFormHtml(fields);
+    // Проверяем наличие данных для истории
     const history = DB.getData('palliative').slice(-10).reverse();
-    let histHtml = history.map(e => `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain} | Тошнота: ${e.nausea} | Аппетит: ${e.appetite} | Сон: ${e.sleep} | Настроение: ${e.mood} | Одышка: ${e.dyspnea} | Усталость: ${e.fatigue} | КЖ: ${e.quality}</div>`).join('');
+    let histHtml = '';
+    if (history.length > 0) {
+        histHtml = history.map(e => 
+            `<div class="history-item"><strong>${e.date}</strong> | Боль: ${e.pain||'—'} | Тошнота: ${e.nausea||'—'} | Аппетит: ${e.appetite||'—'} | Сон: ${e.sleep||'—'} | Настроение: ${e.mood||'—'} | Одышка: ${e.dyspnea||'—'} | Усталость: ${e.fatigue||'—'} | КЖ: ${e.quality||'—'}</div>`
+        ).join('');
+    }
+    
     return `<h2>❤️ Паллиативный модуль</h2>
             <div class="card">
                 <form id="pallForm">
-                    ${formHtml}
+                    ${generateFormHtml(fields)}
                     <button type="button" class="btn btn-primary w-100 mt-2" onclick="savePalliativeLocally()">💾 Сохранить локально</button>
                     <button type="button" class="btn btn-success w-100 mt-2" onclick="sendPalliative()">📤 Отправить врачу</button>
                 </form>
@@ -1807,13 +1813,12 @@ loadFromSurveys: function(target) {
         } else {
           notify('Анкеты для этого пациента не найдены в облаке.', 'error');
         }
-      }.bind(this))
+      }.bind(this)) // <-- ВАЖНО: привязываем this
       .catch(function(e) {
         console.error(e);
         notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
       });
 },
-
 // Вспомогательная функция: подстановка значений анкет в поля калькулятора
 applySurveyData: function(target, pedsql, papascale) {
     if (target === 'efficiency') {
@@ -1836,12 +1841,13 @@ applySurveyData: function(target, pedsql, papascale) {
         if (papascale && papascale.total !== undefined) {
             const pain = papascale.total > 15 ? 7 : (papascale.total > 10 ? 4 : 2);
             document.getElementById('clustPain').value = pain;
-        } else {
-            document.getElementById('clustPain').value = 3; // значение по умолчанию
-            notify('Данные анкет загружены в поля кластеризации.', 'info');
-        };
-},
-
+         } else {
+                document.getElementById('clustPain').value = 3;
+                notify('Данные анкет загружены в поля кластеризации.', 'info');
+            }
+        }
+    }
+}; // <-- Закрывающая скобка
 // ======= ДОПОЛНИТЕЛЬНЫЕ ГЛОБАЛЬНЫЕ ФУНКЦИИ (ВНЕ ОБЪЕКТА) =======
 window.switchPallcalcTab = function(tab) {
     // Убираем активный класс у всех вкладок и кнопок
