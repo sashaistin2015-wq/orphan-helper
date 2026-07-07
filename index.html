@@ -1254,9 +1254,343 @@ window.filterDiseases = () => {
         card.style.display = show ? '' : 'none';
     });
 };
-            function renderGenetics() { return `<h2>🧬 Генетика</h2><div class="card mb-3"><h5>Калькулятор риска</h5><select id="inheritType" class="form-select mb-2"><option value="autosomal_recessive">Аутосомно-рецессивный</option><option value="autosomal_dominant">Аутосомно-доминантный</option><option value="x_linked">X-сцепленный</option></select><select id="fatherStatus" class="form-select mb-2"><option value="healthy">Здоров</option><option value="carrier">Носитель</option><option value="sick">Болен</option></select><select id="motherStatus" class="form-select mb-2"><option value="healthy">Здорова</option><option value="carrier">Носитель</option><option value="sick">Больна</option></select><button class="btn btn-primary w-100" onclick="calcRisk()">Рассчитать</button><div id="riskResult" class="mt-2 text-center fw-bold"></div></div><div class="card mb-3"><h5>📖 Типы наследования</h5><p><strong>Аутосомно-рецессивный:</strong> оба родителя — носители мутации. Риск рождения больного ребёнка — 25%.</p><p><strong>Аутосомно-доминантный:</strong> достаточно одной копии мутантного гена от одного из родителей. Риск — 50%.</p><p><strong>X-сцепленный:</strong> ген находится на X-хромосоме. Мужчины болеют чаще, женщины — носители.</p></div><div class="card mb-3"><h5>🔬 Молекулярно-генетическая экспертиза</h5><p>Для подтверждения диагноза необходимо секвенирование генов (NGS), анализ делеций/дупликаций (MLPA). Исследование проводится в специализированных лабораториях.</p></div><h5>Карточки заболеваний</h5><div class="row">${[{ gene:'CFTR', disease:'Муковисцидоз', desc:'Нарушение транспорта ионов хлора' },{ gene:'PAH', disease:'Фенилкетонурия', desc:'Дефицит фенилаланингидроксилазы' },{ gene:'ATP7B', disease:'Болезнь Вильсона', desc:'Накопление меди в организме' },{ gene:'SMN1', disease:'СМА', desc:'Дегенерация мотонейронов' }].map(d => `<div class="col-md-4 mb-3"><div class="card"><h6>${d.disease}</h6><p><strong>Ген:</strong> ${d.gene}</p><p>${d.desc}</p></div></div>`).join('')}</div>`; }
-            function setupGenetics() { window.calcRisk = () => { const type = document.getElementById('inheritType')?.value; const f = document.getElementById('fatherStatus')?.value; const m = document.getElementById('motherStatus')?.value; if(!f||!m||!type) return; let risk = 0; if (type === 'autosomal_recessive') { if (f==='carrier'&&m==='carrier') risk=25; else if ((f==='sick'&&m==='carrier')||(f==='carrier'&&m==='sick')) risk=50; } else if (type === 'autosomal_dominant') { if (f==='sick'||m==='sick') risk=50; } else if (type === 'x_linked') { if (m==='carrier') risk=25; } document.getElementById('riskResult').textContent = `Вероятность: ${risk}%`; }; }
+function renderGenetics() {
+    const diseases = getDiseaseList();
+    
+    // Классификация заболеваний
+    const classified = {
+        gene: [],      // Генные (мутации в одном гене)
+        chromosomal: [], // Хромосомные (изменение структуры/числа хромосом)
+        genomic: []    // Геномные (изменение числа хромосомных наборов)
+    };
+    
+    diseases.forEach(d => {
+        // Определяем тип нарушения по наличию данных
+        if (d.gene && d.gene !== '—' && !d.chromosomal && !d.genomic) {
+            // Генные заболевания — есть конкретный ген
+            classified.gene.push({
+                ...d,
+                type: 'gene',
+                locus: d.gene,
+                cause: d.mutations || 'Мутация в гене ' + d.gene,
+                inheritance: d.inheritance || 'Уточняется'
+            });
+        } else if (d.chromosomal || /трисомия|делеция|дупликация|инверсия|транслокация/i.test(d.mutations || '')) {
+            // Хромосомные — изменения структуры или числа хромосом
+            classified.chromosomal.push({
+                ...d,
+                type: 'chromosomal',
+                locus: d.chromosomal_locus || d.gene || 'Хромосомная аномалия',
+                cause: d.mutations || 'Хромосомная перестройка',
+                inheritance: d.inheritance || 'Спорадическая'
+            });
+        } else if (d.genomic || /триплоидия|тетраплоидия|плоидия/i.test(d.mutations || '')) {
+            // Геномные — изменение числа наборов хромосом
+            classified.genomic.push({
+                ...d,
+                type: 'genomic',
+                locus: 'Весь геном',
+                cause: d.mutations || 'Изменение плоидности',
+                inheritance: d.inheritance || 'Спорадическая'
+            });
+        } else if (d.gene && d.gene !== '—') {
+            // Если есть ген, но не указан тип — относим к генным
+            classified.gene.push({
+                ...d,
+                type: 'gene',
+                locus: d.gene,
+                cause: d.mutations || 'Мутация в гене ' + d.gene,
+                inheritance: d.inheritance || 'Уточняется'
+            });
+        } else {
+            // Если нет гена — пытаемся определить по названию
+            const name = d.name.toLowerCase();
+            if (name.includes('синдром') && !d.gene) {
+                // Синдромы часто хромосомные
+                classified.chromosomal.push({
+                    ...d,
+                    type: 'chromosomal',
+                    locus: d.chromosomal_locus || 'Хромосомная аномалия',
+                    cause: d.mutations || 'Хромосомная перестройка',
+                    inheritance: d.inheritance || 'Спорадическая'
+                });
+            } else {
+                // Остальные — генные (предположительно)
+                classified.gene.push({
+                    ...d,
+                    type: 'gene',
+                    locus: d.gene || 'Неизвестен',
+                    cause: d.mutations || 'Генетическая мутация',
+                    inheritance: d.inheritance || 'Уточняется'
+                });
+            }
+        }
+    });
 
+    // Сортируем внутри каждой категории по названию
+    classified.gene.sort((a, b) => a.name.localeCompare(b.name));
+    classified.chromosomal.sort((a, b) => a.name.localeCompare(b.name));
+    classified.genomic.sort((a, b) => a.name.localeCompare(b.name));
+
+    const renderCards = (items, type, title, icon, color) => {
+        if (items.length === 0) return '';
+        return `
+        <div class="mt-4">
+            <h5><span class="badge" style="background:${color};">${icon} ${title} (${items.length})</span></h5>
+            <div class="row">
+                ${items.map(d => `
+                <div class="col-md-4 mb-3">
+                    <div class="card disease-card" style="cursor:pointer; border-left: 4px solid ${color};">
+                        <div class="card-body">
+                            <div style="font-size:1.8rem;">${d.icon}</div>
+                            <h6>${esc(d.name)}</h6>
+                            <span class="badge bg-primary">МКБ-10: ${d.icd}</span>
+                            <span class="badge" style="background:${color}20; color:${color};">${d.cat}</span>
+                            
+                            <div class="mt-2">
+                                <p class="mb-1"><strong>🧬 Локус:</strong> <span class="badge bg-info text-dark">${d.locus}</span></p>
+                                <p class="mb-1"><strong>⚠️ Причина:</strong> <span class="badge bg-warning text-dark">${d.cause}</span></p>
+                                <p class="mb-1"><strong>📋 Наследование:</strong> <span class="badge bg-secondary">${d.inheritance}</span></p>
+                            </div>
+                            
+                            <p class="small mt-2">${d.desc}</p>
+                            
+                            <div class="disease-details mt-2" style="display:none;">
+                                <p><strong>🔬 Диагностика:</strong> ${d.diag}</p>
+                                <p><strong>💊 Лечение:</strong> ${d.treat}</p>
+                                ${d.symptoms ? `<p><strong>⚠️ Симптомы:</strong> ${d.symptoms.join(', ')}</p>` : ''}
+                                ${d.gene && d.gene !== '—' ? `<p><strong>🧬 Ген:</strong> ${d.gene}</p>` : ''}
+                            </div>
+                            <small class="text-primary">Нажмите для деталей</small>
+                        </div>
+                    </div>
+                </div>`).join('')}
+            </div>
+        </div>`;
+    };
+
+    return `
+    <h2>🧬 Генетика</h2>
+    
+    <!-- Калькулятор риска -->
+    <div class="card mb-3">
+        <h5>🧮 Калькулятор риска</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <label>Тип наследования</label>
+                <select id="inheritType" class="form-select">
+                    <option value="autosomal_recessive">Аутосомно-рецессивный</option>
+                    <option value="autosomal_dominant">Аутосомно-доминантный</option>
+                    <option value="x_linked">X-сцепленный</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label>Отец</label>
+                <select id="fatherStatus" class="form-select">
+                    <option value="healthy">Здоров</option>
+                    <option value="carrier">Носитель</option>
+                    <option value="sick">Болен</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label>Мать</label>
+                <select id="motherStatus" class="form-select">
+                    <option value="healthy">Здорова</option>
+                    <option value="carrier">Носитель</option>
+                    <option value="sick">Больна</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary w-100" onclick="window.calcRisk()">Рассчитать</button>
+            </div>
+        </div>
+        <div id="riskResult" class="mt-2 text-center fw-bold"></div>
+    </div>
+    
+    <!-- Типы наследования -->
+    <div class="card mb-3">
+        <h5>📖 Типы наследования</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <h6>Аутосомно-рецессивный</h6>
+                <p class="small">Оба родителя — носители. Риск — 25%.</p>
+                <span class="badge bg-secondary">Примеры: ФКУ, муковисцидоз</span>
+            </div>
+            <div class="col-md-4">
+                <h6>Аутосомно-доминантный</h6>
+                <p class="small">Один родитель болен. Риск — 50%.</p>
+                <span class="badge bg-secondary">Примеры: СМА, синдром Марфана</span>
+            </div>
+            <div class="col-md-4">
+                <h6>X-сцепленный</h6>
+                <p class="small">Ген на X-хромосоме. Мужчины болеют чаще.</p>
+                <span class="badge bg-secondary">Примеры: гемофилия, мышечная дистрофия</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Молекулярно-генетическая экспертиза -->
+    <div class="card mb-3">
+        <h5>🔬 Молекулярно-генетическая экспертиза</h5>
+        <p>Для подтверждения диагноза необходимо:</p>
+        <ul class="small">
+            <li><strong>Секвенирование нового поколения (NGS)</strong> — поиск мутаций в генах</li>
+            <li><strong>MLPA</strong> — анализ делеций/дупликаций</li>
+            <li><strong>FISH</strong> — выявление хромосомных перестроек</li>
+            <li><strong>Кариотипирование</strong> — оценка числа и структуры хромосом</li>
+        </ul>
+        <p class="small text-muted">Исследование проводится в специализированных лабораториях по направлению врача-генетика.</p>
+    </div>
+    
+    <!-- ПОИСК И ФИЛЬТРЫ -->
+    <div class="card mb-3">
+        <div class="row">
+            <div class="col-md-8">
+                <input id="searchGene" class="form-control" placeholder="🔍 Поиск по названию, гену, локации..." oninput="window.filterGenetics()">
+            </div>
+            <div class="col-md-4">
+                <select id="geneCategoryFilter" class="form-control" onchange="window.filterGenetics()">
+                    <option value="">Все категории</option>
+                    <option value="Метаболические">Метаболические</option>
+                    <option value="Лизосомные">Лизосомные</option>
+                    <option value="Неврологические">Неврологические</option>
+                    <option value="Нервно-мышечные">Нервно-мышечные</option>
+                    <option value="Хромосомные">Хромосомные</option>
+                    <option value="Иммунодефицитные">Иммунодефицитные</option>
+                    <option value="Гематологические">Гематологические</option>
+                    <option value="Скелетные дисплазии">Скелетные дисплазии</option>
+                    <option value="Эндокринные">Эндокринные</option>
+                    <option value="Почечные">Почечные</option>
+                    <option value="Желудочно-кишечные">Желудочно-кишечные</option>
+                    <option value="Сердечно-сосудистые">Сердечно-сосудистые</option>
+                    <option value="Дерматологические">Дерматологические</option>
+                    <option value="Офтальмологические">Офтальмологические</option>
+                    <option value="Митохондриальные">Митохондриальные</option>
+                    <option value="Костные">Костные</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== КАРТОЧКИ ПО ТИПАМ НАРУШЕНИЙ ===== -->
+    <div id="geneticsContainer">
+        ${renderCards(classified.gene, 'gene', 'Генные нарушения', '🧬', '#2563eb')}
+        ${renderCards(classified.chromosomal, 'chromosomal', 'Хромосомные нарушения', '🧩', '#7c3aed')}
+        ${renderCards(classified.genomic, 'genomic', 'Геномные нарушения', '🧫', '#dc2626')}
+    </div>
+    
+    <!-- СТАТИСТИКА -->
+    <div class="card mt-4">
+        <h5>📊 Статистика по типам нарушений</h5>
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <div style="font-size:2rem; color:#2563eb;">${classified.gene.length}</div>
+                <div>Генных нарушений</div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div style="font-size:2rem; color:#7c3aed;">${classified.chromosomal.length}</div>
+                <div>Хромосомных нарушений</div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div style="font-size:2rem; color:#dc2626;">${classified.genomic.length}</div>
+                <div>Геномных нарушений</div>
+            </div>
+        </div>
+        <div class="progress mt-3" style="height:10px;">
+            <div class="progress-bar bg-primary" style="width:${(classified.gene.length/diseases.length*100).toFixed(1)}%"></div>
+            <div class="progress-bar bg-violet" style="width:${(classified.chromosomal.length/diseases.length*100).toFixed(1)}%; background:#7c3aed;"></div>
+            <div class="progress-bar bg-danger" style="width:${(classified.genomic.length/diseases.length*100).toFixed(1)}%"></div>
+        </div>
+        <div class="text-muted small mt-2">Всего заболеваний: ${diseases.length}</div>
+    </div>
+    `;
+}
+
+function setupGenetics() {
+    // Калькулятор риска
+    window.calcRisk = function() {
+        const type = document.getElementById('inheritType')?.value;
+        const f = document.getElementById('fatherStatus')?.value;
+        const m = document.getElementById('motherStatus')?.value;
+        if(!f||!m||!type) return;
+        let risk = 0;
+        let explanation = '';
+        if (type === 'autosomal_recessive') {
+            if (f==='carrier' && m==='carrier') {
+                risk = 25;
+                explanation = 'Оба родителя — носители. 25% детей будут больны, 50% — носители.';
+            } else if ((f==='sick' && m==='carrier') || (f==='carrier' && m==='sick')) {
+                risk = 50;
+                explanation = 'Один родитель болен, второй — носитель. 50% детей будут больны.';
+            } else if (f==='sick' && m==='sick') {
+                risk = 100;
+                explanation = 'Оба родителя больны. Все дети будут больны.';
+            } else {
+                risk = 0;
+                explanation = 'Нет риска. Ребёнок будет здоровым носителем.';
+            }
+        } else if (type === 'autosomal_dominant') {
+            if (f==='sick' || m==='sick') {
+                risk = 50;
+                explanation = 'Один родитель болен. 50% детей унаследуют мутацию.';
+            } else {
+                risk = 0;
+                explanation = 'Оба родителя здоровы. Риска нет.';
+            }
+        } else if (type === 'x_linked') {
+            if (m==='carrier') {
+                risk = 25;
+                explanation = 'Мать — носитель. 25% детей (мальчики) будут больны, 25% (девочки) — носители.';
+            } else if (m==='sick') {
+                risk = 50;
+                explanation = 'Мать больна. 50% сыновей больны, 50% дочерей — носители.';
+            } else {
+                risk = 0;
+                explanation = 'Нет риска.';
+            }
+        }
+        const resultEl = document.getElementById('riskResult');
+        if (resultEl) {
+            resultEl.innerHTML = `
+                <div class="alert alert-info">
+                    <strong>Вероятность: ${risk}%</strong>
+                    <p class="mb-0 small">${explanation}</p>
+                </div>
+            `;
+        }
+    };
+
+    // Фильтрация
+    window.filterGenetics = function() {
+        const q = document.getElementById('searchGene')?.value.toLowerCase() || '';
+        const cat = document.getElementById('geneCategoryFilter')?.value || '';
+        document.querySelectorAll('#geneticsContainer .disease-card').forEach(card => {
+            const text = card.textContent.toLowerCase();
+            const category = card.closest('.col-md-4')?.dataset?.category || '';
+            let show = true;
+            if (q && !text.includes(q)) show = false;
+            if (cat && category !== cat) show = false;
+            const parent = card.closest('.col-md-4');
+            if (parent) parent.style.display = show ? '' : 'none';
+        });
+    };
+
+    // Клик по карточке для показа деталей
+    document.querySelectorAll('#geneticsContainer .disease-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            const details = this.querySelector('.disease-details');
+            if (details) {
+                if (details.style.display === 'none' || details.style.display === '') {
+                    details.style.display = 'block';
+                    this.classList.add('active');
+                } else {
+                    details.style.display = 'none';
+                    this.classList.remove('active');
+                }
+            }
+        });
+    });
+}
             function renderFAQ() {
                 const FAQ = [
                     { q:'Как передать данные врачу?', a:'Нажмите кнопку «Отправить врачу» в правом верхнем углу экрана – откроется защищенная Яндекс.Форма для заполнения. Ваши данные также автоматически дублируются в Google Таблицу, доступ к которой имеет только ваш лечащий врач. Вы можете отправить как текущие показатели, так и архив за выбранный период.' },
