@@ -462,6 +462,7 @@ function computeDecisionResult() {
 // ⚠️ ВАЖНО: замените этот URL на тот, который получите после деплоя вашего скрипта
 const SURVEY_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgpEHcU6I6C6XjG7R9hWGIc5WjSt_AFlcloCJ5xpJ3E6KjAOYs9-FAPtbI7mUA6NyZ/exec';
 
+// ===== ФУНКЦИЯ ОТПРАВКИ АНКЕТ В ОБЛАКО (ПЕРЕМЕЩЕНА СЮДА, ЧТОБЫ БЫЛА ДОСТУПНА В renderSurveys) =====
 // Утилита для отправки анкеты в облачную Google Таблицу
 function syncSurveyToCloud(surveyType, data) {
   // Если профиль ещё не загружен – тихо выходим
