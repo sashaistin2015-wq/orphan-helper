@@ -2045,58 +2045,140 @@ function setupPallcalc() {
             });
         },
 
-        clusterPatient: function() {
-            const fields = {
-                pain: 'clustPain',
-                nutrition: 'clustNutrition',
-                phys_func: 'clustPhysFunc',
-                emo_func: 'clustEmoFunc',
-                soc_func: 'clustSocFunc',
-                role_func: 'clustRoleFunc'
-            };
-            const limits = { pain:[0,10], nutrition:[0,5], phys_func:[0,100], emo_func:[0,100], soc_func:[0,100], role_func:[0,100] };
-            let valid = true;
-            const vals = {};
-            for (const [key, id] of Object.entries(fields)) {
-                const el = document.getElementById(id);
-                if (!el) { valid = false; continue; }
-                const v = parseFloat(el.value);
-                if (isNaN(v) || v < limits[key][0] || v > limits[key][1]) { el.classList.add('invalid'); valid = false; }
-                else { el.classList.remove('invalid'); vals[key] = v; }
-            }
-            if (!valid) {
-                notify('Введите корректные значения для всех полей.', 'error');
-                return;
-            }
+       clusterPatient: function() {
+    console.log('clusterPatient вызван');
 
-            let best = null, minDist = Infinity;
-            for (const [name, cfg] of Object.entries(profiles)) {
-                const c = cfg.center;
-                const dist = Math.hypot(vals.pain - c.боль, vals.nutrition - c.нутр,
-                    vals.phys_func - c.физ, vals.emo_func - c.эмо,
-                    vals.soc_func - c.соц, vals.role_func - c.рол);
-                if (dist < minDist) { minDist = dist; best = name; }
-            }
-            const p = profiles[best];
-            const deltaQoL = 4.87 - 0.41*vals.nutrition - 0.52*vals.pain - 0.09*vals.phys_func;
-            const orMapping = { "Болевой":6.1, "Нутритивный":3.5, "Двигательный":1.4, "Относительно компенсированный":1.0, "Социально-депривированный":2.8 };
-            const orVal = orMapping[best] || 1.0;
+    // 1. Определяем все поля и их допустимые диапазоны
+    const fields = {
+        pain:      { id: 'clustPain',      min: 0, max: 10 },
+        nutrition: { id: 'clustNutrition', min: 0, max: 5 },
+        phys_func: { id: 'clustPhysFunc',  min: 0, max: 100 },
+        emo_func:  { id: 'clustEmoFunc',   min: 0, max: 100 },
+        soc_func:  { id: 'clustSocFunc',   min: 0, max: 100 },
+        role_func: { id: 'clustRoleFunc',  min: 0, max: 100 }
+    };
 
-            window._pallData = window._pallData || {};
-            window._pallData.clustering = { best, deltaQoL, orVal, recs: p.recs, desc: p.desc, center: p.center };
+    // 2. Считываем значения, проверяем каждое
+    let valid = true;
+    const vals = {};
+    for (const [key, cfg] of Object.entries(fields)) {
+        const el = document.getElementById(cfg.id);
+        if (!el) {
+            console.warn('Поле не найдено:', cfg.id);
+            valid = false;
+            continue;
+        }
+        const v = parseFloat(el.value);
+        if (isNaN(v) || v < cfg.min || v > cfg.max) {
+            el.classList.add('invalid');
+            el.style.borderColor = '#ef4444';
+            valid = false;
+            console.warn('Неверное значение для', key, '=', el.value, '(допустимо от', cfg.min, 'до', cfg.max, ')');
+        } else {
+            el.classList.remove('invalid');
+            el.style.borderColor = '';
+            vals[key] = v;
+        }
+    }
 
-            const container = document.getElementById('clustering-result');
-            if (!container) return;
-            container.innerHTML =
-                '<div class="alert alert-primary">' +
-                '<h5>Профиль: «' + best + '»</h5>' +
-                '<p>' + p.desc + '</p>' +
-                '<p><strong>Рекомендации:</strong> ' + p.recs + '</p>' +
-                '<p><strong>Прогнозируемый прирост КЖ (Δ):</strong> ' + deltaQoL.toFixed(2) + ' балла</p>' +
-                '<p><strong>OR выраженного улучшения:</strong> ' + orVal + ' (p<0.05)</p>' +
-                '</div>';
-            this.drawClusterCharts(vals, p.center, best, deltaQoL, orVal);
+    if (!valid) {
+        notify('Все поля должны быть заполнены числами в указанных диапазонах. Проверьте выделенные поля.', 'error');
+        return;
+    }
+
+    // 3. Профили кластеров (эталонные центроиды)
+    const profiles = {
+        "Болевой": {
+            center: { боль: 7.3, нутр: 2.3, физ: 26.1, эмо: 14.0, соц: 24.5, рол: 17.2 },
+            desc: "Ведущий драйвер – боль.",
+            recs: "Обезболивание по ВОЗ, КПТ, обучение семьи."
         },
+        "Нутритивный": {
+            center: { боль: 3.1, нутр: 4.6, физ: 18.2, эмо: 21.4, соц: 26.8, рол: 19.5 },
+            desc: "Высокий нутритивный риск.",
+            recs: "Диетолог, зондовое питание, еженедельный контроль веса."
+        },
+        "Двигательный": {
+            center: { боль: 5.6, нутр: 3.4, физ: 11.5, эмо: 19.0, соц: 16.2, рол: 11.0 },
+            desc: "Тяжёлые двигательные ограничения.",
+            recs: "ЛФК, ТСР, профилактика контрактур."
+        },
+        "Относительно компенсированный": {
+            center: { боль: 2.9, нутр: 2.0, физ: 43.8, эмо: 31.2, соц: 48.5, рол: 42.3 },
+            desc: "Относительно сохранное качество жизни.",
+            recs: "Наблюдение, поддержка."
+        },
+        "Социально-депривированный": {
+            center: { боль: 3.0, нутр: 2.2, физ: 41.2, эмо: 30.8, соц: 18.1, рол: 15.2 },
+            desc: "Изоляция и низкая социализация.",
+            recs: "Психосоциальная реабилитация."
+        }
+    };
+
+    // 4. Находим ближайший профиль по евклидову расстоянию
+    let best = null, minDist = Infinity;
+    for (const [name, cfg] of Object.entries(profiles)) {
+        const c = cfg.center;
+        const dist = Math.hypot(
+            vals.pain - c.боль,
+            vals.nutrition - c.нутр,
+            vals.phys_func - c.физ,
+            vals.emo_func - c.эмо,
+            vals.soc_func - c.соц,
+            vals.role_func - c.рол
+        );
+        if (dist < minDist) {
+            minDist = dist;
+            best = name;
+        }
+    }
+
+    const p = profiles[best];
+
+    // 5. Расчёт прогнозируемого прироста качества жизни (Δ) и отношения шансов (OR)
+    const deltaQoL = 4.87 - 0.41 * vals.nutrition - 0.52 * vals.pain - 0.09 * vals.phys_func;
+    const orMapping = {
+        "Болевой": 6.1,
+        "Нутритивный": 3.5,
+        "Двигательный": 1.4,
+        "Относительно компенсированный": 1.0,
+        "Социально-депривированный": 2.8
+    };
+    const orVal = orMapping[best] || 1.0;
+
+    // 6. Сохраняем результат в глобальный объект для формирования отчёта
+    window._pallData = window._pallData || {};
+    window._pallData.clustering = {
+        best: best,
+        deltaQoL: deltaQoL,
+        orVal: orVal,
+        recs: p.recs,
+        desc: p.desc,
+        center: p.center
+    };
+
+    // 7. Отображаем результат
+    const container = document.getElementById('clustering-result');
+    if (!container) {
+        console.error('Элемент #clustering-result не найден');
+        notify('Ошибка отображения результата', 'error');
+        return;
+    }
+    container.innerHTML = `
+        <div class="alert alert-primary">
+            <h5>Профиль: «${best}»</h5>
+            <p>${p.desc}</p>
+            <p><strong>Рекомендации:</strong> ${p.recs}</p>
+            <p><strong>Прогнозируемый прирост КЖ (Δ):</strong> ${deltaQoL.toFixed(2)} балла</p>
+            <p><strong>OR выраженного улучшения:</strong> ${orVal} (p<0.05)</p>
+        </div>
+    `;
+
+    // 8. Отрисовываем графики (если библиотека Chart.js доступна)
+    this.drawClusterCharts(vals, p.center, best, deltaQoL, orVal);
+
+    notify('Кластеризация выполнена успешно.', 'info');
+}
 
         drawClusterCharts: function(patient, center, profileName, deltaQoL, orVal) {
             const radarDiv = document.getElementById('radar-container');
@@ -2218,40 +2300,51 @@ function setupPallcalc() {
 
        // ======= НОВЫЙ МЕТОД ЗАГРУЗКИ ИЗ АНКЕТ (С ОБЛАКОМ) =======
 loadFromSurveys: function(target) {
+    console.log('loadFromSurveys вызван для:', target);
     // 1. Сначала пробуем загрузить из локального хранилища
     const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
     if (local.pedsql || local.papascale) {
+        console.log('Найдены локальные данные анкет:', local);
         this.applySurveyData(target, local.pedsql, local.papascale);
         return;
     }
 
     // 2. Если локально пусто – запрашиваем из облака
     const patientId = prompt('Введите ID пациента, чьи анкеты загрузить:');
-    if (!patientId) return;
+    if (!patientId) {
+        notify('ID пациента не введён.', 'error');
+        return;
+    }
 
-    // Показываем индикатор загрузки
     notify('Загрузка анкет из облака...', 'info');
+    const url = SURVEY_SCRIPT_URL + '?action=getSurvey&patientId=' + encodeURIComponent(patientId);
+    console.log('Запрос к облаку:', url);
 
-    fetch(SURVEY_SCRIPT_URL + '?action=getSurvey&patientId=' + encodeURIComponent(patientId))
-        .then(function(response) { 
-            return response.json(); 
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Сеть ответила с ошибкой ' + response.status);
+            return response.json();
         })
-        .then(function(result) {
+        .then(result => {
+            console.log('Ответ облака:', result);
             if (result.success && result.data) {
                 localStorage.setItem('surveyData', JSON.stringify(result.data));
                 this.applySurveyData(target, result.data.pedsql, result.data.papascale);
+                notify('Данные анкет загружены из облака.', 'info');
             } else {
                 notify('Анкеты для этого пациента не найдены в облаке.', 'error');
             }
-        }.bind(this))
-        .catch(function(e) {
-            console.error(e);
-            notify('Ошибка загрузки из облака. Проверьте интернет и ID.', 'error');
+        })
+        .catch(e => {
+            console.error('Ошибка загрузки из облака:', e);
+            notify('Ошибка загрузки из облака: ' + e.message, 'error');
         });
 },
 
+
         // Вспомогательная функция: подстановка значений анкет в поля калькулятора
 applySurveyData: function(target, pedsql, papascale) {
+    console.log('applySurveyData, target:', target, 'pedsql:', pedsql, 'papascale:', papascale);
     if (target === 'efficiency') {
         if (pedsql && pedsql.total !== undefined) {
             var qualityEl = document.getElementById('effPatQuality');
@@ -2287,10 +2380,9 @@ applySurveyData: function(target, pedsql, papascale) {
         } else {
             var painEl = document.getElementById('clustPain');
             if (painEl) painEl.value = 3;
-            notify('Данные анкет загружены в поля кластеризации.', 'info');
         }
+        notify('Данные анкет загружены в поля кластеризации.', 'info');
     }
-}
     };
 
     window.switchPallcalcTab = function(tab) {
