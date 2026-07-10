@@ -351,7 +351,7 @@ function renderDecisionTree() {
     </div>
     `;
 }
-function resetDecisionTree() { decisionState = { step: 0, answers: {} }; showDecisionStep(); }
+window.resetDecisionTree = function() { decisionState = { step: 0, answers: {} }; showDecisionStep(); }
 
 function showDecisionStep() {
     const step = decisionState.step;
