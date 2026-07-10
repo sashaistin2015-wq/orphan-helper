@@ -763,8 +763,33 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
 
             async function sendToGoogleSheet(data) { try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' }, mode: 'no-cors' }); } catch(e) {} }
             function saveLocally(type, data) { const today = new Date().toISOString().split('T')[0]; const existing = DB.getData(type); existing.push({ date: today, ...data, _version: nextVersion(), _deviceId: deviceId, _timestamp: new Date().toISOString() }); DB.saveData(type, existing); }
-            function registerPatientIfNeeded(patientName) { const all = DB.getAllPatients(); if (!all[patientName]) { all[patientName] = { fullName: patientName, firstSeen: new Date().toLocaleDateString('ru-RU'), birthDate: '', age: '', diagnosis: '', lastUpdate: new Date().toLocaleString('ru-RU'), diaryCount:0, palliativeCount:0, medsCount:0, nutritionCount:0, labCount:0, timelineCount:0 }; DB.saveAllPatients(all); } return all[patientName]; }
-            function updatePatientStats(patientName, field) { const all = DB.getAllPatients(); if (all[patientName]) { all[patientName][field] = (all[patientName][field]||0) + 1; all[patientName].lastUpdate = new Date().toLocaleString('ru-RU'); DB.saveAllPatients(all); } }
+function registerPatientIfNeeded(patientName, patientId) {
+  const all = DB.getAllPatients();
+  if (!all[patientName]) {
+    all[patientName] = {
+      fullName: patientName,
+      patientId: patientId || '',
+      firstSeen: new Date().toLocaleDateString('ru-RU'),
+      birthDate: '',
+      age: '',
+      diagnosis: '',
+      lastUpdate: new Date().toLocaleString('ru-RU'),
+      diaryCount: 0,
+      palliativeCount: 0,
+      medsCount: 0,
+      nutritionCount: 0,
+      labCount: 0,
+      timelineCount: 0
+    };
+  } else {
+    // Если запись уже есть, но ID отсутствует – обновляем
+    if (!all[patientName].patientId && patientId) {
+      all[patientName].patientId = patientId;
+    }
+  }
+  DB.saveAllPatients(all);
+  return all[patientName];
+}            function updatePatientStats(patientName, field) { const all = DB.getAllPatients(); if (all[patientName]) { all[patientName][field] = (all[patientName][field]||0) + 1; all[patientName].lastUpdate = new Date().toLocaleString('ru-RU'); DB.saveAllPatients(all); } }
 
             window.App = { navigate: page => { location.hash = '#' + page; }, logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); profile = null; updateNav(); App.navigate('/'); } };
             function toggleTheme() { document.body.classList.toggle('dark-theme'); darkTheme = !darkTheme; localStorage.setItem('darkTheme', darkTheme); }
@@ -905,32 +930,34 @@ function setupLogin() {
   document.getElementById('doctorBtn')?.addEventListener('click', () => {
     const n = document.getElementById('docName').value.trim();
     if (!n) return notify('Введите ФИО', 'error');
-    if (document.getElementById('docCode').value !== '123doc')
-      return notify('Неверный код', 'error');
-    loginAs(n, 'doctor', '');
+    if (document.getElementById('docCode').value !== '123doc') return notify('Неверный код', 'error');
+    loginAs(n, 'doctor', '', '');
   });
 
   document.getElementById('patientBtn')?.addEventListener('click', () => {
     const n = document.getElementById('patName').value.trim();
-if (!n) return notify('Введите ФИО', 'error');
-if (document.getElementById('patCode').value !== 'pat2026') return notify('Неверный код', 'error');
+    if (!n) return notify('Введите ФИО', 'error');
+    if (document.getElementById('patCode').value !== 'pat2026') return notify('Неверный код', 'error');
 
-let patientId = document.getElementById('patPatientId')?.value.trim() || '';
-if (!patientId) {
-  patientId = 'pat_' + Math.random().toString(36).substr(2, 8);
-  notify('Вам присвоен временный ID: ' + patientId + '. Сообщите его врачу.', 'info');
-}
+    // ⬇️ ОБЯЗАТЕЛЬНО объявляем diagnosis
+    const diagnosis = document.getElementById('patDiagnosis')?.value || '';
 
-loginAs(n, 'parent', diagnosis, patientId);
-registerPatientIfNeeded(n, patientId);
+    let patientId = document.getElementById('patPatientId')?.value.trim() || '';
+    if (!patientId) {
+      patientId = 'pat_' + Math.random().toString(36).substr(2, 8);
+      notify('Вам присвоен временный ID: ' + patientId + '. Сообщите его врачу.', 'info');
+    }
+
+    loginAs(n, 'parent', diagnosis, patientId);
+    registerPatientIfNeeded(n, patientId);   // передаём ID
   });
-}            
-function loginAs(name, role, diagnosis = '', patientId = '') {
+}         
+function loginAs(name, role, diagnosis = "", patientId = "") {
   profile = {
     fullName: name,
     role: role,
     diagnosis: diagnosis,
-    patientId: patientId || ''   // сохраняем ID
+    patientId: patientId || ''
   };
   DB.setProfile(profile);
   updateNav();
