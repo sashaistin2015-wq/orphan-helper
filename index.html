@@ -912,20 +912,17 @@ function setupLogin() {
 
   document.getElementById('patientBtn')?.addEventListener('click', () => {
     const n = document.getElementById('patName').value.trim();
-    if (!n) return notify('Введите ФИО', 'error');
-    if (document.getElementById('patCode').value !== 'pat2026')
-      return notify('Неверный код', 'error');
+if (!n) return notify('Введите ФИО', 'error');
+if (document.getElementById('patCode').value !== 'pat2026') return notify('Неверный код', 'error');
 
-    const d = document.getElementById('patDiagnosis')?.value || '';
-    // Берём ID пациента из нового поля
-    let patientId = document.getElementById('patPatientId')?.value.trim() || '';
-    // Если не указан – генерируем временный
-    if (!patientId) {
-      patientId = 'pat_' + Math.random().toString(36).substr(2, 8);
-      notify('Вам присвоен временный ID: ' + patientId + '. Сообщите его врачу.', 'info');
-    }
-    loginAs(n, 'parent', d, patientId);
-    registerPatientIfNeeded(n);
+let patientId = document.getElementById('patPatientId')?.value.trim() || '';
+if (!patientId) {
+  patientId = 'pat_' + Math.random().toString(36).substr(2, 8);
+  notify('Вам присвоен временный ID: ' + patientId + '. Сообщите его врачу.', 'info');
+}
+
+loginAs(n, 'parent', diagnosis, patientId);
+registerPatientIfNeeded(n, patientId);
   });
 }            
 function loginAs(name, role, diagnosis = '', patientId = '') {
