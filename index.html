@@ -1152,12 +1152,38 @@ if (hasSymptoms) {
                 const myPatients = (typeof DB.getDoctorPatients === 'function') ? DB.getDoctorPatients() : [];
                 const allPatients = DB.getAllPatients();
                 let list = myPatients.map(name => {
-                    const p = allPatients[name] || { diaryCount:0, palliativeCount:0, medsCount:0, nutritionCount:0, labCount:0, timelineCount:0, lastUpdate:'—' };
-                    return `<div class="card mb-2 d-flex justify-content-between align-items-center"><span><strong>${esc(name)}</strong></span><div><span class="badge bg-primary me-1">📋${p.diaryCount||0}</span><span class="badge bg-danger me-1">❤️${p.palliativeCount||0}</span><span class="badge bg-info me-1">💊${p.medsCount||0}</span><span class="badge bg-success me-1">🍽️${p.nutritionCount||0}</span><span class="badge bg-warning me-1">🔬${p.labCount||0}</span><span class="badge bg-secondary me-1">📅${p.timelineCount||0}</span><button class="btn btn-sm btn-danger ms-2" onclick="removeDoctorPatient('${name}')">🗑️</button></div></div>`;
-                }).join('');
+  const p = allPatients[name] || { 
+    diaryCount:0, palliativeCount:0, medsCount:0,
+    nutritionCount:0, labCount:0, timelineCount:0,
+    lastUpdate: ' ', patientId: '' 
+  };
+  return `<div class="card mb-2 d-flex justify-content-between align-items-center">
+    <span>
+      <strong>${esc(name)}</strong>
+      <span class="badge bg-secondary">ID: ${esc(p.patientId || 'не указан')}</span>
+    </span>
+    <div>
+      <span class="badge bg-primary me-1">📋${p.diaryCount||0}</span>
+      <span class="badge bg-danger me-1">❤️${p.palliativeCount||0}</span>
+      <span class="badge bg-info me-1">💊${p.medsCount||0}</span>
+      <span class="badge bg-success me-1">🍽️${p.nutritionCount||0}</span>
+      <span class="badge bg-warning me-1">🔬${p.labCount||0}</span>
+      <span class="badge bg-secondary me-1">📅${p.timelineCount||0}</span>
+      <button class="btn btn-sm btn-danger ms-2" onclick="removeDoctorPatient('${name}')">🗑️</button>
+    </div>
+  </div>`;
+}).join('');
                 let available = Object.keys(allPatients).filter(name => !myPatients.includes(name));
-                let availList = available.map(name => `<div class="card mb-2 d-flex justify-content-between align-items-center"><span>${esc(name)}</span><button class="btn btn-sm btn-primary" onclick="addDoctorPatient('${name}')">➕ Добавить</button></div>`).join('');
-                return `<h2>👥 Мои пациенты</h2><div class="card mb-3"><form id="addPatientForm"><input name="name" class="form-control" placeholder="ФИО пациента"><button type="submit" class="btn btn-primary w-100 mt-2">➕ Добавить вручную</button></form></div><h5>Добавленные</h5>${list || '<p class="text-muted">Нет добавленных пациентов</p>'}<h5 class="mt-4">Доступные пациенты</h5>${availList || '<p class="text-muted">Нет новых пациентов</p>'}`;
+let availList = available.map(name => {
+  const p = allPatients[name] || { patientId: '' };
+  return `<div class="card mb-2 d-flex justify-content-between align-items-center">
+    <span>
+      ${esc(name)}
+      <span class="badge bg-secondary">ID: ${esc(p.patientId || 'не указан')}</span>
+    </span>
+    <button class="btn btn-sm btn-primary" onclick="addDoctorPatient('${name}')">➕ Добавить</button>
+  </div>`;
+}).join('');                return `<h2>👥 Мои пациенты</h2><div class="card mb-3"><form id="addPatientForm"><input name="name" class="form-control" placeholder="ФИО пациента"><button type="submit" class="btn btn-primary w-100 mt-2">➕ Добавить вручную</button></form></div><h5>Добавленные</h5>${list || '<p class="text-muted">Нет добавленных пациентов</p>'}<h5 class="mt-4">Доступные пациенты</h5>${availList || '<p class="text-muted">Нет новых пациентов</p>'}`;
             }
             window.addDoctorPatient = function(name) { const my = (typeof DB.getDoctorPatients === 'function') ? DB.getDoctorPatients() : []; if (!my.includes(name)) { my.push(name); DB.saveDoctorPatients(my); render(); } };
             window.removeDoctorPatient = function(name) { let my = (typeof DB.getDoctorPatients === 'function') ? DB.getDoctorPatients() : []; my = my.filter(p => p !== name); DB.saveDoctorPatients(my); render(); };
