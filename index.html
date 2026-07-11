@@ -2140,14 +2140,31 @@ function loginAs(name, role, diagnosis = '', patientId = '') {
                 input.value = '';
             };
 
-            function generateFormHtml(fields) {
-                return fields.map(f => {
-                    if (f.type === 'range') return `<label>${f.label}</label><input type="range" name="${f.name}" class="form-range" min="${f.min||0}" max="${f.max||10}" value="${Math.floor((f.min||0)+(f.max||10))/2}">`;
-                    else if (f.type === 'textarea') return `<textarea name="${f.name}" class="form-control" rows="2" placeholder="${f.placeholder||''}"></textarea>`;
-                    else if (f.type === 'date') return `<input type="date" name="${f.name}" class="form-control" value="${new Date().toISOString().split('T')[0]}">`;
-                    else return `<input type="${f.type}" name="${f.name}" class="form-control" placeholder="${f.placeholder||f.label}" ${f.step ? `step="${f.step}"` : ''} ${f.min!==undefined ? `min="${f.min}"` : ''} ${f.max!==undefined ? `max="${f.max}"` : ''}>`;
-                }).join('');
-            }
+           function generateFormHtml(fields) {
+    return fields.map(f => {
+        if (f.type === 'range') {
+            // Вычисляем начальное значение (середина диапазона)
+            const defaultVal = Math.round((f.min + f.max) / 2);
+            return `<label>${f.label}</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="range" name="${f.name}" class="form-range" 
+                               min="${f.min||0}" max="${f.max||10}" value="${defaultVal}"
+                               oninput="document.getElementById('${f.name}_val').textContent=this.value">
+                        <span id="${f.name}_val" class="badge bg-primary" style="min-width:2.5rem;">${defaultVal}</span>
+                    </div>`;
+        } else if (f.type === 'textarea') {
+            return `<textarea name="${f.name}" class="form-control" rows="2" placeholder="${f.placeholder||''}"></textarea>`;
+        } else if (f.type === 'date') {
+            return `<input type="date" name="${f.name}" class="form-control" value="${new Date().toISOString().split('T')[0]}">`;
+        } else {
+            return `<input type="${f.type}" name="${f.name}" class="form-control" 
+                           placeholder="${f.placeholder||f.label}" 
+                           ${f.step ? `step="${f.step}"` : ''} 
+                           ${f.min!==undefined ? `min="${f.min}"` : ''} 
+                           ${f.max!==undefined ? `max="${f.max}"` : ''}>`;
+        }
+    }).join('');
+}
 
             async function renderDiary() {
                 const today = new Date().toISOString().split('T')[0];
