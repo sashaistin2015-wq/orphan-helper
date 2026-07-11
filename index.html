@@ -1089,167 +1089,399 @@ function getAffectedSystems(diseaseName) {
   return Array.from(systems);
 }
 
-// ======= ГЕНЕРАЦИЯ SVG-МАКЕТА РЕБЁНКА (ЧЕЛОВЕЧНЫЙ ВАРИАНТ) =======
-function renderChildSVG(affectedSystems) {
-  // Цветовая функция: поражённая система — мягкий красный, здоровая — светло-серая
-  const color = (sys) => affectedSystems.includes(sys) ? '#e57373' : '#eceff1';
-  const strokeColor = (sys) => affectedSystems.includes(sys) ? '#c62828' : '#90a4ae';
-  const textColor = (sys) => affectedSystems.includes(sys) ? '#fff' : '#37474f';
+// ======= ГЕНЕРАЦИЯ CANVAS-МАКЕТА ЧЕЛОВЕКА С ПОДСВЕТКОЙ СИСТЕМ =======
+function renderChildCanvas(affectedSystems) {
+  // Создаём canvas и сразу рисуем на нём (можно до вставки в DOM)
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 900;
+  canvas.style.display = 'block';
+  canvas.style.margin = '0 auto';
+  canvas.style.background = 'transparent'; // прозрачный фон
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 600, 900);
+
+  // Функция определения цвета для системы
   const isAffected = (sys) => affectedSystems.includes(sys);
+  const fillColor = (sys) => isAffected(sys) ? '#e57373' : '#f5f5f5';
+  const strokeColor = (sys) => isAffected(sys) ? '#b71c1c' : '#212121';
+  const lineWidth = (sys) => isAffected(sys) ? 3 : 2;
 
-  return `
-  <div class="card mt-4" style="background: var(--surface); border: 1px solid var(--border); max-width: 300px; margin-left: auto; margin-right: auto;">
-    <h5 style="font-size:0.95rem; margin-bottom:0.5rem;">👶 Поражённые системы</h5>
-    <div style="padding:8px;">
-      <svg viewBox="0 0 360 500" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; background: transparent;">
-        <!-- ===== ГОЛОВА ===== -->
-        <!-- Волосы (чёл + затылок) -->
-        <path d="M 140 40 Q 180 15 220 40 Q 220 20 200 15 Q 180 10 160 15 Q 140 20 140 40" fill="#8d6e63" stroke="#6d4c41" stroke-width="1.5"/>
-        <path d="M 140 40 Q 180 10 220 40" fill="none" stroke="#6d4c41" stroke-width="2"/>
+  // ========== 1. Рисуем органы (залитые области) ==========
+  // Мозг (нервная система)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(290, 120);
+  ctx.quadraticCurveTo(260, 120, 260, 160);
+  ctx.quadraticCurveTo(260, 190, 290, 170);
+  ctx.quadraticCurveTo(320, 190, 320, 160);
+  ctx.quadraticCurveTo(320, 120, 290, 120);
+  ctx.closePath();
+  ctx.fillStyle = fillColor('Нервная');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Нервная');
+  ctx.lineWidth = lineWidth('Нервная');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Лицо (овал головы) -->
-        <ellipse cx="180" cy="70" rx="48" ry="52" fill="#fff3e0" stroke="#bcaaa4" stroke-width="2"/>
+  // Сердце (сердечно-сосудистая)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(300, 310);
+  ctx.bezierCurveTo(290, 290, 270, 310, 270, 330);
+  ctx.bezierCurveTo(270, 360, 300, 380, 300, 380);
+  ctx.bezierCurveTo(300, 380, 330, 360, 330, 330);
+  ctx.bezierCurveTo(330, 310, 310, 290, 300, 310);
+  ctx.closePath();
+  ctx.fillStyle = fillColor('Сердечно-сосудистая');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Сердечно-сосудистая');
+  ctx.lineWidth = lineWidth('Сердечно-сосудистая');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Глаза -->
-        <circle cx="160" cy="60" r="9" fill="#fff" stroke="#5d4037" stroke-width="1.2"/>
-        <circle cx="200" cy="60" r="9" fill="#fff" stroke="#5d4037" stroke-width="1.2"/>
-        <circle cx="162" cy="60" r="4.5" fill="#3e2723"/>
-        <circle cx="202" cy="60" r="4.5" fill="#3e2723"/>
-        <!-- Блики в глазах -->
-        <circle cx="164" cy="58" r="1.5" fill="#fff"/>
-        <circle cx="204" cy="58" r="1.5" fill="#fff"/>
-        <!-- Реснички -->
-        <path d="M 151 56 L 147 53" stroke="#5d4037" stroke-width="1.2" stroke-linecap="round"/>
-        <path d="M 209 56 L 213 53" stroke="#5d4037" stroke-width="1.2" stroke-linecap="round"/>
+  // Левое лёгкое (дыхательная)
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(240, 320, 25, 45, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor('Дыхательная');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Дыхательная');
+  ctx.lineWidth = lineWidth('Дыхательная');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Румянец -->
-        <circle cx="145" cy="72" r="7" fill="#ffab91" opacity="0.6"/>
-        <circle cx="215" cy="72" r="7" fill="#ffab91" opacity="0.6"/>
+  // Правое лёгкое
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(360, 320, 25, 45, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor('Дыхательная');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Дыхательная');
+  ctx.lineWidth = lineWidth('Дыхательная');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Нос -->
-        <path d="M 178 68 Q 180 78 182 68" stroke="#bcaaa4" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  // Печень (ЖКТ / метаболическая)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(340, 360);
+  ctx.quadraticCurveTo(380, 360, 390, 400);
+  ctx.quadraticCurveTo(395, 440, 360, 460);
+  ctx.quadraticCurveTo(330, 460, 320, 420);
+  ctx.quadraticCurveTo(310, 380, 340, 360);
+  ctx.closePath();
+  ctx.fillStyle = fillColor('ЖКТ') === '#e57373' ? '#e57373' : fillColor('Метаболическая');
+  ctx.fill();
+  ctx.strokeStyle = isAffected('ЖКТ') || isAffected('Метаболическая') ? '#b71c1c' : '#212121';
+  ctx.lineWidth = isAffected('ЖКТ') || isAffected('Метаболическая') ? 3 : 2;
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Рот (улыбка) -->
-        <path d="M 170 84 Q 180 92 190 84" stroke="#5d4037" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  // Желудок (ЖКТ)
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(280, 390, 22, 30, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor('ЖКТ');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('ЖКТ');
+  ctx.lineWidth = lineWidth('ЖКТ');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Уши (маленькие) -->
-        <ellipse cx="132" cy="72" rx="8" ry="13" fill="#fff3e0" stroke="#bcaaa4" stroke-width="1.5"/>
-        <ellipse cx="228" cy="72" rx="8" ry="13" fill="#fff3e0" stroke="#bcaaa4" stroke-width="1.5"/>
+  // Кишечник (ЖКТ) — упрощённая петля
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(270, 440);
+  ctx.bezierCurveTo(260, 460, 280, 480, 300, 480);
+  ctx.bezierCurveTo(320, 480, 340, 460, 330, 440);
+  ctx.bezierCurveTo(320, 430, 300, 450, 290, 460);
+  ctx.fillStyle = fillColor('ЖКТ');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('ЖКТ');
+  ctx.lineWidth = lineWidth('ЖКТ');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Мозг внутри головы (полупрозрачный, если нервная) -->
-        <path d="M 155 45 Q 180 25 205 45 Q 210 65 195 80 Q 180 84 165 80 Q 150 65 155 45"
-              fill="${isAffected('Нервная') ? '#ef9a9a' : '#e0e0e0'}" stroke="${strokeColor('Нервная')}" stroke-width="1.5" opacity="0.7"/>
+  // Селезёнка (иммунная / кроветворная)
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(230, 370, 12, 20, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor('Иммунная') === '#e57373' ? '#e57373' : fillColor('Кроветворная');
+  ctx.fill();
+  ctx.strokeStyle = isAffected('Иммунная') || isAffected('Кроветворная') ? '#b71c1c' : '#212121';
+  ctx.lineWidth = isAffected('Иммунная') || isAffected('Кроветворная') ? 3 : 2;
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- ===== ШЕЯ ===== -->
-        <rect x="167" y="116" width="26" height="15" rx="6" fill="#fff3e0" stroke="#bcaaa4" stroke-width="1.5"/>
+  // Почка левая (мочевыделительная)
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(250, 460, 12, 18, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor('Мочевыделительная');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Мочевыделительная');
+  ctx.lineWidth = lineWidth('Мочевыделительная');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- ===== ТУЛОВИЩЕ (овальное) ===== -->
-        <path d="M 125 138 Q 180 128 235 138 L 235 240 Q 180 258 125 240 Z"
-              fill="${isAffected('Сердечно-сосудистая') || isAffected('Дыхательная') ? '#ffcdd2' : '#f5f5f5'}"
-              stroke="#bdbdbd" stroke-width="2"/>
+  // Почка правая
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(350, 460, 12, 18, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor('Мочевыделительная');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Мочевыделительная');
+  ctx.lineWidth = lineWidth('Мочевыделительная');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Сердце -->
-        <path d="M 170 155 L 180 143 L 190 155 L 180 168 Z"
-              fill="${isAffected('Сердечно-сосудистая') ? '#e57373' : '#e0e0e0'}"
-              stroke="${strokeColor('Сердечно-сосудистая')}" stroke-width="1.5" stroke-linejoin="round"/>
-        <!-- Маленький символ аорты -->
-        <circle cx="180" cy="142" r="3" fill="${isAffected('Сердечно-сосудистая') ? '#e57373' : '#b0bec5'}"/>
+  // Поджелудочная (эндокринная)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(270, 410);
+  ctx.quadraticCurveTo(300, 400, 330, 410);
+  ctx.quadraticCurveTo(330, 420, 300, 425);
+  ctx.quadraticCurveTo(270, 420, 270, 410);
+  ctx.closePath();
+  ctx.fillStyle = fillColor('Эндокринная');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Эндокринная');
+  ctx.lineWidth = lineWidth('Эндокринная');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Лёгкие -->
-        <ellipse cx="148" cy="175" rx="18" ry="28"
-                 fill="${isAffected('Дыхательная') ? '#e57373' : '#e0e0e0'}"
-                 stroke="${strokeColor('Дыхательная')}" stroke-width="1.5"/>
-        <ellipse cx="212" cy="175" rx="18" ry="28"
-                 fill="${isAffected('Дыхательная') ? '#e57373' : '#e0e0e0'}"
-                 stroke="${strokeColor('Дыхательная')}" stroke-width="1.5"/>
+  // Мочевой пузырь
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(300, 520, 18, 12, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor('Мочевыделительная');
+  ctx.fill();
+  ctx.strokeStyle = strokeColor('Мочевыделительная');
+  ctx.lineWidth = lineWidth('Мочевыделительная');
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Печень -->
-        <path d="M 200 190 Q 220 185 225 205 Q 220 225 200 220 Q 190 215 200 190"
-              fill="${isAffected('ЖКТ') || isAffected('Метаболическая') ? '#e57373' : '#e0e0e0'}"
-              stroke="${strokeColor('ЖКТ')}" stroke-width="1.5"/>
+  // ========== 2. Рисуем контур человека (поверх органов) ==========
+  ctx.save();
+  ctx.strokeStyle = '#212121';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
 
-        <!-- Желудок -->
-        <ellipse cx="170" cy="205" rx="15" ry="10"
-                 fill="${isAffected('ЖКТ') ? '#e57373' : '#e0e0e0'}"
-                 stroke="${strokeColor('ЖКТ')}" stroke-width="1.5"/>
+  // Голова
+  ctx.moveTo(290, 100);
+  ctx.bezierCurveTo(270, 120, 270, 190, 280, 230);
 
-        <!-- Кишечник (абстрактная петля) -->
-        <path d="M 155 218 Q 140 228 155 238 Q 170 246 185 238 Q 198 228 185 220"
-              fill="${isAffected('ЖКТ') ? '#e57373' : '#e0e0e0'}"
-              stroke="${strokeColor('ЖКТ')}" stroke-width="1.5"/>
+  // Левая сторона
+  ctx.lineTo(250, 250);
+  ctx.lineTo(170, 370);
+  ctx.lineTo(120, 510);
+  ctx.lineTo(80, 520);
 
-        <!-- Селезёнка -->
-        <ellipse cx="132" cy="200" rx="8" ry="14"
-                 fill="${isAffected('Иммунная') || isAffected('Кроветворная') ? '#e57373' : '#e0e0e0'}"
-                 stroke="${strokeColor('Иммунная')}" stroke-width="1.5"/>
+  // Пальцы левой руки
+  ctx.moveTo(75, 535);
+  ctx.lineTo(80, 520);
+  ctx.moveTo(90, 525);
+  ctx.lineTo(85, 545);
+  ctx.moveTo(105, 520);
+  ctx.lineTo(100, 540);
 
-        <!-- Почки -->
-        <ellipse cx="138" cy="220" rx="7" ry="11"
-                 fill="${isAffected('Мочевыделительная') ? '#e57373' : '#e0e0e0'}"
-                 stroke="${strokeColor('Мочевыделительная')}" stroke-width="1.5"/>
-        <ellipse cx="222" cy="220" rx="7" ry="11"
-                 fill="${isAffected('Мочевыделительная') ? '#e57373' : '#e0e0e0'}"
-                 stroke="${strokeColor('Мочевыделительная')}" stroke-width="1.5"/>
+  // Внутренняя левая рука
+  ctx.moveTo(120, 510);
+  ctx.lineTo(190, 420);
+  ctx.lineTo(240, 280);
 
-        <!-- Мочевой пузырь -->
-        <ellipse cx="180" cy="248" rx="11" ry="8"
-                 fill="${isAffected('Мочевыделительная') ? '#e57373' : '#e0e0e0'}"
-                 stroke="${strokeColor('Мочевыделительная')}" stroke-width="1.5"/>
+  // Левое бедро, нога, ступня
+  ctx.lineTo(210, 380);
+  ctx.lineTo(220, 540);
+  ctx.lineTo(210, 780);
+  ctx.lineTo(190, 830);
+  ctx.lineTo(180, 850);
+  ctx.lineTo(200, 855);
+  ctx.lineTo(225, 845);
+  ctx.lineTo(230, 810);
 
-        <!-- Поджелудочная -->
-        <path d="M 150 198 L 192 196 L 192 202 L 150 204 Z"
-              fill="${isAffected('Эндокринная') ? '#e57373' : '#e0e0e0'}"
-              stroke="${strokeColor('Эндокринная')}" stroke-width="1"/>
+  // Пах
+  ctx.lineTo(260, 680);
+  ctx.lineTo(300, 660);
+  ctx.lineTo(335, 680);
 
-        <!-- ===== РУКИ (с локтями) ===== -->
-        <!-- Левая рука -->
-        <line x1="120" y1="160" x2="80" y2="210" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="9" stroke-linecap="round"/>
-        <circle cx="80" cy="210" r="5" fill="#bcaaa4" stroke="#8d6e63" stroke-width="1"/>
-        <line x1="80" y1="210" x2="55" y2="265" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="7" stroke-linecap="round"/>
-        <circle cx="55" cy="265" r="7" fill="#fff3e0" stroke="#bcaaa4" stroke-width="1.5"/> <!-- кисть -->
+  // Правая нога
+  ctx.lineTo(365, 810);
+  ctx.lineTo(370, 845);
+  ctx.lineTo(395, 855);
+  ctx.lineTo(415, 850);
+  ctx.lineTo(395, 830);
+  ctx.lineTo(380, 780);
+  ctx.lineTo(380, 540);
+  ctx.lineTo(390, 380);
 
-        <!-- Правая рука -->
-        <line x1="240" y1="160" x2="280" y2="210" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="9" stroke-linecap="round"/>
-        <circle cx="280" cy="210" r="5" fill="#bcaaa4" stroke="#8d6e63" stroke-width="1"/>
-        <line x1="280" y1="210" x2="305" y2="265" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="7" stroke-linecap="round"/>
-        <circle cx="305" cy="265" r="7" fill="#fff3e0" stroke="#bcaaa4" stroke-width="1.5"/> <!-- кисть -->
+  // Правая рука
+  ctx.lineTo(360, 280);
+  ctx.lineTo(410, 420);
+  ctx.lineTo(480, 510);
 
-        <!-- ===== НОГИ (с коленями) ===== -->
-        <!-- Левая нога -->
-        <line x1="145" y1="246" x2="125" y2="320" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="10" stroke-linecap="round"/>
-        <circle cx="125" cy="320" r="5" fill="#bcaaa4" stroke="#8d6e63" stroke-width="1"/>
-        <line x1="125" y1="320" x2="105" y2="405" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="8" stroke-linecap="round"/>
-        <ellipse cx="95" cy="415" rx="16" ry="7" fill="#fff3e0" stroke="#bcaaa4" stroke-width="1.5"/> <!-- стопа -->
+  // Пальцы правой руки
+  ctx.moveTo(480, 510);
+  ctx.lineTo(475, 530);
+  ctx.moveTo(495, 520);
+  ctx.lineTo(490, 540);
+  ctx.moveTo(510, 525);
+  ctx.lineTo(505, 545);
 
-        <!-- Правая нога -->
-        <line x1="215" y1="246" x2="235" y2="320" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="10" stroke-linecap="round"/>
-        <circle cx="235" cy="320" r="5" fill="#bcaaa4" stroke="#8d6e63" stroke-width="1"/>
-        <line x1="235" y1="320" x2="255" y2="405" stroke="${isAffected('Костно-мышечная') ? '#e57373' : '#d7ccc8'}" stroke-width="8" stroke-linecap="round"/>
-        <ellipse cx="265" cy="415" rx="16" ry="7" fill="#fff3e0" stroke="#bcaaa4" stroke-width="1.5"/> <!-- стопа -->
+  // Завершение правой руки и шея
+  ctx.moveTo(480, 510);
+  ctx.lineTo(430, 370);
+  ctx.lineTo(350, 250);
+  ctx.lineTo(320, 230);
+  ctx.bezierCurveTo(330, 190, 330, 120, 290, 100);
 
-        <!-- ===== КОЖА (контур) ===== -->
-        <path d="M 125 138 Q 180 128 235 138 L 235 240 Q 180 258 125 240 Z"
-              fill="none" stroke="${isAffected('Кожные покровы') ? '#e57373' : '#90a4ae'}"
-              stroke-width="2.5" stroke-dasharray="${isAffected('Кожные покровы') ? 'none' : '5,4'}" opacity="0.8"/>
+  ctx.stroke();
+  ctx.restore();
 
-        <!-- Лимфоузлы -->
-        <circle cx="110" cy="170" r="4" fill="${isAffected('Иммунная') ? '#e57373' : '#cfd8dc'}" stroke="#78909c" stroke-width="1"/>
-        <circle cx="250" cy="170" r="4" fill="${isAffected('Иммунная') ? '#e57373' : '#cfd8dc'}" stroke="#78909c" stroke-width="1"/>
-        <circle cx="110" cy="225" r="4" fill="${isAffected('Иммунная') ? '#e57373' : '#cfd8dc'}" stroke="#78909c" stroke-width="1"/>
-        <circle cx="250" cy="225" r="4" fill="${isAffected('Иммунная') ? '#e57373' : '#cfd8dc'}" stroke="#78909c" stroke-width="1"/>
+  // ========== 3. Лицо ==========
+  ctx.save();
+  ctx.fillStyle = '#212121';
+  // Глаза
+  ctx.beginPath();
+  ctx.arc(270, 150, 5, 0, Math.PI * 2);
+  ctx.arc(310, 150, 5, 0, Math.PI * 2);
+  ctx.fill();
+  // Блики
+  ctx.fillStyle = '#fff';
+  ctx.arc(268, 148, 1.5, 0, Math.PI * 2);
+  ctx.arc(308, 148, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Нос
+  ctx.strokeStyle = '#212121';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(290, 165);
+  ctx.lineTo(290, 180);
+  ctx.lineTo(295, 180);
+  ctx.stroke();
+  // Рот
+  ctx.beginPath();
+  ctx.arc(290, 195, 8, 0.1, Math.PI - 0.1);
+  ctx.stroke();
+  ctx.restore();
 
-        <title>Поражённые системы: ${affectedSystems.length ? affectedSystems.join(', ') : 'Не выявлено'}</title>
-      </svg>
+  // ========== 4. Подсветка конечностей (костно-мышечная) ==========
+  // Если поражена костно-мышечная, зальём руки и ноги полупрозрачным красным
+  if (isAffected('Костно-мышечная')) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(229, 115, 115, 0.3)';
+    // Левая рука
+    ctx.beginPath();
+    ctx.moveTo(240, 280);
+    ctx.lineTo(190, 420);
+    ctx.lineTo(120, 510);
+    ctx.lineTo(80, 520);
+    ctx.lineTo(75, 535);
+    ctx.lineTo(85, 545);
+    ctx.lineTo(100, 540);
+    ctx.lineTo(120, 510);
+    ctx.lineTo(170, 370);
+    ctx.lineTo(250, 250);
+    ctx.closePath();
+    ctx.fill();
+    // Правая рука
+    ctx.beginPath();
+    ctx.moveTo(360, 280);
+    ctx.lineTo(410, 420);
+    ctx.lineTo(480, 510);
+    ctx.lineTo(475, 530);
+    ctx.lineTo(490, 540);
+    ctx.lineTo(505, 545);
+    ctx.lineTo(480, 510);
+    ctx.lineTo(430, 370);
+    ctx.lineTo(350, 250);
+    ctx.closePath();
+    ctx.fill();
+    // Левая нога
+    ctx.beginPath();
+    ctx.moveTo(210, 380);
+    ctx.lineTo(220, 540);
+    ctx.lineTo(210, 780);
+    ctx.lineTo(190, 830);
+    ctx.lineTo(180, 850);
+    ctx.lineTo(200, 855);
+    ctx.lineTo(225, 845);
+    ctx.lineTo(230, 810);
+    ctx.lineTo(260, 680);
+    ctx.closePath();
+    ctx.fill();
+    // Правая нога
+    ctx.beginPath();
+    ctx.moveTo(390, 380);
+    ctx.lineTo(380, 540);
+    ctx.lineTo(380, 780);
+    ctx.lineTo(395, 830);
+    ctx.lineTo(370, 845);
+    ctx.lineTo(395, 855);
+    ctx.lineTo(415, 850);
+    ctx.lineTo(365, 810);
+    ctx.lineTo(335, 680);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
 
-      <!-- Компактная легенда -->
-      <div style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center; margin-top:8px;">
-        ${['Нервная','Дыхательная','Сердечно-сосудистая','ЖКТ','Мочевыделительная','Эндокринная','Костно-мышечная','Кожные покровы','Иммунная','Метаболическая','Кроветворная','Зрительная','Множественные врождённые'].map(sys =>
-          `<span style="display:inline-block; padding:2px 8px; border-radius:12px; font-size:0.65rem; background:${affectedSystems.includes(sys) ? '#e57373' : '#eceff1'}; color:${affectedSystems.includes(sys) ? '#fff' : '#37474f'}; border:1px solid ${affectedSystems.includes(sys) ? '#c62828' : '#b0bec5'}; cursor:default;" title="${sys}">${sys}</span>`
-        ).join('')}
-      </div>
-      ${affectedSystems.length === 0 ? '<p style="color:#78909c; text-align:center; font-size:0.75rem; margin:4px 0 0;">✅ Все системы в норме</p>' : ''}
-    </div>
-  </div>`;
+  // Собираем HTML
+  const card = document.createElement('div');
+  card.style.background = 'var(--surface, #ffffff)';
+  card.style.border = '1px solid var(--border, #ddd)';
+  card.style.borderRadius = '12px';
+  card.style.padding = '12px';
+  card.style.maxWidth = '340px';
+  card.style.margin = '1rem auto';
+
+  const title = document.createElement('h5');
+  title.style.margin = '0 0 8px 0';
+  title.style.fontSize = '0.95rem';
+  title.textContent = '👶 Поражённые системы';
+  card.appendChild(title);
+
+  card.appendChild(canvas);
+
+  // Легенда
+  const legend = document.createElement('div');
+  legend.style.display = 'flex';
+  legend.style.flexWrap = 'wrap';
+  legend.style.gap = '3px';
+  legend.style.justifyContent = 'center';
+  legend.style.marginTop = '8px';
+
+  const systems = ['Нервная','Дыхательная','Сердечно-сосудистая','ЖКТ','Мочевыделительная','Эндокринная','Костно-мышечная','Кожные покровы','Иммунная','Метаболическая','Кроветворная','Зрительная','Множественные врождённые'];
+  systems.forEach(sys => {
+    const span = document.createElement('span');
+    span.style.display = 'inline-block';
+    span.style.padding = '2px 8px';
+    span.style.borderRadius = '12px';
+    span.style.fontSize = '0.65rem';
+    span.style.background = affectedSystems.includes(sys) ? '#e57373' : '#eceff1';
+    span.style.color = affectedSystems.includes(sys) ? '#fff' : '#37474f';
+    span.style.border = `1px solid ${affectedSystems.includes(sys) ? '#c62828' : '#b0bec5'}`;
+    span.style.cursor = 'default';
+    span.textContent = sys;
+    legend.appendChild(span);
+  });
+  card.appendChild(legend);
+
+  if (affectedSystems.length === 0) {
+    const msg = document.createElement('p');
+    msg.style.color = '#78909c';
+    msg.style.textAlign = 'center';
+    msg.style.fontSize = '0.75rem';
+    msg.style.margin = '4px 0 0';
+    msg.textContent = '✅ Все системы в норме';
+    card.appendChild(msg);
+  }
+
+  return card.outerHTML;
 }
 
             // Глобальная валидация для всех числовых полей
