@@ -570,6 +570,69 @@
         position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
         overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0;
     }
+	/* ========== УЛУЧШЕННЫЕ ЧАСЫ ========== */
+.clock-widget-enhanced {
+    background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.clock-widget-enhanced::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotateGlow 8s linear infinite;
+}
+
+@keyframes rotateGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.clock-time {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0,180,216,0.7);
+    position: relative;
+    z-index: 1;
+}
+
+.clock-date {
+    font-size: var(--text-sm);
+    font-weight: 400;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+    position: relative;
+    z-index: 1;
+}
+
+.clock-pulse {
+    width: 10px;
+    height: 10px;
+    background: var(--accent-400);
+    border-radius: 50%;
+    margin: 0.75rem auto 0;
+    animation: pulse-ring 2s infinite;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(0,180,216,0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(0,180,216,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,180,216,0); }
+}
 </style>
 </head>
 <body>
@@ -1312,44 +1375,80 @@ async function updateNav() {
 // Периодическая обработка очереди синхронизации
 setInterval(() => SyncManager.processQueue(), 30000);
 
-            async function render() {
-                await updateNav();
-                const page = location.hash.slice(1) || '/';
-                const app = document.getElementById('app');
-                if (!app) return;
-                if (!profile && !['/', '/login', '/reference', '/faq', '/genetics', '/support', '/diary', '/palliative', '/medications', '/nutrition', '/lab', '/timeline', '/patients', '/analytics'].includes(page)) {
-                    App.navigate('/login');
-                    return;
-                }
-                try {
-                    switch (page) {
-                        case '/': app.innerHTML = renderWelcome(); break;
-                        case '/login': app.innerHTML = renderLogin(); setupLogin(); break;
-                        case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break;
-                        case '/diary': app.innerHTML = await renderDiary(); break;
-                        case '/palliative': app.innerHTML = await renderPalliative(); break;
-                        case '/medications': app.innerHTML = await renderMedications(); break;
-                        case '/nutrition': app.innerHTML = await renderNutrition(); break;
-                        case '/lab': app.innerHTML = await renderLab(); break;
-                        case '/timeline': app.innerHTML = await renderTimeline(); break;
-                        case '/patients': app.innerHTML = await renderPatients(); break;
-                        case '/analytics': app.innerHTML = await renderAnalytics(); break;
-                        case '/reference': app.innerHTML = renderReference(); setupReference(); break;
-                        case '/genetics': app.innerHTML = renderGenetics(); setupGenetics(); break;
-                        case '/faq': app.innerHTML = renderFAQ(); break;
-                        case '/support': app.innerHTML = renderSupport(); break;
-                            case '/pallcalc': app.innerHTML = renderPallcalc(); setupPallcalc(); break;
-case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
-                            case '/symptom_search': app.innerHTML = renderSymptomSearch(); break;
-case '/decision_tree': app.innerHTML = renderDecisionTree(); resetDecisionTree(); break;
-case '/prognosis': app.innerHTML = renderPrognosis(); break;
-                        default: app.innerHTML = '<h2 class="text-center mt-5">404</h2>';
-                    }
-                } catch (e) {
-                    app.innerHTML = `<div class="alert alert-danger">Произошла ошибка при загрузке страницы. Попробуйте перезагрузить приложение или очистить кэш браузера.<br><small>${esc(e.message)}</small></div>`;
-                    console.error(e);
-                }
-            }
+// Вставьте в начало вашего скрипта, если ещё нет
+async function initApp() {
+    // Загружаем профиль из DB, если есть
+    const savedProfile = DB.getProfile();
+    if (savedProfile) {
+        profile = savedProfile;
+    }
+    await render();
+}
+
+// Вызовите initApp() при старте вместо простого render()
+// Например: window.addEventListener('load', initApp);
+
+// Обновлённая функция render
+async function render() {
+    await updateNav();
+    const page = location.hash.slice(1) || '/';
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    // Страницы, доступные без авторизации
+    const publicPages = ['/', '/login', '/reference', '/faq', '/genetics', '/support'];
+
+    if (!profile && !publicPages.includes(page)) {
+        App.navigate('/login');
+        return;
+    }
+
+    // Проверка ролей для защищённых страниц
+    if (profile) {
+        const parentPages = ['/diary', '/palliative', '/medications', '/nutrition', '/lab', '/timeline'];
+        const doctorPages = ['/patients', '/analytics']; // можно расширить
+
+        if (profile.role === 'parent' && !parentPages.includes(page) && !publicPages.includes(page) && page !== '/dashboard' && page !== '/surveys') {
+            // пациенту запрещены врачебные страницы
+            app.innerHTML = '<p class="text-center mt-5">Доступ запрещён. <a href="#/dashboard">На главную</a></p>';
+            return;
+        }
+        if (profile.role === 'doctor' && !doctorPages.includes(page) && !publicPages.includes(page) && page !== '/dashboard' && page !== '/pallcalc' && page !== '/surveys' && page !== '/decision_tree' && page !== '/prognosis' && page !== '/symptom_search') {
+            // врачу запрещены пациентские страницы
+            app.innerHTML = '<p class="text-center mt-5">Доступ запрещён. <a href="#/dashboard">На главную</a></p>';
+            return;
+        }
+    }
+
+    try {
+        switch (page) {
+            case '/': app.innerHTML = renderWelcome(); break;
+            case '/login': app.innerHTML = renderLogin(); setupLogin(); break;
+            case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break;
+            case '/diary': app.innerHTML = await renderDiary(); break;
+            case '/palliative': app.innerHTML = await renderPalliative(); break;
+            case '/medications': app.innerHTML = await renderMedications(); break;
+            case '/nutrition': app.innerHTML = await renderNutrition(); break;
+            case '/lab': app.innerHTML = await renderLab(); break;
+            case '/timeline': app.innerHTML = await renderTimeline(); break;
+            case '/patients': app.innerHTML = await renderPatients(); break;
+            case '/analytics': app.innerHTML = await renderAnalytics(); break;
+            case '/reference': app.innerHTML = renderReference(); setupReference(); break;
+            case '/genetics': app.innerHTML = renderGenetics(); setupGenetics(); break;
+            case '/faq': app.innerHTML = renderFAQ(); break;
+            case '/support': app.innerHTML = renderSupport(); break;
+            case '/pallcalc': app.innerHTML = renderPallcalc(); setupPallcalc(); break;
+            case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
+            case '/symptom_search': app.innerHTML = renderSymptomSearch(); break;
+            case '/decision_tree': app.innerHTML = renderDecisionTree(); resetDecisionTree(); break;
+            case '/prognosis': app.innerHTML = renderPrognosis(); break;
+            default: app.innerHTML = '<h2 class="text-center mt-5">404</h2>';
+        }
+    } catch (e) {
+        app.innerHTML = `<div class="alert alert-danger">Ошибка загрузки. Попробуйте перезагрузить страницу.<br><small>${esc(e.message)}</small></div>`;
+        console.error(e);
+    }
+}
 
             function renderWelcome() { return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1><p class="hero-subtitle">Современный инструмент для ведения дневника здоровья и обмена данными с врачом</p><button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`; }
            function renderLogin() {
@@ -1468,7 +1567,11 @@ function loginAs(name, role, diagnosis = '', patientId = '') {
                 }
                 const instruction = isDoc ? `<div class="card mt-4"><h5><i class="bi bi-info-circle"></i> Инструкция для врача</h5><p>Добавляйте пациентов в разделе «Пациенты». Все данные автоматически собираются в Google Таблицу. Используйте раздел «Аналитика» для просмотра и скачивания Excel.</p></div>` : `<div class="card mt-4"><h5><i class="bi bi-info-circle"></i> Инструкция для пациента</h5><p>Заполняйте модули и нажимайте «Отправить врачу». Данные сохраняются локально и открываются в Яндекс.Форме для отправки врачу.</p></div>`;
                 const importExportHtml = `<div class="card mt-4"><h5><i class="bi bi-arrow-down-up"></i> Импорт/Экспорт данных</h5><div class="d-flex gap-2 flex-wrap"><button class="btn btn-sm btn-outline" onclick="window.exportData()">📤 Экспорт JSON</button><input type="file" id="importFile" accept=".json" class="d-none" onchange="window.importData(this)"><button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">📥 Импорт JSON</button></div></div>`;
-                return `<div class="row"><div class="col-lg-9"><h2>👋 ${esc(profile.fullName)}</h2><div class="row mt-3">${cards}</div>${!isDoc ? `<div class="row mt-4"><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-thermometer-half fs-1 text-primary"></i><h5>Средняя t°</h5><div class="display-6">${avgTemp}°C</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-heart-pulse fs-1 text-danger"></i><h5>Средняя боль</h5><div class="display-6">${avgPain}</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-journal-medical fs-1 text-success"></i><h5>Записей дневника</h5><div class="display-6">${diary.length}</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-heart-pulse fs-1 text-warning"></i><h5>Паллиатив</h5><div class="display-6">${palliative.length}</div></div></div></div><div class="row mt-4"><div class="col-md-6"><div class="card"><h5>Последние записи дневника</h5>${lastDiary.map(e => `<div class="history-item">${e.date} | ${e.temperature||'—'}°C | ${e.wellbeing}/10</div>`).join('') || '<p class="text-muted">Нет записей</p>'}</div></div><div class="col-md-6"><div class="card"><h5>Последние паллиативные показатели</h5>${lastPall.map(e => `<div class="history-item">${e.date} | Боль: ${e.pain} | КЖ: ${e.quality}</div>`).join('') || '<p class="text-muted">Нет записей</p>'}</div></div></div>` : docPalliativeHtml + instruction}${importExportHtml}</div><div class="col-lg-3">${riskHtml}<div class="clock-widget mb-3"><div class="time" id="liveClock">--:--:--</div><div class="date" id="liveDate"></div></div><div class="calendar-widget" id="miniCalendar"></div></div></div>`;
+                return `<div class="row"><div class="col-lg-9"><h2>👋 ${esc(profile.fullName)}</h2><div class="row mt-3">${cards}</div>${!isDoc ? `<div class="row mt-4"><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-thermometer-half fs-1 text-primary"></i><h5>Средняя t°</h5><div class="display-6">${avgTemp}°C</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-heart-pulse fs-1 text-danger"></i><h5>Средняя боль</h5><div class="display-6">${avgPain}</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-journal-medical fs-1 text-success"></i><h5>Записей дневника</h5><div class="display-6">${diary.length}</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-heart-pulse fs-1 text-warning"></i><h5>Паллиатив</h5><div class="display-6">${palliative.length}</div></div></div></div><div class="row mt-4"><div class="col-md-6"><div class="card"><h5>Последние записи дневника</h5>${lastDiary.map(e => `<div class="history-item">${e.date} | ${e.temperature||'—'}°C | ${e.wellbeing}/10</div>`).join('') || '<p class="text-muted">Нет записей</p>'}</div></div><div class="col-md-6"><div class="card"><h5>Последние паллиативные показатели</h5>${lastPall.map(e => `<div class="history-item">${e.date} | Боль: ${e.pain} | КЖ: ${e.quality}</div>`).join('') || '<p class="text-muted">Нет записей</p>'}</div></div></div>` : docPalliativeHtml + instruction}${importExportHtml}</div><div class="col-lg-3">${riskHtml}<div class="clock-widget-enhanced mb-3">
+    <div class="clock-time" id="liveClock">--:--:--</div>
+    <div class="clock-date" id="liveDate">---</div>
+    <div class="clock-pulse"></div>
+</div></div></div><div class="calendar-widget" id="miniCalendar"></div></div></div>`;
             }
 
             window.exportData = function() {
@@ -3209,8 +3312,23 @@ function setupSurveys() {
     });
 }
 
-            function initClock() { const update = () => { const now = new Date(); const c = document.getElementById('liveClock'), d = document.getElementById('liveDate'); if(c) c.textContent = now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); if(d) d.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }; update(); if(clockTimer)clearInterval(clockTimer); clockTimer = setInterval(update, 1000); }
-            function initCalendar() { const cal = document.getElementById('miniCalendar'); if(!cal)return; const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']; const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const diary = DB.getData('diary'); const palliative = DB.getData('palliative'); const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]); let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`; for(let i=1;i<fd;i++)h+='<td></td>'; for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>'; const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; h+=`<td class="${d===now.getDate()?'today':''} ${allDates.has(dateStr)?'has-entry':''}">${d}</td>`;} h+='</tr></table>'; cal.innerHTML = h; }
+function initClock() {
+    const update = () => {
+        const now = new Date();
+        const timeEl = document.getElementById('liveClock');
+        const dateEl = document.getElementById('liveDate');
+        if (timeEl) {
+            timeEl.textContent = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        if (dateEl) {
+            dateEl.textContent = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        }
+    };
+    update();
+    if (window.clockTimer) clearInterval(window.clockTimer);
+    window.clockTimer = setInterval(update, 1000);
+}            
+function initCalendar() { const cal = document.getElementById('miniCalendar'); if(!cal)return; const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']; const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const diary = DB.getData('diary'); const palliative = DB.getData('palliative'); const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]); let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`; for(let i=1;i<fd;i++)h+='<td></td>'; for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>'; const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; h+=`<td class="${d===now.getDate()?'today':''} ${allDates.has(dateStr)?'has-entry':''}">${d}</td>`;} h+='</tr></table>'; cal.innerHTML = h; }
     
        window.onhashchange = () => { if (clockTimer) clearInterval(clockTimer); render(); };
     window.onload = render;
