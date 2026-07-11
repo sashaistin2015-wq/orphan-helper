@@ -1821,35 +1821,40 @@ function renderLogin() {
   <div class="col-md-5 mb-3">
     <div class="card">
       <h4><i class="bi bi-person-badge"></i> Врач</h4>
-      <input id="docName" class="form-control" placeholder="ФИО" autocomplete="name">
-      <div class="password-wrapper">
-        <input id="docCode" type="password" class="form-control" placeholder="Код доступа" autocomplete="current-password">
-        <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i>
-      </div>
-      <button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button>
+      <form id="doctorLoginForm">
+        <input id="docName" class="form-control" placeholder="ФИО" autocomplete="name">
+        <div class="password-wrapper">
+          <input id="docCode" type="password" class="form-control" placeholder="Код доступа" autocomplete="current-password">
+          <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-2">Войти как врач</button>
+      </form>
     </div>
   </div>
   <div class="col-md-5 mb-3">
     <div class="card">
       <h4><i class="bi bi-person"></i> Пациент</h4>
-      <input id="patName" class="form-control" placeholder="ФИО" autocomplete="name">
-      <div class="password-wrapper">
-        <input id="patCode" type="password" class="form-control" placeholder="Код доступа" autocomplete="current-password">
-        <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i>
-      </div>
-      <input id="patPatientId" class="form-control mt-2" placeholder="ID пациента (выдаётся врачом)" autocomplete="off">
-      <select id="patDiagnosis" class="form-control mt-2" autocomplete="off">
-        <option value="">Выберите диагноз (опционально)</option>
-        ${getDiseaseOptions()}
-      </select>
-      <button class="btn btn-success w-100 mt-2" id="patientBtn">Войти как пациент</button>
+      <form id="patientLoginForm">
+        <input id="patName" class="form-control" placeholder="ФИО" autocomplete="name">
+        <div class="password-wrapper">
+          <input id="patCode" type="password" class="form-control" placeholder="Код доступа" autocomplete="current-password">
+          <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i>
+        </div>
+        <input id="patPatientId" class="form-control mt-2" placeholder="ID пациента (выдаётся врачом)" autocomplete="off">
+        <select id="patDiagnosis" class="form-control mt-2" autocomplete="off">
+          <option value="">Выберите диагноз (опционально)</option>
+          ${getDiseaseOptions()}
+        </select>
+        <button type="submit" class="btn btn-success w-100 mt-2">Войти как пациент</button>
+      </form>
     </div>
   </div>
   </div></div>`;
 }
             window.togglePasswordVisibility = function(inputId, iconEl) { const input = document.getElementById(inputId); if (!input) return; if (input.type === 'password') { input.type = 'text'; iconEl.classList.remove('bi-eye'); iconEl.classList.add('bi-eye-slash'); } else { input.type = 'password'; iconEl.classList.remove('bi-eye-slash'); iconEl.classList.add('bi-eye'); } };
 function setupLogin() {
-  document.getElementById('doctorBtn')?.addEventListener('click', () => {
+  document.getElementById('doctorLoginForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
     const n = document.getElementById('docName').value.trim();
     if (!n) return notify('Введите ФИО', 'error');
     if (document.getElementById('docCode').value !== '123doc')
@@ -1857,16 +1862,15 @@ function setupLogin() {
     loginAs(n, 'doctor', '');
   });
 
-  document.getElementById('patientBtn')?.addEventListener('click', () => {
+  document.getElementById('patientLoginForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
     const n = document.getElementById('patName').value.trim();
     if (!n) return notify('Введите ФИО', 'error');
     if (document.getElementById('patCode').value !== 'pat2026')
       return notify('Неверный код', 'error');
 
     const d = document.getElementById('patDiagnosis')?.value || '';
-    // Берём ID пациента из нового поля
     let patientId = document.getElementById('patPatientId')?.value.trim() || '';
-    // Если не указан – генерируем временный
     if (!patientId) {
       patientId = 'pat_' + Math.random().toString(36).substr(2, 8);
       notify('Вам присвоен временный ID: ' + patientId + '. Сообщите его врачу.', 'info');
@@ -1874,7 +1878,7 @@ function setupLogin() {
     loginAs(n, 'parent', d, patientId);
     registerPatientIfNeeded(n);
   });
-}            
+}           
 function loginAs(name, role, diagnosis = '', patientId = '') {
   profile = {
     fullName: name,
