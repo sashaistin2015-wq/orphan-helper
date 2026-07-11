@@ -1661,8 +1661,23 @@ RiskPredictor.predict = function(data, diagnosis = '', history = []) {
             function registerPatientIfNeeded(patientName) { const all = DB.getAllPatients(); if (!all[patientName]) { all[patientName] = { fullName: patientName, firstSeen: new Date().toLocaleDateString('ru-RU'), birthDate: '', age: '', diagnosis: '', lastUpdate: new Date().toLocaleString('ru-RU'), diaryCount:0, palliativeCount:0, medsCount:0, nutritionCount:0, labCount:0, timelineCount:0 }; DB.saveAllPatients(all); } return all[patientName]; }
             function updatePatientStats(patientName, field) { const all = DB.getAllPatients(); if (all[patientName]) { all[patientName][field] = (all[patientName][field]||0) + 1; all[patientName].lastUpdate = new Date().toLocaleString('ru-RU'); DB.saveAllPatients(all); } }
 
-            window.App = { navigate: page => { location.hash = '#' + page; }, logout: () => { if(clockTimer)clearInterval(clockTimer); DB.setProfile(null); profile = null; updateNav(); App.navigate('/'); } };
-            function toggleTheme() { document.body.classList.toggle('dark-theme'); darkTheme = !darkTheme; localStorage.setItem('darkTheme', darkTheme); }
+// ======== НАВИГАЦИЯ (ИСПРАВЛЕННАЯ) ========
+window.App = {
+    navigate: function(page) {
+        location.hash = '#' + page;
+        // Принудительный рендер после смены хэша
+        setTimeout(function() {
+            render();
+        }, 10);
+    },
+    logout: function() {
+        if (window.clockTimer) clearInterval(window.clockTimer);
+        DB.setProfile(null);
+        profile = null;
+        updateNav();
+        App.navigate('/');
+    }
+};            function toggleTheme() { document.body.classList.toggle('dark-theme'); darkTheme = !darkTheme; localStorage.setItem('darkTheme', darkTheme); }
             window.toggleTheme = toggleTheme;
 
            // ==================== НАВИГАЦИЯ (исправлена) ====================
@@ -1750,98 +1765,125 @@ async function initApp() {
 // Например: window.addEventListener('load', initApp);
 
 // Обновлённая функция render
+// ======== ОСНОВНАЯ ФУНКЦИЯ РЕНДЕРИНГА (ИСПРАВЛЕННАЯ) ========
 async function render() {
-    await updateNav();
-    const page = location.hash.slice(1) || '/';
-    const app = document.getElementById('app');
-    if (!app) return;
-
-    // Страницы, доступные без авторизации
-    const publicPages = ['/', '/login', '/reference', '/faq', '/genetics', '/support'];
-
-    if (!profile && !publicPages.includes(page)) {
-        App.navigate('/login');
-        return;
-    }
-
-    // Проверка ролей для защищённых страниц
-    if (profile) {
-        const parentPages = ['/diary', '/palliative', '/medications', '/nutrition', '/lab', '/timeline'];
-        const doctorPages = ['/patients', '/analytics']; // можно расширить
-
-        if (profile.role === 'parent' && !parentPages.includes(page) && !publicPages.includes(page) && page !== '/dashboard' && page !== '/surveys') {
-            // пациенту запрещены врачебные страницы
-            app.innerHTML = '<p class="text-center mt-5">Доступ запрещён. <a href="#/dashboard">На главную</a></p>';
-            return;
-        }
-        if (profile.role === 'doctor' && !doctorPages.includes(page) && !publicPages.includes(page) && page !== '/dashboard' && page !== '/pallcalc' && page !== '/surveys' && page !== '/decision_tree' && page !== '/prognosis' && page !== '/symptom_search') {
-            // врачу запрещены пациентские страницы
-            app.innerHTML = '<p class="text-center mt-5">Доступ запрещён. <a href="#/dashboard">На главную</a></p>';
-            return;
-        }
-    }
-
     try {
+        await updateNav();
+        const page = location.hash.slice(1) || '/';
+        const app = document.getElementById('app');
+        if (!app) return;
+
+        // Публичные страницы (доступны без авторизации)
+        const publicPages = ['/', '/login', '/reference', '/faq', '/genetics', '/support'];
+
+        // Проверка авторизации
+        if (!profile && !publicPages.includes(page)) {
+            App.navigate('/login');
+            return;
+        }
+
+        // Проверка ролей
+        if (profile) {
+            const parentPages = ['/diary', '/palliative', '/medications', '/nutrition', '/lab', '/timeline'];
+            const doctorPages = ['/patients', '/analytics', '/pallcalc', '/surveys', '/decision_tree', '/prognosis', '/symptom_search'];
+
+            if (profile.role === 'parent' && !parentPages.includes(page) && !publicPages.includes(page) && page !== '/dashboard') {
+                app.innerHTML = '<p class="text-center mt-5">⛔ Доступ запрещён. <a href="#/dashboard">На главную</a></p>';
+                return;
+            }
+
+            if (profile.role === 'doctor' && !doctorPages.includes(page) && !publicPages.includes(page) && page !== '/dashboard') {
+                app.innerHTML = '<p class="text-center mt-5">⛔ Доступ запрещён. <a href="#/dashboard">На главную</a></p>';
+                return;
+            }
+        }
+
+        // Рендеринг страниц
         switch (page) {
-            case '/': app.innerHTML = renderWelcome(); break;
-            case '/login': app.innerHTML = renderLogin(); setupLogin(); break;
-            case '/dashboard': app.innerHTML = await renderDashboard(); initClock(); initCalendar(); break;
-            case '/diary': app.innerHTML = await renderDiary(); break;
-            case '/palliative': app.innerHTML = await renderPalliative(); break;
-            case '/medications': app.innerHTML = await renderMedications(); break;
-            case '/nutrition': app.innerHTML = await renderNutrition(); break;
-            case '/lab': app.innerHTML = await renderLab(); break;
-            case '/timeline': app.innerHTML = await renderTimeline(); break;
-            case '/patients': app.innerHTML = await renderPatients(); break;
-            case '/analytics': app.innerHTML = await renderAnalytics(); break;
-            case '/reference': app.innerHTML = renderReference(); setupReference(); break;
-            case '/genetics': app.innerHTML = renderGenetics(); setupGenetics(); break;
-            case '/faq': app.innerHTML = renderFAQ(); break;
-            case '/support': app.innerHTML = renderSupport(); break;
-            case '/pallcalc': app.innerHTML = renderPallcalc(); setupPallcalc(); break;
-            case '/surveys': app.innerHTML = renderSurveys(); setupSurveys(); break;
-            case '/symptom_search': app.innerHTML = renderSymptomSearch(); break;
-            case '/decision_tree': app.innerHTML = renderDecisionTree(); resetDecisionTree(); break;
-            case '/prognosis': app.innerHTML = renderPrognosis(); break;
-            default: app.innerHTML = '<h2 class="text-center mt-5">404</h2>';
+            case '/': 
+                app.innerHTML = renderWelcome(); 
+                break;
+            case '/login': 
+                app.innerHTML = renderLogin(); 
+                setupLogin(); 
+                break;
+            case '/dashboard': 
+                app.innerHTML = await renderDashboard(); 
+                initClock(); 
+                initCalendar(); 
+                break;
+            case '/diary': 
+                app.innerHTML = await renderDiary(); 
+                break;
+            case '/palliative': 
+                app.innerHTML = await renderPalliative(); 
+                break;
+            case '/medications': 
+                app.innerHTML = await renderMedications(); 
+                break;
+            case '/nutrition': 
+                app.innerHTML = await renderNutrition(); 
+                break;
+            case '/lab': 
+                app.innerHTML = await renderLab(); 
+                break;
+            case '/timeline': 
+                app.innerHTML = await renderTimeline(); 
+                break;
+            case '/patients': 
+                app.innerHTML = await renderPatients(); 
+                break;
+            case '/analytics': 
+                app.innerHTML = await renderAnalytics(); 
+                break;
+            case '/reference': 
+                app.innerHTML = renderReference(); 
+                setupReference(); 
+                break;
+            case '/genetics': 
+                app.innerHTML = renderGenetics(); 
+                setupGenetics(); 
+                break;
+            case '/faq': 
+                app.innerHTML = renderFAQ(); 
+                break;
+            case '/support': 
+                app.innerHTML = renderSupport(); 
+                break;
+            case '/pallcalc': 
+                app.innerHTML = renderPallcalc(); 
+                setupPallcalc(); 
+                break;
+            case '/surveys': 
+                app.innerHTML = renderSurveys(); 
+                setupSurveys(); 
+                break;
+            case '/symptom_search': 
+                app.innerHTML = renderSymptomSearch(); 
+                break;
+            case '/decision_tree': 
+                app.innerHTML = renderDecisionTree(); 
+                resetDecisionTree(); 
+                break;
+            case '/prognosis': 
+                app.innerHTML = renderPrognosis(); 
+                break;
+            default: 
+                app.innerHTML = '<h2 class="text-center mt-5">📄 404 — Страница не найдена</h2>';
         }
     } catch (e) {
-        app.innerHTML = `<div class="alert alert-danger">Ошибка загрузки. Попробуйте перезагрузить страницу.<br><small>${esc(e.message)}</small></div>`;
-        console.error(e);
+        console.error('Render error:', e);
+        const app = document.getElementById('app');
+        if (app) {
+            app.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>⚠️ Ошибка загрузки страницы</strong>
+                    <p>Попробуйте перезагрузить страницу (F5).</p>
+                    <small>${esc(e.message)}</small>
+                </div>
+            `;
+        }
     }
-}
-
-            function renderWelcome() { return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1><p class="hero-subtitle">Современный инструмент для ведения дневника здоровья и обмена данными с врачом</p><button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`; }
-           function renderLogin() {
-  return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
-  <div class="col-md-5 mb-3">
-    <div class="card">
-      <h4><i class="bi bi-person-badge"></i> Врач</h4>
-      <input id="docName" class="form-control" placeholder="ФИО">
-      <div class="password-wrapper">
-        <input id="docCode" type="password" class="form-control" placeholder="Код доступа">
-        <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i>
-      </div>
-      <button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button>
-    </div>
-  </div>
-  <div class="col-md-5 mb-3">
-    <div class="card">
-      <h4><i class="bi bi-person"></i> Пациент</h4>
-      <input id="patName" class="form-control" placeholder="ФИО">
-      <div class="password-wrapper">
-        <input id="patCode" type="password" class="form-control" placeholder="Код доступа">
-        <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i>
-      </div>
-      <input id="patPatientId" class="form-control mt-2" placeholder="ID пациента (выдаётся врачом)">
-      <select id="patDiagnosis" class="form-control mt-2">
-        <option value="">Выберите диагноз (опционально)</option>
-        ${getDiseaseOptions()}
-      </select>
-      <button class="btn btn-success w-100 mt-2" id="patientBtn">Войти как пациент</button>
-    </div>
-  </div>
-  </div></div>`;
 }
             window.togglePasswordVisibility = function(inputId, iconEl) { const input = document.getElementById(inputId); if (!input) return; if (input.type === 'password') { input.type = 'text'; iconEl.classList.remove('bi-eye'); iconEl.classList.add('bi-eye-slash'); } else { input.type = 'password'; iconEl.classList.remove('bi-eye-slash'); iconEl.classList.add('bi-eye'); } };
 function setupLogin() {
@@ -3468,21 +3510,32 @@ function setupPallcalc() {
     }
     };
 
-    window.switchPallcalcTab = function(tab) {
-    document.querySelectorAll('.pallcalc-tab').forEach(function(t) { 
-        t.classList.remove('active'); 
+// ======== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК КАЛЬКУЛЯТОРА (ИСПРАВЛЕННОЕ) ========
+window.switchPallcalcTab = function(tab) {
+    // Скрываем все вкладки
+    document.querySelectorAll('.pallcalc-tab').forEach(function(t) {
+        t.classList.remove('active');
     });
-    document.querySelectorAll('.tab-btn').forEach(function(b) { 
-        b.classList.remove('active'); 
+    // Убираем активный класс со всех кнопок
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+        b.classList.remove('active');
     });
 
+    // Показываем выбранную вкладку
     var el = document.getElementById('tab-' + tab);
     if (el) el.classList.add('active');
 
-    var btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
-    if (btn) btn.classList.add('active');
+    // Активируем соответствующую кнопку
+    var btns = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < btns.length; i++) {
+        var btn = btns[i];
+        var onclick = btn.getAttribute('onclick');
+        if (onclick && onclick.indexOf("'" + tab + "'") !== -1) {
+            btn.classList.add('active');
+            break;
+        }
+    }
 };
-}
 
 // ===== ГЛОБАЛЬНАЯ ФУНКЦИЯ ЭКСПОРТА СТАТИСТИЧЕСКИХ ДАННЫХ =====
 // ========== ПРОГНОЗИРОВАНИЕ ИСХОДОВ ==========
@@ -3759,14 +3812,28 @@ function renderSurveys() {
 }
 
 function setupSurveys() {
-    window.switchSurveyTab = function(tab) {
-        document.querySelectorAll('.survey-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        const el = document.getElementById('tab-' + tab);
-        if (el) el.classList.add('active');
-        const btn = document.querySelector('[onclick="switchSurveyTab(\'' + tab + '\')"]');
-        if (btn) btn.classList.add('active');
-    };
+   // ======== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК АНКЕТ (ИСПРАВЛЕННОЕ) ========
+window.switchSurveyTab = function(tab) {
+    document.querySelectorAll('.survey-tab').forEach(function(t) {
+        t.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
+
+    var el = document.getElementById('tab-' + tab);
+    if (el) el.classList.add('active');
+
+    var btns = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < btns.length; i++) {
+        var btn = btns[i];
+        var onclick = btn.getAttribute('onclick');
+        if (onclick && onclick.indexOf("'" + tab + "'") !== -1) {
+            btn.classList.add('active');
+            break;
+        }
+    }
+};
 
     window.calculatePedsQL = function() {
         const allItems = [...Array(8)].map((_, i) => parseInt(document.getElementById('pedsql_a' + (i+1))?.value) || 0)
@@ -3822,67 +3889,102 @@ function setupSurveys() {
     });
 }
 
+// ======== ЧАСЫ (С ЗАЩИТОЙ ОТ ОШИБОК) ========
 function initClock() {
-    const update = () => {
-        const now = new Date();
-        const timeEl = document.getElementById('liveClock');
-        const dateEl = document.getElementById('liveDate');
-        if (timeEl) {
-            timeEl.textContent = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    function update() {
+        try {
+            var now = new Date();
+            var timeEl = document.getElementById('liveClock');
+            var dateEl = document.getElementById('liveDate');
+            if (timeEl) {
+                timeEl.textContent = now.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                });
+            }
+            if (dateEl) {
+                dateEl.textContent = now.toLocaleDateString('ru-RU', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+            }
+        } catch (e) {
+            // Игнорируем ошибки часов
         }
-        if (dateEl) {
-            dateEl.textContent = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        }
-    };
+    }
     update();
     if (window.clockTimer) clearInterval(window.clockTimer);
     window.clockTimer = setInterval(update, 1000);
-}            
+}
+
+// ======== КАЛЕНДАРЬ (С ЗАЩИТОЙ ОТ ОШИБОК) ========
 function initCalendar() {
-    const cal = document.getElementById('miniCalendar');
+    var cal = document.getElementById('miniCalendar');
     if (!cal) return;
-    const now = new Date();
-    const m = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-    const fd = new Date(now.getFullYear(), now.getMonth(), 1).getDay() || 7;
-    const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const diary = DB.getData('diary');
-    const palliative = DB.getData('palliative');
-    const allDates = new Set([...diary.map(e => e.date), ...palliative.map(e => e.date)]);
-    
-    let h = `
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold" style="font-size:0.9rem;">${m[now.getMonth()]} ${now.getFullYear()}</span>
-            <span style="font-size:0.7rem; color:var(--text-muted);">${diary.length + palliative.length} записей</span>
-        </div>
-        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
-            <tr>
-                <th style="text-align:center; padding:2px; color:var(--text-muted);">Пн</th>
-                <th style="text-align:center; padding:2px; color:var(--text-muted);">Вт</th>
-                <th style="text-align:center; padding:2px; color:var(--text-muted);">Ср</th>
-                <th style="text-align:center; padding:2px; color:var(--text-muted);">Чт</th>
-                <th style="text-align:center; padding:2px; color:var(--text-muted);">Пт</th>
-                <th style="text-align:center; padding:2px; color:var(--text-muted);">Сб</th>
-                <th style="text-align:center; padding:2px; color:var(--text-muted);">Вс</th>
-            </tr>
-            <tr>
-    `;
-    for (let i = 1; i < fd; i++) h += '<td style="text-align:center; padding:2px;"></td>';
-    for (let d = 1; d <= days; d++) {
-        if ((fd + d - 1) % 7 === 1 && d > 1) h += '</tr><tr>';
-        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const isToday = d === now.getDate();
-        const hasEntry = allDates.has(dateStr);
-        let cls = 'text-center p-1 rounded';
-        if (isToday) cls += ' bg-primary text-white fw-bold';
-        if (hasEntry && !isToday) cls += ' bg-success bg-opacity-25 text-success';
-        h += `<td class="${cls}" style="cursor:default; font-size:0.7rem; width:14%;">${d}</td>`;
+    try {
+        var now = new Date();
+        var m = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+        var fd = new Date(now.getFullYear(), now.getMonth(), 1).getDay() || 7;
+        var days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        var diary = DB.getData('diary');
+        var palliative = DB.getData('palliative');
+        var allDates = new Set();
+        
+        if (diary) {
+            diary.forEach(function(e) { if (e.date) allDates.add(e.date); });
+        }
+        if (palliative) {
+            palliative.forEach(function(e) { if (e.date) allDates.add(e.date); });
+        }
+
+        var totalRecords = (diary ? diary.length : 0) + (palliative ? palliative.length : 0);
+        
+        var h = '<div class="d-flex justify-content-between align-items-center mb-2">' +
+            '<span class="fw-bold" style="font-size:0.9rem;">' + m[now.getMonth()] + ' ' + now.getFullYear() + '</span>' +
+            '<span style="font-size:0.7rem; color:var(--text-muted);">' + totalRecords + ' записей</span>' +
+            '</div>' +
+            '<table style="width:100%; border-collapse:collapse; font-size:0.75rem;">' +
+            '<tr><th style="text-align:center; padding:2px; color:var(--text-muted);">Пн</th>' +
+            '<th style="text-align:center; padding:2px; color:var(--text-muted);">Вт</th>' +
+            '<th style="text-align:center; padding:2px; color:var(--text-muted);">Ср</th>' +
+            '<th style="text-align:center; padding:2px; color:var(--text-muted);">Чт</th>' +
+            '<th style="text-align:center; padding:2px; color:var(--text-muted);">Пт</th>' +
+            '<th style="text-align:center; padding:2px; color:var(--text-muted);">Сб</th>' +
+            '<th style="text-align:center; padding:2px; color:var(--text-muted);">Вс</th></tr><tr>';
+        
+        for (var i = 1; i < fd; i++) {
+            h += '<td style="text-align:center; padding:2px;"></td>';
+        }
+        
+        for (var d = 1; d <= days; d++) {
+            if ((fd + d - 1) % 7 === 1 && d > 1) h += '</tr><tr>';
+            var monthStr = String(now.getMonth() + 1).padStart(2, '0');
+            var dayStr = String(d).padStart(2, '0');
+            var dateStr = now.getFullYear() + '-' + monthStr + '-' + dayStr;
+            var isToday = d === now.getDate();
+            var hasEntry = allDates.has(dateStr);
+            var cls = 'text-center p-1 rounded';
+            if (isToday) cls += ' bg-primary text-white fw-bold';
+            if (hasEntry && !isToday) cls += ' bg-success bg-opacity-25 text-success';
+            h += '<td class="' + cls + '" style="cursor:default; font-size:0.7rem; width:14%;">' + d + '</td>';
+        }
+        h += '</tr></table>';
+        cal.innerHTML = h;
+    } catch (e) {
+        cal.innerHTML = '<p class="text-muted small">Календарь временно недоступен</p>';
     }
-    h += '</tr></table>';
-    cal.innerHTML = h;
-}    
-       window.onhashchange = () => { if (clockTimer) clearInterval(clockTimer); render(); };
-    window.onload = render;
-})();
+}   
+      // ======== ОБРАБОТЧИКИ СОБЫТИЙ (ИСПРАВЛЕННЫЕ) ========
+window.onhashchange = function() {
+    if (window.clockTimer) clearInterval(window.clockTimer);
+    render();
+};
+
+// Запуск приложения
+window.onload = render;
 
     </script>
 </body>
