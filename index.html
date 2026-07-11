@@ -10,138 +10,855 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-   <style>
-        :root { --primary: #0d7377; --primary-light: #14a3a8; --accent: #00b4d8; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --bg: #f0f4f8; --card: #ffffff; --radius: 24px; --radius-sm: 16px; --shadow: 0 10px 30px rgba(0,0,0,0.06); }
-        .dark-theme { --primary: #14a3a8; --text: #f1f5f9; --text-light: #94a3b8; --bg: #0f172a; --card: #1e293b; --shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; font-size: 0.85rem; transition: all 0.3s; }
-        .navbar { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); padding: 6px 0; }
-        .dark-theme .navbar { background: rgba(30,41,59,0.8); }
-        .navbar-brand { font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; -webkit-text-fill-color: white; }
-        .btn { border-radius: 20px; padding: 4px 12px; font-weight: 500; border: none; transition: all 0.25s; cursor: pointer; font-size: 0.75rem; position: relative; }
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(13,115,119,0.3); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #34d399); color: white; }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #f87171); color: white; }
-        .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
-        .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem; margin-bottom: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0,0,0,0.06); }
-        .dashboard-card { cursor: pointer; text-align: center; padding: 1rem; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); transition: all 0.3s; }
-        .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,0.1); }
-        .dashboard-card .icon { font-size: 2rem; margin-bottom: 0.3rem; }
-        .form-control, .form-select { border-radius: var(--radius-sm); border: 2px solid #e2e8f0; padding: 6px 12px; background: var(--card); color: var(--text); width: 100%; margin-bottom: 6px; font-size: 0.8rem; }
-        .form-control:focus, .form-select:focus { border-color: var(--primary-light); outline: none; }
-        .form-range { height: 6px; }
-        .form-range::-webkit-slider-thumb { width: 18px; height: 18px; background: var(--primary); cursor: pointer; }
-        .clock-widget { background: linear-gradient(135deg, #1e293b, #334155); color: white; border-radius: var(--radius); padding: 1rem; text-align: center; }
-        .clock-widget .time { font-size: 1.8rem; font-weight: 800; }
-        .calendar-widget { background: var(--card); border-radius: var(--radius); padding: 0.8rem; }
-        .calendar-widget table { width: 100%; border-collapse: collapse; }
-        .calendar-widget td { text-align: center; padding: 4px; cursor: pointer; border-radius: 8px; font-size: 0.75rem; }
-        .calendar-widget td.today { background: var(--primary); color: white; }
-        .calendar-widget td.has-entry { background: var(--success); color: white; opacity: 0.7; }
-        .faq-item { border-left: 3px solid var(--primary); padding: 0.8rem; margin-bottom: 0.8rem; background: var(--card); cursor: pointer; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; transition: all 0.3s; }
-        .faq-item:hover { background: rgba(13,115,119,0.05); transform: translateX(3px); }
-        .faq-item.active { border-left-color: var(--accent); background: rgba(0,180,216,0.08); }
-        .faq-question { display: flex; align-items: center; gap: 8px; }
-        .faq-icon { font-size: 12px; color: var(--primary); min-width: 16px; transition: transform 0.3s; }
-        .faq-item.active .faq-icon { transform: rotate(90deg); }
-        .faq-answer { margin-top: 8px; padding-top: 8px; border-top: 2px dashed rgba(128,128,128,0.2); display: none; font-size: 0.8rem; }
-        .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 12px 18px; border-radius: 10px; color: white; animation: fadeInUp 0.5s ease; font-size: 0.8rem; }
-        @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        .hero-section { text-align: center; padding: 3rem 1rem; }
-        .hero-title { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
-        .hero-subtitle { font-size: 1rem; color: var(--text-light); max-width: 500px; margin: 0 auto 1.5rem; }
-        .hero-btn { padding: 10px 28px; font-size: 0.9rem; }
-        .reminder-badge { background: #c7d2fe; color: #3730a3; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; }
-        .history-item { font-size: 0.75rem; padding: 6px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        footer { background: var(--card); border-top: 1px solid rgba(128,128,128,0.1); padding: 1rem 0; text-align: center; font-size: 0.75rem; }
-        .offcanvas { background: var(--card); color: var(--text); }
-        .disease-details { display: none; padding-top: 8px; margin-top: 8px; border-top: 1px solid rgba(128,128,128,0.2); font-size: 0.8rem; }
-        .disease-card.active .disease-details { display: block; }
-        .password-wrapper { position: relative; }
-        .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-light); z-index: 10; background: none; border: none; font-size: 1rem; }
-        .risk-indicator { padding: 4px 10px; border-radius: 16px; font-weight: 600; font-size: 0.8rem; }
-        .risk-low { background: #d1fae5; color: #065f46; }
-        .risk-medium { background: #fef3c7; color: #92400e; }
-        .risk-high { background: #fee2e2; color: #991b1b; }
-        @media (max-width: 768px) { .hero-title { font-size: 1.8rem; } .btn { padding: 4px 10px; font-size: 0.7rem; } .navbar-brand { font-size: 0.9rem; } .card { padding: 0.8rem; } }
-        .pallcalc-tab, .survey-tab { display: none; }
-        .pallcalc-tab.active, .survey-tab.active { display: block; }
-        .tab-btn { border-radius: 16px 16px 0 0; font-size: 0.75rem; padding: 4px 12px; }
-        .tab-btn.active { background: var(--primary); color: white; }
-        .card, .dashboard-card { border-radius: 12px; border: 1px solid #e9ecef; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-        .card:hover, .dashboard-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .btn { border-radius: 8px; font-weight: 500; padding: 4px 12px; font-size: 0.75rem; }
-        .btn-primary { background: #2563eb; border-color: #2563eb; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .btn-success { background: #059669; border-color: #059669; }
-        .btn-outline { border: 1px solid #d1d5db; color: #374151; }
-        .btn-outline:hover { background: #f3f4f6; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #f8fafc; font-size: 0.8rem; }
-        h2, h3, h4, h5 { color: #1e293b; font-weight: 600; font-size: 1.1rem; }
-        .history-item { background: #fff; border-radius: 6px; padding: 4px 10px; margin-bottom: 4px; border: 1px solid #e2e8f0; }
-        .pallcalc-card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 1rem; }
-        .pallcalc-card .section-title { font-size: 0.95rem; font-weight: 600; color: #2c3e50; margin-bottom: 0.8rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e9ecef; }
-        .pallcalc-field { margin-bottom: 0.6rem; }
-        .pallcalc-field label { display: block; font-size: 0.75rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
-        .pallcalc-field .form-control, .pallcalc-field .form-select { height: 34px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #ced4da; }
-        .pallcalc-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        .pallcalc-row .pallcalc-field { flex: 1 1 0; min-width: 120px; }
-        .tab-btn { border-radius: 16px; padding: 4px 12px; font-weight: 500; transition: 0.2s; font-size: 0.75rem; }
-        .tab-btn.active { background: #0d6efd; color: #fff; border-color: #0d6efd; }
-        .btn-accent { background: #6f42c1; color: #fff; border: none; }
-        .btn-accent:hover { background: #5a32a3; }
-        .alert-soft { background: #f0f4ff; border-left: 4px solid #0d6efd; border-radius: 0 8px 8px 0; padding: 0.6rem; font-size: 0.8rem; }
-        .pallcalc-tab { animation: fadeIn 0.2s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .pallcalc-card { background: #fff; border-radius: 12px; padding: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 1rem; border: 1px solid #f0f2f5; }
-        .section-title { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem; }
-        .section-title i { font-size: 1.1rem; color: #3b82f6; }
-        .params-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-        @media (max-width: 768px) { .params-grid { grid-template-columns: 1fr; } }
-        .param-field { display: flex; flex-direction: column; gap: 0.2rem; }
-        .param-field label { font-size: 0.75rem; font-weight: 500; color: #475569; display: flex; align-items: center; gap: 0.2rem; }
-        .param-field label .badge { font-size: 0.6rem; padding: 0.1em 0.4em; border-radius: 4px; }
-        .param-field .form-control { height: 34px; font-size: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; padding: 0 0.8rem; }
-        .param-field .form-control:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
-        .btn-clust { border-radius: 8px; padding: 4px 12px; font-weight: 500; font-size: 0.75rem; }
-        .chart-box { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
-        .chart-wrapper { flex: 1 1 240px; min-height: 200px; background: #fafbfc; border-radius: 10px; padding: 0.6rem; }
-	   .decision-option {
-    display: inline-block;
-    padding: 8px 16px;
-    margin: 4px 6px 4px 0;
-    background: var(--card);
-    border: 2px solid var(--primary);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text);
-}
-.decision-option:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(13,115,119,0.3);
-}
-.decision-option.selected {
-    background: var(--primary);
-    color: white;
-}
-.decision-question {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 12px;
-    padding: 12px;
-    background: rgba(13,115,119,0.08);
-    border-radius: 12px;
-    border-left: 4px solid var(--primary);
-}
-	    </style>
+<style>
+    /* ============================================
+       CSS-ДИЗАЙН МЕДИЦИНСКОГО ПРИЛОЖЕНИЯ (ПОЛНЫЙ КОД)
+       Адаптирован под медицинскую тематику, современный, удобный
+       ============================================ */
+
+    /* ========== 1. ПЕРЕМЕННЫЕ ========== */
+    :root {
+        /* Основная медицинская палитра (бирюзово-синяя) */
+        --primary-50: #e6f4f5;
+        --primary-100: #b3dfe2;
+        --primary-200: #80cacf;
+        --primary-300: #4db5bc;
+        --primary-400: #26a5ad;
+        --primary-500: #0d7377;   /* Основной */
+        --primary-600: #0b5f62;
+        --primary-700: #094b4e;
+        --primary-800: #07373a;
+        --primary-900: #052326;
+
+        /* Акцент (более яркий для кнопок действий) */
+        --accent-50: #e0f7fa;
+        --accent-400: #26c6da;
+        --accent-500: #00b4d8;
+        --accent-600: #0097a7;
+
+        /* Семантические цвета */
+        --success-50: #e6f9f0;
+        --success-500: #10b981;
+        --success-600: #059669;
+        --danger-50: #fef2f2;
+        --danger-500: #ef4444;
+        --danger-600: #dc2626;
+        --warning-50: #fffbeb;
+        --warning-500: #f59e0b;
+        --warning-600: #d97706;
+        --info-50: #eff6ff;
+        --info-500: #3b82f6;
+        --info-600: #2563eb;
+
+        /* Нейтральные/текстовые */
+        --gray-50: #f8fafc;
+        --gray-100: #f1f5f9;
+        --gray-200: #e2e8f0;
+        --gray-300: #cbd5e1;
+        --gray-400: #94a3b8;
+        --gray-500: #64748b;
+        --gray-600: #475569;
+        --gray-700: #334155;
+        --gray-800: #1e293b;
+        --gray-900: #0f172a;
+
+        /* Переменные для светлой темы */
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-hover: #f1f5f9;
+        --border: #e2e8f0;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+
+        /* Скругления */
+        --radius-xs: 6px;
+        --radius-sm: 10px;
+        --radius-md: 16px;
+        --radius-lg: 24px;
+        --radius-xl: 32px;
+
+        /* Типографика */
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        --text-xs: 0.75rem;
+        --text-sm: 0.875rem;
+        --text-base: 1rem;
+        --text-lg: 1.125rem;
+        --text-xl: 1.25rem;
+        --text-2xl: 1.5rem;
+        --text-3xl: 2rem;
+        --leading-tight: 1.25;
+        --leading-normal: 1.5;
+
+        /* Анимации */
+        --transition-fast: 0.15s ease;
+        --transition-base: 0.25s ease;
+        --transition-slow: 0.35s ease;
+    }
+
+    /* ========== 2. ТЁМНАЯ ТЕМА ========== */
+    .dark-theme {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --surface-hover: #273549;
+        --border: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.35);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ========== 3. СБРОС И БАЗОВЫЕ СТИЛИ ========== */
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    html {
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        font-size: var(--text-base);
+        line-height: var(--leading-normal);
+        color: var(--text-primary);
+        background: var(--bg);
+        transition: background var(--transition-base), color var(--transition-base);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ========== 4. ТИПОГРАФИКА ========== */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--text-primary);
+        font-weight: 600;
+        line-height: var(--leading-tight);
+    }
+
+    h1 { font-size: var(--text-3xl); }
+    h2 { font-size: var(--text-2xl); }
+    h3 { font-size: var(--text-xl); }
+    h4 { font-size: var(--text-lg); }
+
+    a {
+        color: var(--primary-500);
+        text-decoration: none;
+    }
+    a:hover {
+        color: var(--primary-600);
+        text-decoration: underline;
+    }
+
+    /* ========== 5. КНОПКИ ========== */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        font-size: var(--text-sm);
+        font-weight: 500;
+        font-family: var(--font-sans);
+        line-height: 1;
+        border: 2px solid transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        white-space: nowrap;
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn:focus-visible {
+        outline: 2px solid var(--primary-500);
+        outline-offset: 2px;
+    }
+
+    .btn:active {
+        transform: scale(0.97);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+        color: #ffffff;
+        border-color: transparent;
+        box-shadow: var(--shadow-sm);
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success-500), var(--success-600));
+        color: #ffffff;
+        border-color: transparent;
+    }
+    .btn-success:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger-500), var(--danger-600));
+        color: #ffffff;
+        border-color: transparent;
+    }
+    .btn-danger:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--primary-500);
+        color: var(--primary-500);
+    }
+    .btn-outline:hover {
+        background: var(--primary-50);
+        border-color: var(--primary-600);
+        color: var(--primary-600);
+    }
+
+    .btn-outline-danger {
+        border-color: var(--danger-500);
+        color: var(--danger-500);
+    }
+    .btn-outline-danger:hover {
+        background: var(--danger-50);
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.875rem;
+        font-size: var(--text-xs);
+    }
+
+    .btn-lg {
+        padding: 0.8rem 1.75rem;
+        font-size: var(--text-base);
+    }
+
+    /* ========== 6. ФОРМЫ ========== */
+    .form-control,
+    .form-select {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        font-size: var(--text-sm);
+        font-family: var(--font-sans);
+        color: var(--text-primary);
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-400);
+        box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.15);
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: var(--text-muted);
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.375rem;
+        font-size: var(--text-sm);
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .form-range {
+        width: 100%;
+        height: 6px;
+        -webkit-appearance: none;
+        background: var(--gray-200);
+        border-radius: 3px;
+        outline: none;
+    }
+
+    .form-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        background: var(--primary-500);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .password-wrapper {
+        position: relative;
+    }
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1.25rem;
+        padding: 0;
+        line-height: 1;
+    }
+
+    /* ========== 7. КАРТОЧКИ ========== */
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow var(--transition-base), transform var(--transition-base);
+    }
+
+    .card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .dashboard-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+        text-align: center;
+        transition: all var(--transition-base);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dashboard-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-4px);
+        border-color: var(--primary-300);
+    }
+
+    .dashboard-card .icon {
+        font-size: 2rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Карточка для PallCalc */
+    .pallcalc-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: var(--text-base);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* ========== 8. НАВБАР ========== */
+    .navbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0.625rem 0;
+        backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    .dark-theme .navbar {
+        background: rgba(30, 41, 59, 0.9);
+    }
+
+    .navbar-brand {
+        font-weight: 700;
+        font-size: var(--text-lg);
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .brand-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+        border-radius: var(--radius-xs);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+    }
+
+    /* ========== 9. ОПОВЕЩЕНИЯ (ТОСТЫ) ========== */
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10000;
+        padding: 0.875rem 1.25rem;
+        border-radius: var(--radius-sm);
+        color: white;
+        font-size: var(--text-sm);
+        font-weight: 500;
+        box-shadow: var(--shadow-lg);
+        animation: fadeInUp 0.4s ease;
+        max-width: 400px;
+        line-height: 1.4;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ========== 10. FAQ ========== */
+    .faq-item {
+        border-left: 4px solid var(--primary-500);
+        padding: 0.875rem 1rem;
+        margin-bottom: 0.75rem;
+        background: var(--surface);
+        cursor: pointer;
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        transition: all var(--transition-fast);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .faq-item:hover {
+        background: var(--surface-hover);
+        border-left-color: var(--primary-600);
+    }
+
+    .faq-item.active {
+        border-left-color: var(--accent-500);
+        background: var(--primary-50);
+    }
+    .dark-theme .faq-item.active {
+        background: rgba(13, 115, 119, 0.15);
+    }
+
+    .faq-question {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .faq-icon {
+        font-size: 0.75rem;
+        color: var(--primary-500);
+        min-width: 16px;
+        transition: transform var(--transition-fast);
+    }
+
+    .faq-item.active .faq-icon {
+        transform: rotate(90deg);
+        color: var(--accent-500);
+    }
+
+    .faq-answer {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px dashed var(--border);
+        display: none;
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    /* ========== 11. КАЛЕНДАРЬ ========== */
+    .calendar-widget {
+        background: var(--surface);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+    }
+
+    .calendar-widget table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .calendar-widget td {
+        text-align: center;
+        padding: 6px;
+        cursor: pointer;
+        border-radius: var(--radius-xs);
+        font-size: var(--text-sm);
+        transition: background var(--transition-fast);
+    }
+
+    .calendar-widget td:hover {
+        background: var(--primary-50);
+    }
+
+    .calendar-widget td.today {
+        background: var(--primary-500);
+        color: white;
+        font-weight: 600;
+    }
+
+    .calendar-widget td.has-entry {
+        background: var(--success-500);
+        color: white;
+        opacity: 0.8;
+    }
+
+    /* ========== 12. ИНДИКАТОРЫ РИСКА ========== */
+    .risk-indicator {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: var(--text-xs);
+        line-height: 1.5;
+    }
+
+    .risk-low {
+        background: var(--success-50);
+        color: var(--success-600);
+    }
+
+    .risk-medium {
+        background: var(--warning-50);
+        color: var(--warning-600);
+    }
+
+    .risk-high {
+        background: var(--danger-50);
+        color: var(--danger-600);
+    }
+
+    /* ========== 13. БЕЙДЖИ ========== */
+    .badge {
+        display: inline-block;
+        padding: 0.2em 0.6em;
+        font-size: var(--text-xs);
+        font-weight: 600;
+        border-radius: var(--radius-xs);
+        background: var(--gray-100);
+        color: var(--gray-700);
+    }
+
+    .reminder-badge {
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 0.2em 0.6em;
+        border-radius: 10px;
+        font-size: var(--text-xs);
+        font-weight: 500;
+    }
+
+    /* ========== 14. ИСТОРИЯ (СПИСОК) ========== */
+    .history-item {
+        font-size: var(--text-sm);
+        padding: 0.625rem 0.875rem;
+        margin-bottom: 0.375rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        transition: background var(--transition-fast);
+    }
+
+    .history-item:hover {
+        background: var(--surface-hover);
+    }
+
+    /* ========== 15. БЛОК ПРИНЯТИЯ РЕШЕНИЙ ========== */
+    .decision-question {
+        font-size: var(--text-base);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        padding: 0.875rem 1rem;
+        background: var(--primary-50);
+        border-radius: var(--radius-sm);
+        border-left: 4px solid var(--primary-500);
+    }
+    .dark-theme .decision-question {
+        background: rgba(13, 115, 119, 0.15);
+    }
+
+    .decision-option {
+        display: inline-block;
+        padding: 0.5rem 1.25rem;
+        margin: 0.25rem 0.5rem 0.25rem 0;
+        background: var(--surface);
+        border: 2px solid var(--primary-500);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .decision-option:hover {
+        background: var(--primary-500);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(13, 115, 119, 0.3);
+    }
+
+    .decision-option.selected {
+        background: var(--primary-500);
+        color: white;
+    }
+
+    /* ========== 16. ТАБЫ ========== */
+    .tab-btn {
+        border-radius: 16px;
+        padding: 0.4rem 1rem;
+        font-size: var(--text-sm);
+        font-weight: 500;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .tab-btn.active {
+        background: var(--primary-500);
+        color: white;
+        border-color: var(--primary-500);
+    }
+
+    .tab-btn:hover:not(.active) {
+        background: var(--surface-hover);
+    }
+
+    .pallcalc-tab,
+    .survey-tab {
+        display: none;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .pallcalc-tab.active,
+    .survey-tab.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ========== 17. HERO СЕКЦИЯ ========== */
+    .hero-section {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+
+    .hero-title {
+        font-size: var(--text-3xl);
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.75rem;
+    }
+
+    .hero-subtitle {
+        font-size: var(--text-lg);
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto 1.5rem;
+        line-height: 1.6;
+    }
+
+    .hero-btn {
+        padding: 0.8rem 2rem;
+        font-size: var(--text-base);
+        font-weight: 600;
+    }
+
+    /* ========== 18. СЕТКИ ========== */
+    .params-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .pallcalc-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .pallcalc-row .pallcalc-field {
+        flex: 1 1 0;
+        min-width: 140px;
+    }
+
+    .param-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .param-field label {
+        font-size: var(--text-sm);
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .chart-box {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .chart-wrapper {
+        flex: 1 1 250px;
+        min-height: 200px;
+        background: var(--gray-50);
+        border-radius: var(--radius-sm);
+        padding: 0.75rem;
+    }
+
+    /* ========== 19. КНОПКИ PALL CALC ========== */
+    .btn-clust {
+        border-radius: 8px;
+        padding: 0.4rem 0.875rem;
+        font-weight: 500;
+        font-size: var(--text-sm);
+    }
+
+    .btn-accent {
+        background: #6f42c1;
+        color: #fff;
+        border: none;
+    }
+
+    .btn-accent:hover {
+        background: #5a32a3;
+    }
+
+    .alert-soft {
+        background: var(--info-50);
+        border-left: 4px solid var(--info-500);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        padding: 0.75rem 1rem;
+        font-size: var(--text-sm);
+        color: var(--text-primary);
+    }
+
+    /* ========== 20. ФУТЕР ========== */
+    footer {
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 1.25rem 0;
+        text-align: center;
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+        margin-top: 2rem;
+    }
+
+    /* ========== 21. OFF-CANVAS (если используется Bootstrap) ========== */
+    .offcanvas {
+        background: var(--surface);
+        color: var(--text-primary);
+    }
+
+    /* ========== 22. АДАПТИВНОСТЬ ========== */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: var(--text-2xl);
+        }
+
+        .hero-subtitle {
+            font-size: var(--text-base);
+        }
+
+        .params-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-card {
+            padding: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            font-size: var(--text-xs);
+        }
+
+        .card,
+        .pallcalc-card {
+            padding: 1rem;
+        }
+
+        .toast {
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            max-width: 100%;
+        }
+    }
+
+    /* ========== 23. УВАЖЕНИЕ К ПОЛЬЗОВАТЕЛЬСКИМ НАСТРОЙКАМ ========== */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* ========== 24. СКРЫТЫЕ УТИЛИТЫ ========== */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+</style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg sticky-top">
