@@ -1752,6 +1752,9 @@ async function initApp() {
 
 // Обновлённая функция render
 async function render() {
+	if (!profile) {
+        profile = DB.getProfile();
+    }
     await updateNav();
     const page = location.hash.slice(1) || '/';
     const app = document.getElementById('app');
