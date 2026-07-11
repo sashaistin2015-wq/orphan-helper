@@ -633,6 +633,176 @@
     70% { box-shadow: 0 0 0 15px rgba(0,180,216,0); }
     100% { box-shadow: 0 0 0 0 rgba(0,180,216,0); }
 }
+	/* ===== ДАШБОРД — РОВНЫЕ КАРТОЧКИ ===== */
+.dashboard-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 1.25rem 0.75rem;
+    min-height: 130px;
+    height: 100%;
+    cursor: pointer;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+}
+.dashboard-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+.dashboard-card .icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+.dashboard-card h5 {
+    font-size: var(--text-base);
+    margin-bottom: 0;
+}
+.dashboard-card small {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+/* ===== СТАТ-КАРТОЧКИ ===== */
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-xs);
+    height: 100%;
+}
+.stat-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: var(--primary-50);
+    color: var(--primary-500);
+    flex-shrink: 0;
+}
+.stat-info { flex: 1; min-width: 0; }
+.stat-value { font-size: var(--text-xl); font-weight: 700; line-height: 1.1; }
+.stat-label { font-size: var(--text-xs); color: var(--text-secondary); }
+
+/* ===== КАЛЕНДАРЬ ===== */
+.calendar-widget {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+}
+.calendar-widget th {
+    font-weight: 500;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+.calendar-widget td {
+    text-align: center;
+    padding: 3px 0;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: default;
+    transition: background var(--transition-fast);
+}
+.calendar-widget td:hover:not(.today) {
+    background: var(--primary-50);
+}
+.calendar-widget td.today {
+    background: var(--primary-500);
+    color: white;
+    font-weight: 600;
+}
+
+/* ===== ДЕРЕВО РЕШЕНИЙ ===== */
+.decision-tree-card {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: none;
+    background: var(--surface);
+}
+.decision-question {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+    background: var(--primary-50);
+    border-radius: var(--radius-sm);
+    border-left: 5px solid var(--primary-500);
+    margin-bottom: 1.25rem;
+    color: var(--text-primary);
+}
+.dark-theme .decision-question {
+    background: rgba(13, 115, 119, 0.15);
+}
+.decision-options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+.decision-option {
+    display: inline-block;
+    padding: 0.55rem 1.4rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-xs);
+    user-select: none;
+}
+.decision-option:hover {
+    background: var(--primary-500);
+    color: white;
+    border-color: var(--primary-500);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(13, 115, 119, 0.25);
+}
+.decision-option:active {
+    transform: scale(0.96);
+}
+#decisionResult .list-group-item {
+    border-left: 4px solid var(--primary-500);
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+#decisionResult .list-group-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+}
+#decisionResult .badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.7rem;
+}
+
+/* ===== АНИМАЦИЯ ПОЯВЛЕНИЯ ===== */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#decisionResult .alert,
+#decisionResult .list-group-item {
+    animation: fadeSlideUp 0.35s ease forwards;
+}
+#decisionResult .list-group-item:nth-child(2) { animation-delay: 0.05s; }
+#decisionResult .list-group-item:nth-child(3) { animation-delay: 0.1s; }
+#decisionResult .list-group-item:nth-child(4) { animation-delay: 0.15s; }
+#decisionResult .list-group-item:nth-child(5) { animation-delay: 0.2s; }
 </style>
 </head>
 <body>
@@ -833,7 +1003,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const root = document.getElementById('node-root');
     if (root) root.classList.add('active');
 });
-            // ========== ДЕРЕВО РЕШЕНИЙ (улучшенное) ==========
+      // ========== ДЕРЕВО РЕШЕНИЙ — СОВРЕМЕННЫЙ ДИЗАЙН ==========
+
 const symptomWeights = {
     'кашель': 2, 'одышка': 3, 'боль': 3, 'лихорадка': 2,
     'тошнота': 1, 'рвота': 2, 'диарея': 1, 'судороги': 3,
@@ -851,11 +1022,11 @@ const decisionSteps = [
     { question: 'Есть ли лихорадка (>38°C)?', type: 'single', options: ['Да', 'Нет'], key: 'fever' },
     { question: 'Кашель или одышка?', type: 'single', options: ['Нет', 'Кашель', 'Одышка', 'И то, и другое'], key: 'respiratory' },
     { question: 'Наличие болей (любая локализация)?', type: 'single', options: ['Нет', 'Лёгкие', 'Умеренные', 'Сильные'], key: 'pain' },
-    { question: 'Желудочно-кишечные нарушения (тошнота, рвота, диарея)?', type: 'multi', options: ['Тошнота', 'Рвота', 'Диарея'], key: 'gi' },
+    { question: 'Желудочно-кишечные нарушения?', type: 'multi', options: ['Тошнота', 'Рвота', 'Диарея'], key: 'gi' },
     { question: 'Неврологические симптомы?', type: 'multi', options: ['Судороги', 'Атаксия', 'Мышечная слабость'], key: 'neuro' },
     { question: 'Кожные проявления?', type: 'multi', options: ['Сыпь', 'Ихтиоз (шелушение)', 'Нарушение пигментации'], key: 'skin' },
     { question: 'Увеличение печени или селезёнки?', type: 'single', options: ['Нет', 'Гепатомегалия', 'Спленомегалия', 'И то, и другое'], key: 'hepatosplenomegaly' },
-    { question: 'Задержка развития или регресс навыков?', type: 'single', options: ['Нет', 'Задержка развития', 'Регресс'], key: 'development' },
+    { question: 'Задержка развития или регресс?', type: 'single', options: ['Нет', 'Задержка развития', 'Регресс'], key: 'development' },
     { question: 'Мышечная атрофия или слабость?', type: 'single', options: ['Нет', 'Да'], key: 'muscle' },
     { question: 'Пороки развития (черепно-лицевые, скелетные)?', type: 'single', options: ['Нет', 'Да'], key: 'malformations' },
     { question: 'Кардиальные проявления (шум, сердечная недостаточность)?', type: 'single', options: ['Нет', 'Да'], key: 'cardiac' }
@@ -863,64 +1034,146 @@ const decisionSteps = [
 
 function renderDecisionTree() {
     return `
-    <h2>🌳 Дерево решений</h2>
-<p class="text-muted small">Ответьте на вопросы для получения вероятных диагнозов</p>
-    <div class="card">
-        <div class="card-body" id="decisionContainer">
-            <div id="decisionQuestion" class="decision-question"></div>
-            <div id="decisionOptions" class="mt-3 d-flex flex-wrap"></div>
-            <div id="decisionResult" class="mt-4"></div>
-            <button class="btn btn-secondary mt-3" onclick="resetDecisionTree()">🔄 Начать заново</button>
+        <div class="decision-tree-module">
+            <h2>🌳 Дерево решений</h2>
+            <p class="text-muted small">Ответьте на несколько вопросов, чтобы получить список вероятных диагнозов</p>
+            
+            <div class="card decision-tree-card">
+                <div class="card-body" id="decisionContainer">
+                    <!-- Прогресс -->
+                    <div class="decision-progress mb-3">
+                        <div class="progress" style="height: 6px; background: var(--gray-200); border-radius: 10px;">
+                            <div id="decisionProgressBar" class="progress-bar" role="progressbar" style="width: 0%; background: linear-gradient(90deg, var(--primary-500), var(--accent-500)); transition: width 0.5s ease;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span class="text-muted small" id="decisionStepIndicator">Шаг 1 из ${decisionSteps.length}</span>
+                            <span class="text-muted small" id="decisionStepLabel">Вопрос 1</span>
+                        </div>
+                    </div>
+
+                    <!-- Вопрос -->
+                    <div id="decisionQuestion" class="decision-question"></div>
+                    
+                    <!-- Варианты ответов -->
+                    <div id="decisionOptions" class="decision-options-container"></div>
+                    
+                    <!-- Результат -->
+                    <div id="decisionResult" class="mt-4"></div>
+                    
+                    <!-- Кнопка сброса -->
+                    <button class="btn btn-secondary mt-3" onclick="resetDecisionTree()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Начать заново
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
     `;
 }
-window.resetDecisionTree = function() { decisionState = { step: 0, answers: {} }; showDecisionStep(); }
+
+window.resetDecisionTree = function() {
+    decisionState = { step: 0, answers: {} };
+    const bar = document.getElementById('decisionProgressBar');
+    if (bar) { bar.style.width = '0%'; bar.setAttribute('aria-valuenow', 0); }
+    const indicator = document.getElementById('decisionStepIndicator');
+    if (indicator) indicator.textContent = `Шаг 1 из ${decisionSteps.length}`;
+    const label = document.getElementById('decisionStepLabel');
+    if (label) label.textContent = 'Вопрос 1';
+    const resultDiv = document.getElementById('decisionResult');
+    if (resultDiv) resultDiv.innerHTML = '';
+    document.getElementById('decisionQuestion').style.display = '';
+    document.getElementById('decisionOptions').style.display = '';
+    document.querySelector('.decision-progress').style.display = '';
+    showDecisionStep();
+};
 
 function showDecisionStep() {
     const step = decisionState.step;
-    if (step >= decisionSteps.length) { computeDecisionResult(); return; }
+    if (step >= decisionSteps.length) {
+        computeDecisionResult();
+        return;
+    }
     const s = decisionSteps[step];
-    document.getElementById('decisionQuestion').textContent = s.question;
+
+    // Обновляем прогресс
+    const total = decisionSteps.length;
+    const progress = (step / total) * 100;
+    const bar = document.getElementById('decisionProgressBar');
+    if (bar) {
+        bar.style.width = progress + '%';
+        bar.setAttribute('aria-valuenow', progress);
+    }
+    const indicator = document.getElementById('decisionStepIndicator');
+    if (indicator) indicator.textContent = `Шаг ${step + 1} из ${total}`;
+    const label = document.getElementById('decisionStepLabel');
+    if (label) label.textContent = `Вопрос ${step + 1}`;
+
+    // Показываем вопрос
+    const qEl = document.getElementById('decisionQuestion');
+    if (qEl) qEl.textContent = s.question;
+
     const optDiv = document.getElementById('decisionOptions');
     document.getElementById('decisionResult').innerHTML = '';
+    
     let html = '';
     if (s.type === 'single') {
+        html = '<div class="d-flex flex-wrap gap-2">';
         s.options.forEach(opt => {
             html += `<div class="decision-option" onclick="selectDecisionOption('${s.key}','${opt}')">${opt}</div>`;
         });
+        html += '</div>';
     } else if (s.type === 'number') {
-        html += `<input type="number" id="decisionNumberInput" class="form-control" min="${s.min||0}" max="${s.max||120}" placeholder="Введите число">`;
-        html += `<button class="btn btn-primary mt-2" onclick="submitDecisionNumber('${s.key}')">Подтвердить</button>`;
+        html = `
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="number" id="decisionNumberInput" class="form-control" style="max-width:200px;" min="${s.min || 0}" max="${s.max || 120}" placeholder="Введите число">
+                <button class="btn btn-primary" onclick="submitDecisionNumber('${s.key}')">Подтвердить</button>
+            </div>
+        `;
     } else if (s.type === 'multi') {
+        html = '<div>';
         s.options.forEach(opt => {
             const checked = (decisionState.answers[s.key] && decisionState.answers[s.key].includes(opt)) ? 'checked' : '';
-            html += `<div class="form-check"><input class="form-check-input" type="checkbox" id="dec_${s.key}_${opt}" value="${opt}" ${checked} onchange="toggleDecisionOption('${s.key}','${opt}')"><label class="form-check-label" for="dec_${s.key}_${opt}">${opt}</label></div>`;
+            html += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="dec_${s.key}_${opt}" value="${opt}" ${checked} onchange="toggleDecisionOption('${s.key}','${opt}')">
+                    <label class="form-check-label" for="dec_${s.key}_${opt}">${opt}</label>
+                </div>
+            `;
         });
         html += `<button class="btn btn-primary mt-2" onclick="nextDecisionStep()">Далее</button>`;
+        html += '</div>';
     }
     optDiv.innerHTML = html;
 }
 
-window.selectDecisionOption = function(key, value) { decisionState.answers[key] = value; nextDecisionStep(); };
+window.selectDecisionOption = function(key, value) {
+    decisionState.answers[key] = value;
+    nextDecisionStep();
+};
+
 window.submitDecisionNumber = function(key) {
     const val = document.getElementById('decisionNumberInput').value;
     if (val === '') return;
     decisionState.answers[key] = parseFloat(val);
     nextDecisionStep();
 };
+
 window.toggleDecisionOption = function(key, value) {
     if (!decisionState.answers[key]) decisionState.answers[key] = [];
     const idx = decisionState.answers[key].indexOf(value);
     if (idx > -1) decisionState.answers[key].splice(idx, 1);
     else decisionState.answers[key].push(value);
 };
-window.nextDecisionStep = function() { decisionState.step++; showDecisionStep(); };
+
+window.nextDecisionStep = function() {
+    decisionState.step++;
+    showDecisionStep();
+};
 
 function computeDecisionResult() {
     const answers = decisionState.answers;
     const diseases = getDiseaseList();
     const userSymptoms = [];
+    
     if (answers.fever === 'Да') userSymptoms.push('лихорадка');
     if (answers.respiratory === 'Кашель') userSymptoms.push('кашель');
     if (answers.respiratory === 'Одышка' || answers.respiratory === 'И то, и другое') userSymptoms.push('одышка');
@@ -965,22 +1218,39 @@ function computeDecisionResult() {
         resDiv.innerHTML = '<div class="alert alert-warning">Не удалось сопоставить. Попробуйте уточнить симптомы.</div>';
         return;
     }
-    let html = '<h5>🎯 Топ-5 вероятных диагнозов (взвешенное совпадение):</h5><div class="list-group">';
-    top.forEach(item => {
-        const d = item.disease;
-        html += `
-        <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-                <h6>${d.icon} ${d.name}</h6>
-                <span class="badge bg-primary">${item.matchPercent}%</span>
+
+    let html = `
+        <div class="alert alert-success d-flex align-items-center">
+            <i class="bi bi-check-circle-fill fs-4 me-2"></i>
+            <div>
+                <strong>Топ-${top.length} вероятных диагнозов</strong>
+                <small class="d-block text-muted">Основано на взвешенном совпадении симптомов</small>
             </div>
-            <p class="mb-1 small">${d.desc}</p>
-            <small><strong>Ген:</strong> ${d.gene || '—'} | <strong>Лечение:</strong> ${d.treat}</small>
         </div>
+        <div class="list-group">
+    `;
+    top.forEach((item, idx) => {
+        const d = item.disease;
+        const colors = ['primary', 'success', 'warning', 'info', 'secondary'];
+        const color = colors[idx] || 'secondary';
+        html += `
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">${d.icon} ${d.name}</div>
+                    <p class="mb-1 small">${d.desc}</p>
+                    <small><strong>Ген:</strong> ${d.gene || '—'} | <strong>Лечение:</strong> ${d.treat}</small>
+                </div>
+                <span class="badge bg-${color} rounded-pill fs-6">${item.matchPercent}%</span>
+            </div>
         `;
     });
     html += '</div>';
     resDiv.innerHTML = html;
+
+    // Скрываем вопросы и прогресс
+    document.getElementById('decisionQuestion').style.display = 'none';
+    document.getElementById('decisionOptions').style.display = 'none';
+    document.querySelector('.decision-progress').style.display = 'none';
 }
 // URL вашего опубликованного веб-приложения Google Apps Script (замените на свой)
 // ⚠️ ВАЖНО: замените этот URL на тот, который получите после деплоя вашего скрипта
@@ -1521,58 +1791,202 @@ function loginAs(name, role, diagnosis = '', patientId = '') {
   updateNav();
   App.navigate('/dashboard');
 }
-            async function renderDashboard() {
-                if (!profile) return '';
-                const isDoc = profile.role === 'doctor';
-                let cards = isDoc ? `<div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('/patients')"><div class="icon"><i class="bi bi-people"></i></div><h5>Пациенты</h5></div></div><div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('/analytics')"><div class="icon"><i class="bi bi-graph-up"></i></div><h5>Аналитика</h5></div></div>` : `<div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('/diary')"><div class="icon"><i class="bi bi-journal"></i></div><h5>Дневник</h5></div></div><div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('/palliative')"><div class="icon"><i class="bi bi-heart-pulse"></i></div><h5>Паллиатив</h5></div></div><div class="col-md-4 mb-3"><div class="dashboard-card" onclick="App.navigate('/medications')"><div class="icon"><i class="bi bi-capsule"></i></div><h5>Лекарства</h5></div></div>`;
-                const diary = DB.getData('diary'); const palliative = DB.getData('palliative');
-                const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-                const recentDiary = diary.filter(e => e.date >= weekAgo); const recentPall = palliative.filter(e => e.date >= weekAgo);
-                const avgTemp = recentDiary.length ? (recentDiary.reduce((s, e) => s + parseFloat(e.temperature||0), 0) / recentDiary.length).toFixed(1) : '—';
-                const avgPain = recentPall.length ? (recentPall.reduce((s, e) => s + parseFloat(e.pain||0), 0) / recentPall.length).toFixed(1) : '—';
-                const lastDiary = diary.slice(-5).reverse(); const lastPall = palliative.slice(-5).reverse();
-                let riskHtml = '';
-                if (!isDoc && profile.diagnosis) {
-                    const lastData = diary.length ? diary[diary.length-1] : {};
-                    const risk = RiskPredictor.predict(lastData, profile.diagnosis, diary.slice(-7));
-                    let riskClass = 'risk-low'; if (risk > 50) riskClass = 'risk-medium'; if (risk > 80) riskClass = 'risk-high';
-                    riskHtml = `<div class="card text-center mb-3"><h5>📊 Прогноз риска</h5><div class="display-6"><span class="risk-indicator ${riskClass}">${risk}%</span></div><small class="text-muted">На основе данных за последние 7 дней</small></div>`;
-                }
-                let docPalliativeHtml = '';
-                if (isDoc) {
-                    const myPatients = DB.getDoctorPatients();
-                    const allPatients = DB.getAllPatients();
-                    const heavyPatients = [];
-                    myPatients.forEach(name => {
-                        const p = allPatients[name] || {};
-                        const pDiary = DB.getData('diary').filter(e => e.patient === name);
-                        const pPall = DB.getData('palliative').filter(e => e.patient === name);
-                        const lastPall = pPall.length ? pPall[pPall.length-1] : {};
-                        const risk = RiskPredictor.predict(lastPall, p.diagnosis || '', pDiary.slice(-7));
-                        if (risk >= 50 || (lastPall.pain && parseInt(lastPall.pain) >= 7) || (lastPall.quality && parseInt(lastPall.quality) <= 3)) {
-                            heavyPatients.push({ name, risk, pain: lastPall.pain, quality: lastPall.quality, lastUpdate: p.lastUpdate });
-                        }
-                    });
-                    if (heavyPatients.length > 0) {
-                        docPalliativeHtml = `<div class="card mt-4"><h5><i class="bi bi-heart-pulse text-danger"></i> Паллиативный контроль</h5><p class="text-muted small">Пациенты, требующие внимания</p>`;
-                        heavyPatients.forEach(p => {
-                            let riskClass = 'risk-low'; if (p.risk > 50) riskClass = 'risk-medium'; if (p.risk > 80) riskClass = 'risk-high';
-                            docPalliativeHtml += `<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+           async function renderDashboard() {
+    if (!profile) return '';
+    const isDoc = profile.role === 'doctor';
+    
+    // Карточки для врача
+    let cards = isDoc ? `
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="dashboard-card" onclick="App.navigate('/patients')">
+                <div class="icon"><i class="bi bi-people fs-1"></i></div>
+                <h5>Пациенты</h5>
+                <small class="text-muted">Управление списком</small>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="dashboard-card" onclick="App.navigate('/analytics')">
+                <div class="icon"><i class="bi bi-graph-up fs-1"></i></div>
+                <h5>Аналитика</h5>
+                <small class="text-muted">Данные и отчёты</small>
+            </div>
+        </div>
+    ` : `
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="dashboard-card" onclick="App.navigate('/diary')">
+                <div class="icon"><i class="bi bi-journal fs-1"></i></div>
+                <h5>Дневник</h5>
+                <small class="text-muted">Ежедневные записи</small>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="dashboard-card" onclick="App.navigate('/palliative')">
+                <div class="icon"><i class="bi bi-heart-pulse fs-1"></i></div>
+                <h5>Паллиатив</h5>
+                <small class="text-muted">Оценка состояния</small>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="dashboard-card" onclick="App.navigate('/medications')">
+                <div class="icon"><i class="bi bi-capsule fs-1"></i></div>
+                <h5>Лекарства</h5>
+                <small class="text-muted">Приём препаратов</small>
+            </div>
+        </div>
+    `;
+
+    const diary = DB.getData('diary');
+    const palliative = DB.getData('palliative');
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+    const recentDiary = diary.filter(e => e.date >= weekAgo);
+    const recentPall = palliative.filter(e => e.date >= weekAgo);
+    const avgTemp = recentDiary.length ? (recentDiary.reduce((s, e) => s + parseFloat(e.temperature||0), 0) / recentDiary.length).toFixed(1) : '—';
+    const avgPain = recentPall.length ? (recentPall.reduce((s, e) => s + parseFloat(e.pain||0), 0) / recentPall.length).toFixed(1) : '—';
+    const lastDiary = diary.slice(-5).reverse();
+    const lastPall = palliative.slice(-5).reverse();
+    
+    let riskHtml = '';
+    if (!isDoc && profile.diagnosis) {
+        const lastData = diary.length ? diary[diary.length-1] : {};
+        const risk = RiskPredictor.predict(lastData, profile.diagnosis, diary.slice(-7));
+        let riskClass = 'risk-low';
+        if (risk > 50) riskClass = 'risk-medium';
+        if (risk > 80) riskClass = 'risk-high';
+        riskHtml = `
+            <div class="card text-center mb-3">
+                <h5>📊 Прогноз риска</h5>
+                <div class="display-6"><span class="risk-indicator ${riskClass}">${risk}%</span></div>
+                <small class="text-muted">На основе данных за последние 7 дней</small>
+            </div>
+        `;
+    }
+    
+    let docPalliativeHtml = '';
+    if (isDoc) {
+        const myPatients = DB.getDoctorPatients();
+        const allPatients = DB.getAllPatients();
+        const heavyPatients = [];
+        myPatients.forEach(name => {
+            const p = allPatients[name] || {};
+            const pDiary = DB.getData('diary').filter(e => e.patient === name);
+            const pPall = DB.getData('palliative').filter(e => e.patient === name);
+            const lastPall = pPall.length ? pPall[pPall.length-1] : {};
+            const risk = RiskPredictor.predict(lastPall, p.diagnosis || '', pDiary.slice(-7));
+            if (risk >= 50 || (lastPall.pain && parseInt(lastPall.pain) >= 7) || (lastPall.quality && parseInt(lastPall.quality) <= 3)) {
+                heavyPatients.push({ name, risk, pain: lastPall.pain, quality: lastPall.quality, lastUpdate: p.lastUpdate });
+            }
+        });
+        if (heavyPatients.length > 0) {
+            docPalliativeHtml = `
+                <div class="card mt-4">
+                    <h5><i class="bi bi-heart-pulse text-danger"></i> Паллиативный контроль</h5>
+                    <p class="text-muted small">Пациенты, требующие внимания</p>
+                    ${heavyPatients.map(p => {
+                        let riskClass = 'risk-low';
+                        if (p.risk > 50) riskClass = 'risk-medium';
+                        if (p.risk > 80) riskClass = 'risk-high';
+                        return `
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
                                 <div><strong>${esc(p.name)}</strong><br><small class="text-muted">Боль: ${p.pain||'—'} | КЖ: ${p.quality||'—'}</small></div>
                                 <span class="risk-indicator ${riskClass}">Риск ${p.risk}%</span>
-                            </div>`;
-                        });
-                        docPalliativeHtml += `</div>`;
-                    }
-                }
-                const instruction = isDoc ? `<div class="card mt-4"><h5><i class="bi bi-info-circle"></i> Инструкция для врача</h5><p>Добавляйте пациентов в разделе «Пациенты». Все данные автоматически собираются в Google Таблицу. Используйте раздел «Аналитика» для просмотра и скачивания Excel.</p></div>` : `<div class="card mt-4"><h5><i class="bi bi-info-circle"></i> Инструкция для пациента</h5><p>Заполняйте модули и нажимайте «Отправить врачу». Данные сохраняются локально и открываются в Яндекс.Форме для отправки врачу.</p></div>`;
-                const importExportHtml = `<div class="card mt-4"><h5><i class="bi bi-arrow-down-up"></i> Импорт/Экспорт данных</h5><div class="d-flex gap-2 flex-wrap"><button class="btn btn-sm btn-outline" onclick="window.exportData()">📤 Экспорт JSON</button><input type="file" id="importFile" accept=".json" class="d-none" onchange="window.importData(this)"><button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">📥 Импорт JSON</button></div></div>`;
-                return `<div class="row"><div class="col-lg-9"><h2>👋 ${esc(profile.fullName)}</h2><div class="row mt-3">${cards}</div>${!isDoc ? `<div class="row mt-4"><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-thermometer-half fs-1 text-primary"></i><h5>Средняя t°</h5><div class="display-6">${avgTemp}°C</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-heart-pulse fs-1 text-danger"></i><h5>Средняя боль</h5><div class="display-6">${avgPain}</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-journal-medical fs-1 text-success"></i><h5>Записей дневника</h5><div class="display-6">${diary.length}</div></div></div><div class="col-md-3 mb-3"><div class="card text-center"><i class="bi bi-heart-pulse fs-1 text-warning"></i><h5>Паллиатив</h5><div class="display-6">${palliative.length}</div></div></div></div><div class="row mt-4"><div class="col-md-6"><div class="card"><h5>Последние записи дневника</h5>${lastDiary.map(e => `<div class="history-item">${e.date} | ${e.temperature||'—'}°C | ${e.wellbeing}/10</div>`).join('') || '<p class="text-muted">Нет записей</p>'}</div></div><div class="col-md-6"><div class="card"><h5>Последние паллиативные показатели</h5>${lastPall.map(e => `<div class="history-item">${e.date} | Боль: ${e.pain} | КЖ: ${e.quality}</div>`).join('') || '<p class="text-muted">Нет записей</p>'}</div></div></div>` : docPalliativeHtml + instruction}${importExportHtml}</div><div class="col-lg-3">${riskHtml}<div class="clock-widget-enhanced mb-3">
-    <div class="clock-time" id="liveClock">--:--:--</div>
-    <div class="clock-date" id="liveDate">---</div>
-    <div class="clock-pulse"></div>
-</div></div></div><div class="calendar-widget" id="miniCalendar"></div></div></div>`;
-            }
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+    }
+    
+    const instruction = isDoc ? `
+        <div class="card mt-4">
+            <h5><i class="bi bi-info-circle"></i> Инструкция для врача</h5>
+            <p>Добавляйте пациентов в разделе «Пациенты». Все данные автоматически собираются в Google Таблицу. Используйте раздел «Аналитика» для просмотра и скачивания Excel.</p>
+        </div>
+    ` : `
+        <div class="card mt-4">
+            <h5><i class="bi bi-info-circle"></i> Инструкция для пациента</h5>
+            <p>Заполняйте модули и нажимайте «Отправить врачу». Данные сохраняются локально и открываются в Яндекс.Форме для отправки врачу.</p>
+        </div>
+    `;
+    
+    const importExportHtml = `
+        <div class="card mt-4">
+            <h5><i class="bi bi-arrow-down-up"></i> Импорт/Экспорт данных</h5>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline" onclick="window.exportData()">📤 Экспорт JSON</button>
+                <input type="file" id="importFile" accept=".json" class="d-none" onchange="window.importData(this)">
+                <button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">📥 Импорт JSON</button>
+            </div>
+        </div>
+    `;
+
+    // Пациентские метрики (только для пациента)
+    let patientMetrics = '';
+    if (!isDoc) {
+        patientMetrics = `
+            <div class="row mt-4">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="bi bi-thermometer-half"></i></div>
+                        <div class="stat-info"><div class="stat-value">${avgTemp}°C</div><div class="stat-label">Средняя t°</div></div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="bi bi-heart-pulse"></i></div>
+                        <div class="stat-info"><div class="stat-value">${avgPain}</div><div class="stat-label">Средняя боль</div></div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="bi bi-journal-medical"></i></div>
+                        <div class="stat-info"><div class="stat-value">${diary.length}</div><div class="stat-label">Записей дневника</div></div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="bi bi-heart-pulse"></i></div>
+                        <div class="stat-info"><div class="stat-value">${palliative.length}</div><div class="stat-label">Паллиатив</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card"><h5>Последние записи дневника</h5>
+                        ${lastDiary.map(e => `<div class="history-item">${e.date} | ${e.temperature||'—'}°C | ${e.wellbeing}/10</div>`).join('') || '<p class="text-muted">Нет записей</p>'}
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card"><h5>Последние паллиативные показатели</h5>
+                        ${lastPall.map(e => `<div class="history-item">${e.date} | Боль: ${e.pain} | КЖ: ${e.quality}</div>`).join('') || '<p class="text-muted">Нет записей</p>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="row">
+            <div class="col-lg-8">
+                <h2>👋 ${esc(profile.fullName)}</h2>
+                <div class="row mt-3">${cards}</div>
+                ${patientMetrics}
+                ${docPalliativeHtml}
+                ${instruction}
+                ${importExportHtml}
+            </div>
+            <div class="col-lg-4">
+                ${riskHtml}
+                <div class="clock-widget-enhanced mb-3">
+                    <div class="clock-time" id="liveClock">--:--:--</div>
+                    <div class="clock-date" id="liveDate">---</div>
+                    <div class="clock-pulse"></div>
+                </div>
+                <div class="calendar-widget" id="miniCalendar" style="padding: 0.75rem;"></div>
+            </div>
+        </div>
+    `;
+}
 
             window.exportData = function() {
                 const exportObj = {
@@ -3328,8 +3742,48 @@ function initClock() {
     if (window.clockTimer) clearInterval(window.clockTimer);
     window.clockTimer = setInterval(update, 1000);
 }            
-function initCalendar() { const cal = document.getElementById('miniCalendar'); if(!cal)return; const now = new Date(); const m = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']; const fd = new Date(now.getFullYear(),now.getMonth(),1).getDay()||7; const days = new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const diary = DB.getData('diary'); const palliative = DB.getData('palliative'); const allDates = new Set([...diary.map(e=>e.date), ...palliative.map(e=>e.date)]); let h = `<div class="month-title">${m[now.getMonth()]} ${now.getFullYear()}</div><table><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr><tr>`; for(let i=1;i<fd;i++)h+='<td></td>'; for(let d=1;d<=days;d++){if((fd+d-1)%7===1&&d>1)h+='</tr><tr>'; const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; h+=`<td class="${d===now.getDate()?'today':''} ${allDates.has(dateStr)?'has-entry':''}">${d}</td>`;} h+='</tr></table>'; cal.innerHTML = h; }
+function initCalendar() {
+    const cal = document.getElementById('miniCalendar');
+    if (!cal) return;
+    const now = new Date();
+    const m = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+    const fd = new Date(now.getFullYear(), now.getMonth(), 1).getDay() || 7;
+    const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const diary = DB.getData('diary');
+    const palliative = DB.getData('palliative');
+    const allDates = new Set([...diary.map(e => e.date), ...palliative.map(e => e.date)]);
     
+    let h = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold" style="font-size:0.9rem;">${m[now.getMonth()]} ${now.getFullYear()}</span>
+            <span style="font-size:0.7rem; color:var(--text-muted);">${diary.length + palliative.length} записей</span>
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+            <tr>
+                <th style="text-align:center; padding:2px; color:var(--text-muted);">Пн</th>
+                <th style="text-align:center; padding:2px; color:var(--text-muted);">Вт</th>
+                <th style="text-align:center; padding:2px; color:var(--text-muted);">Ср</th>
+                <th style="text-align:center; padding:2px; color:var(--text-muted);">Чт</th>
+                <th style="text-align:center; padding:2px; color:var(--text-muted);">Пт</th>
+                <th style="text-align:center; padding:2px; color:var(--text-muted);">Сб</th>
+                <th style="text-align:center; padding:2px; color:var(--text-muted);">Вс</th>
+            </tr>
+            <tr>
+    `;
+    for (let i = 1; i < fd; i++) h += '<td style="text-align:center; padding:2px;"></td>';
+    for (let d = 1; d <= days; d++) {
+        if ((fd + d - 1) % 7 === 1 && d > 1) h += '</tr><tr>';
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isToday = d === now.getDate();
+        const hasEntry = allDates.has(dateStr);
+        let cls = 'text-center p-1 rounded';
+        if (isToday) cls += ' bg-primary text-white fw-bold';
+        if (hasEntry && !isToday) cls += ' bg-success bg-opacity-25 text-success';
+        h += `<td class="${cls}" style="cursor:default; font-size:0.7rem; width:14%;">${d}</td>`;
+    }
+    h += '</tr></table>';
+    cal.innerHTML = h;
+}    
        window.onhashchange = () => { if (clockTimer) clearInterval(clockTimer); render(); };
     window.onload = render;
 })();
