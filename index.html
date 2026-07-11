@@ -2179,7 +2179,7 @@ function setupPallcalc() {
     this.drawClusterCharts(vals, p.center, best, deltaQoL, orVal);
 
     notify('Кластеризация выполнена успешно.', 'info');
-},
+}, // <-- ИСПРАВЛЕНО: добавлена запятая
 
         drawClusterCharts: function(patient, center, profileName, deltaQoL, orVal) {
             const radarDiv = document.getElementById('radar-container');
@@ -2299,10 +2299,8 @@ function setupPallcalc() {
             }
         },
 
-       // ======= НОВЫЙ МЕТОД ЗАГРУЗКИ ИЗ АНКЕТ (С ОБЛАКОМ) =======
-loadFromSurveys: function(target) {
+        loadFromSurveys: function(target) {
     console.log('loadFromSurveys вызван для:', target);
-    // 1. Сначала пробуем загрузить из локального хранилища
     const local = JSON.parse(localStorage.getItem('surveyData') || '{}');
     if (local.pedsql || local.papascale) {
         console.log('Найдены локальные данные анкет:', local);
@@ -2310,7 +2308,6 @@ loadFromSurveys: function(target) {
         return;
     }
 
-    // 2. Если локально пусто – запрашиваем из облака
     const patientId = prompt('Введите ID пациента, чьи анкеты загрузить:');
     if (!patientId) {
         notify('ID пациента не введён.', 'error');
@@ -2342,9 +2339,7 @@ loadFromSurveys: function(target) {
         });
 },
 
-
-        // Вспомогательная функция: подстановка значений анкет в поля калькулятора
-applySurveyData: function(target, pedsql, papascale) {
+        applySurveyData: function(target, pedsql, papascale) {
     console.log('applySurveyData, target:', target, 'pedsql:', pedsql, 'papascale:', papascale);
     if (target === 'efficiency') {
         if (pedsql && pedsql.total !== undefined) {
@@ -2384,10 +2379,10 @@ applySurveyData: function(target, pedsql, papascale) {
         }
         notify('Данные анкет загружены в поля кластеризации.', 'info');
     }
+    }
     };
 
     window.switchPallcalcTab = function(tab) {
-    // Убираем активный класс у всех вкладок и кнопок
     document.querySelectorAll('.pallcalc-tab').forEach(function(t) { 
         t.classList.remove('active'); 
     });
@@ -2395,11 +2390,9 @@ applySurveyData: function(target, pedsql, papascale) {
         b.classList.remove('active'); 
     });
 
-    // Находим нужную вкладку и активируем
     var el = document.getElementById('tab-' + tab);
     if (el) el.classList.add('active');
 
-    // Находим и активируем соответствующую кнопку
     var btn = document.querySelector('[onclick="switchPallcalcTab(\'' + tab + '\')"]');
     if (btn) btn.classList.add('active');
 };
@@ -2711,7 +2704,6 @@ function setupSurveys() {
         };
         const existing = JSON.parse(localStorage.getItem('surveyData') || '{}');
         localStorage.setItem('surveyData', JSON.stringify({ ...existing, ...surveyData }));
-        // 🔹 Отправляем данные в облако
         syncSurveyToCloud('pedsql', surveyData.pedsql);
         notify('Данные PedsQL сохранены локально и отправлены врачу.', 'info');
     };
@@ -2728,7 +2720,6 @@ function setupSurveys() {
         const surveyData = JSON.parse(localStorage.getItem('surveyData') || '{}');
         surveyData.papascale = { total, category: cat };
         localStorage.setItem('surveyData', JSON.stringify(surveyData));
-        // 🔹 Отправляем данные в облако
         syncSurveyToCloud('papascale', surveyData.papascale);
         notify('Данные PaPaScale сохранены локально и отправлены врачу.', 'info');
     };
