@@ -1816,14 +1816,14 @@ async function render() {
 }
 
             function renderWelcome() { return `<div class="hero-section"><div style="font-size:5rem;">🧬</div><h1 class="hero-title">Орфанный помощник</h1><p class="hero-subtitle">Современный инструмент для ведения дневника здоровья и обмена данными с врачом</p><button class="btn btn-primary hero-btn" onclick="App.navigate('/login')">Войти в систему</button></div>`; }
-           function renderLogin() {
+function renderLogin() {
   return `<div class="text-center mt-5"><h2>🔐 Вход</h2><div class="row justify-content-center mt-4">
   <div class="col-md-5 mb-3">
     <div class="card">
       <h4><i class="bi bi-person-badge"></i> Врач</h4>
-      <input id="docName" class="form-control" placeholder="ФИО">
+      <input id="docName" class="form-control" placeholder="ФИО" autocomplete="name">
       <div class="password-wrapper">
-        <input id="docCode" type="password" class="form-control" placeholder="Код доступа">
+        <input id="docCode" type="password" class="form-control" placeholder="Код доступа" autocomplete="current-password">
         <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('docCode', this)"></i>
       </div>
       <button class="btn btn-primary w-100 mt-2" id="doctorBtn">Войти как врач</button>
@@ -1832,13 +1832,13 @@ async function render() {
   <div class="col-md-5 mb-3">
     <div class="card">
       <h4><i class="bi bi-person"></i> Пациент</h4>
-      <input id="patName" class="form-control" placeholder="ФИО">
+      <input id="patName" class="form-control" placeholder="ФИО" autocomplete="name">
       <div class="password-wrapper">
-        <input id="patCode" type="password" class="form-control" placeholder="Код доступа">
+        <input id="patCode" type="password" class="form-control" placeholder="Код доступа" autocomplete="current-password">
         <i class="bi bi-eye password-toggle" onclick="window.togglePasswordVisibility('patCode', this)"></i>
       </div>
-      <input id="patPatientId" class="form-control mt-2" placeholder="ID пациента (выдаётся врачом)">
-      <select id="patDiagnosis" class="form-control mt-2">
+      <input id="patPatientId" class="form-control mt-2" placeholder="ID пациента (выдаётся врачом)" autocomplete="off">
+      <select id="patDiagnosis" class="form-control mt-2" autocomplete="off">
         <option value="">Выберите диагноз (опционально)</option>
         ${getDiseaseOptions()}
       </select>
@@ -2143,24 +2143,29 @@ function loginAs(name, role, diagnosis = '', patientId = '') {
                 input.value = '';
             };
 
-           function generateFormHtml(fields) {
+   function generateFormHtml(fields, prefix = 'field_') {
+    let index = 0;
     return fields.map(f => {
+        const fieldId = prefix + f.name + '_' + (index++);
         if (f.type === 'range') {
-            // Вычисляем начальное значение (середина диапазона)
             const defaultVal = Math.round((f.min + f.max) / 2);
-            return `<label>${f.label}</label>
+            return `<label for="${fieldId}">${f.label}</label>
                     <div class="d-flex align-items-center gap-2">
-                        <input type="range" name="${f.name}" class="form-range" 
+                        <input type="range" id="${fieldId}" name="${f.name}" class="form-range" 
                                min="${f.min||0}" max="${f.max||10}" value="${defaultVal}"
-                               oninput="document.getElementById('${f.name}_val').textContent=this.value">
-                        <span id="${f.name}_val" class="badge bg-primary" style="min-width:2.5rem;">${defaultVal}</span>
+                               oninput="document.getElementById('${fieldId}_val').textContent=this.value">
+                        <span id="${fieldId}_val" class="badge bg-primary" style="min-width:2.5rem;">${defaultVal}</span>
                     </div>`;
         } else if (f.type === 'textarea') {
-            return `<textarea name="${f.name}" class="form-control" rows="2" placeholder="${f.placeholder||''}"></textarea>`;
+            return `<label for="${fieldId}">${f.label}</label>
+                    <textarea id="${fieldId}" name="${f.name}" class="form-control" rows="2" placeholder="${f.placeholder||''}"></textarea>`;
         } else if (f.type === 'date') {
-            return `<input type="date" name="${f.name}" class="form-control" value="${new Date().toISOString().split('T')[0]}">`;
+            const today = new Date().toISOString().split('T')[0];
+            return `<label for="${fieldId}">${f.label}</label>
+                    <input type="date" id="${fieldId}" name="${f.name}" class="form-control" value="${today}">`;
         } else {
-            return `<input type="${f.type}" name="${f.name}" class="form-control" 
+            return `<label for="${fieldId}">${f.label}</label>
+                    <input type="${f.type}" id="${fieldId}" name="${f.name}" class="form-control" 
                            placeholder="${f.placeholder||f.label}" 
                            ${f.step ? `step="${f.step}"` : ''} 
                            ${f.min!==undefined ? `min="${f.min}"` : ''} 
