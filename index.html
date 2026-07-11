@@ -2516,7 +2516,7 @@ function loginAs(name, role, diagnosis = '', patientId = '') {
   let childHtml = '';
   if (!isDoc && profile.diagnosis) {
     const affected = getAffectedSystems(profile.diagnosis);
-    childHtml = renderChildSVG(affected);
+    childHtml = renderChildCanvas(affected);
   }
 
   // ---- Сборка всей страницы ----
